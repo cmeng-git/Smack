@@ -280,6 +280,10 @@ public final class ModularXmppClientToServerConnection extends AbstractXMPPConne
                 ModularXmppClientToServerConnection.this.connected = true;
             }
 
+            @Override
+            public void notifyDataReceived() {
+                ModularXmppClientToServerConnection.this.notifyDataReceived();
+            }
         };
 
         // Construct the modules from the module descriptor. We do this before constructing the state graph, as the
