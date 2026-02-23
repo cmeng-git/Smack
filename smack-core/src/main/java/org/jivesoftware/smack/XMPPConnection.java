@@ -715,6 +715,13 @@ public interface XMPPConnection {
      */
     long getLastStanzaReceived();
 
+    /**
+     * Returns the timestamp in milliseconds when the last data was received.
+     *
+     * @return the timestamp in milliseconds
+     */
+    long getLastDataReceived();
+
     default JxmppContext getJxmppContext() {
         return JxmppContext.getDefaultContext();
     };
