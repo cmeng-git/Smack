@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2020-2025 Florian Schmaus
+ * Copyright 2020-2026 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,4 +142,7 @@ public abstract class ModularXmppClientToServerConnectionInternal {
      * @param xmppTransport the active transport.
      */
     public abstract void setTransport(XmppClientToServerTransport xmppTransport);
+
+    public abstract void notifyDataReceived();
+
 }

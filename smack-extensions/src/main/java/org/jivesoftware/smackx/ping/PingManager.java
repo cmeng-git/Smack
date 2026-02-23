@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2012-2018 Florian Schmaus
+ * Copyright 2012-2026 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -416,11 +416,11 @@ public final class PingManager extends Manager {
             // Ping has been disabled
             return;
         }
-        long lastStanzaReceived = connection.getLastStanzaReceived();
-        if (lastStanzaReceived > 0) {
+        long lastDataReceived = connection.getLastDataReceived();
+        if (lastDataReceived > 0) {
             long now = System.currentTimeMillis();
             // Delta since the last stanza was received
-            int deltaInSeconds = (int)  ((now - lastStanzaReceived) / 1000);
+            int deltaInSeconds = (int)  ((now - lastDataReceived) / 1000);
             // If the delta is small then the ping interval, then we can defer the ping
             if (deltaInSeconds < pingInterval) {
                 maybeSchedulePingServerTask(deltaInSeconds);

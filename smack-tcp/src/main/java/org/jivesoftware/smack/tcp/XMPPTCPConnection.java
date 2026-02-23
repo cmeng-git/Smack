@@ -702,6 +702,7 @@ public class XMPPTCPConnection extends AbstractXMPPConnection {
 
     private void initReaderAndWriter() throws IOException {
         InputStream is = socket.getInputStream();
+        is = new CallbackInputStream(is, (bytesRead) -> notifyDataReceived());
         OutputStream os = socket.getOutputStream();
         if (compressionHandler != null) {
             is = compressionHandler.getInputStream(is);
