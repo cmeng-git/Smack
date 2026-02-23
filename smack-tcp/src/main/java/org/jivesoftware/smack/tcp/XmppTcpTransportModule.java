@@ -500,7 +500,10 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                     newInterestedOps |= SelectionKey.OP_WRITE;
                 }
 
-                callbackBytesRead += bytesRead;
+                if (bytesRead > 0) {
+                    callbackBytesRead += bytesRead;
+                    this.connectionInternal.notifyDataReceived();
+                }
 
                 ByteBuffer filteredIncomingBuffer = incomingBuffer;
                 for (ListIterator<XmppInputOutputFilter> it = connectionInternal.getXmppInputOutputFilterEndIterator(); it.hasPrevious();) {
