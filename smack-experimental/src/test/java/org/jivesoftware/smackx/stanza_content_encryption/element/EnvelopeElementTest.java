@@ -32,14 +32,14 @@ import org.jivesoftware.smackx.sid.element.StanzaIdElement;
 import org.junit.jupiter.api.Test;
 import org.jxmpp.util.XmppDateTime;
 
-public class ContentElementTest {
+public class EnvelopeElementTest {
 
     @Test
-    public void testContentElement() throws ParseException {
+    public void testEnvelopeElement() throws ParseException {
         Message.Body body = new Message.Body("en", "My battery is low and it’s getting dark"); // :'(
 
-        ContentElement contentElement = ContentElement.builder()
-                .addPayloadItem(body)
+        EnvelopeElement envelopeElement = EnvelopeElement.builder()
+                .addContentItem(body)
                 .setFrom(AffixElementsTest.JID_OPPORTUNITY)
                 .addTo(AffixElementsTest.JID_HOUSTON)
                 .setTimestamp(XmppDateTime.parseXEP0082Date("2018-06-10T00:00:00.000+00:00"))
@@ -57,26 +57,26 @@ public class ContentElementTest {
                 "  </payload>" +
                 "</content>";
 
-        assertXmlSimilar(expectedXml, contentElement.toXML());
-        assertEquals(Collections.singletonList(body), contentElement.getPayload().getItems());
+        assertXmlSimilar(expectedXml, envelopeElement.toXML());
+        assertEquals(Collections.singletonList(body), envelopeElement.getContentElement().getItems());
 
-        assertEquals(4, contentElement.getAffixElements().size());
-        assertTrue(contentElement.getAffixElements().contains(new ToAffixElement(AffixElementsTest.JID_HOUSTON)));
-        assertTrue(contentElement.getAffixElements().contains(new FromAffixElement(AffixElementsTest.JID_OPPORTUNITY)));
-        assertTrue(contentElement.getAffixElements().contains(
+        assertEquals(4, envelopeElement.getAffixElements().size());
+        assertTrue(envelopeElement.getAffixElements().contains(new ToAffixElement(AffixElementsTest.JID_HOUSTON)));
+        assertTrue(envelopeElement.getAffixElements().contains(new FromAffixElement(AffixElementsTest.JID_OPPORTUNITY)));
+        assertTrue(envelopeElement.getAffixElements().contains(
                 new TimestampAffixElement(XmppDateTime.parseXEP0082Date("2018-06-10T00:00:00.000+00:00"))));
-        assertTrue(contentElement.getAffixElements().contains(new RandomPaddingAffixElement("RANDOMPADDING")));
+        assertTrue(envelopeElement.getAffixElements().contains(new RandomPaddingAffixElement("RANDOMPADDING")));
     }
 
     @Test
     public void stanzaIdForbiddenInContentElementPayload() {
         assertThrows(IllegalArgumentException.class,
-                () -> ContentElement.builder().addPayloadItem(new StanzaIdElement("alice@wonderland.lit")));
+                () -> EnvelopeElement.builder().addContentItem(new StanzaIdElement("alice@wonderland.lit")));
     }
 
     @Test
     public void processingHintsForbiddenInContentElementPayload() {
         assertThrows(IllegalArgumentException.class,
-                () -> ContentElement.builder().addPayloadItem(StoreHint.INSTANCE));
+                () -> EnvelopeElement.builder().addContentItem(StoreHint.INSTANCE));
     }
 }
