@@ -1,4 +1,4 @@
-/**
+/*
  *
  *  Copyright 2019-2023 Eng Chong Meng
  *
@@ -23,7 +23,7 @@ import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension
 
 /**
  * An HTTP Requests IQ implementation for retrieving information about an HTTP Authorization request via IQ.
- * XEP-0070: Verifying HTTP Requests via XMPP (1.0.1 (2016-12-09))
+ * XEP-0070: Verifying HTTP Requests via XMPP (1.0.2 (2025-09-30))
  *
  * @author Eng Chong Meng
  */

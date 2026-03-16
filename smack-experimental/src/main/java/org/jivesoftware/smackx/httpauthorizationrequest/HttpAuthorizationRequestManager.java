@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019-2023 Eng Chong Meng
  *
@@ -51,7 +51,7 @@ import org.jxmpp.jid.Jid;
  * IQ : when the request is via EntityFullJid
  * Message: When request is via EntityBareJid
  *
- * XEP-0070: Verifying HTTP Requests via XMPP (1.0.1 (2016-12-09))
+ * XEP-0070: Verifying HTTP Requests via XMPP (1.0.2 (2025-09-30))
  *
  * @see HttpAuthorizationRequestListener on callback
  */

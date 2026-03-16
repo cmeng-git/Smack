@@ -1,4 +1,4 @@
-/**
+/*
  *
  *  Copyright 2019-2023 Eng Chong Meng
  *
@@ -18,15 +18,15 @@ package org.jivesoftware.smackx.httpauthorizationrequest.element;
 
 import javax.xml.namespace.QName;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 
 /**
- * ExtensionElement <code>Conform</code> for HTTP Request.
- * XEP-0070: Verifying HTTP Requests via XMPP (1.0.1 (2016-12-09))
+ * XmlElement <code>Conform</code> for HTTP Request.
+ * XEP-0070: Verifying HTTP Requests via XMPP (1.0.2 (2025-09-30))
  */
-public class ConfirmExtension implements ExtensionElement {
+public class ConfirmExtension implements XmlElement {
     public static final String ELEMENT = "confirm";
     public static final String NAMESPACE = "http://jabber.org/protocol/http-auth";
 
@@ -96,7 +96,7 @@ public class ConfirmExtension implements ExtensionElement {
      * @return Confirm extension
      */
     public static ConfirmExtension from(Message message) {
-        return message.getExtension(ConfirmExtension.class);
+        return (ConfirmExtension) message.getExtension(QNAME);
     }
 
     @Override
