@@ -44,18 +44,18 @@ public class EnvelopeElementProviderTest {
     @Test
     public void testParsing() throws XmlPullParserException, IOException, SmackParsingException, ParseException {
         String xml = "" +
-                "<content xmlns='urn:xmpp:sce:0'>\n" +
-                "  <payload>\n" +
+                "<envelope xmlns='urn:xmpp:sce:1'>\n" +
+                "  <content>\n" +
                 "    <body xmlns='jabber:client'>Have you seen that new movie?</body>\n" +
                 "    <x xmlns='jabber:x:oob'>\n" +
                 "      <url>https://en.wikipedia.org/wiki/Fight_Club#Plot</url>\n" +
                 "    </x>\n" +
-                "  </payload>\n" +
+                "  </content>\n" +
                 "  <from jid='ladymacbeth@shakespear.lit/castle'/>\n" +
                 "  <to jid='doctor@shakespeare.lit/pda'/>\n" +
                 "  <time stamp='1993-10-12T03:13:10.000+00:00'/>\n" +
                 "  <rpad>A98D7KJF1ASDVG232sdff341</rpad>\n" +
-                "</content>";
+                "</envelope>";
 
         EnvelopeElementProvider provider = new EnvelopeElementProvider();
         EnvelopeElement envelopeElement = provider.parse(TestUtils.getParser(xml));

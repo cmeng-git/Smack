@@ -47,15 +47,15 @@ public class EnvelopeElementTest {
                 .build();
 
         String expectedXml = "" +
-                "<content xmlns='urn:xmpp:sce:0'>" +
+                "<envelope xmlns='urn:xmpp:sce:1'>" +
                 "  <to jid='missioncontrol@houston.nasa.gov'/>" +
                 "  <from jid='opportunity@mars.planet'/>" +
                 "  <time stamp='2018-06-10T00:00:00.000+00:00'/>" +
                 "  <rpad>RANDOMPADDING</rpad>" +
-                "  <payload>" +
+                "  <content>" +
                 "    <body xmlns='jabber:client' xml:lang='en'>My battery is low and it’s getting dark</body>" +
-                "  </payload>" +
-                "</content>";
+                "  </content>" +
+                "</envelope>";
 
         assertXmlSimilar(expectedXml, envelopeElement.toXML());
         assertEquals(Collections.singletonList(body), envelopeElement.getContentElement().getItems());
