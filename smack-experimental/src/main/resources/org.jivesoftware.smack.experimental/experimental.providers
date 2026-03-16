@@ -7,11 +7,11 @@
       <namespace>http://jabber.org/protocol/http-auth</namespace>
       <className>org.jivesoftware.smackx.httpauthorizationrequest.provider.ConfirmExtProvider</className>
     </extensionProvider>
-    <extensionProvider>
+    <iqProvider>
       <elementName>confirm</elementName>
       <namespace>http://jabber.org/protocol/http-auth</namespace>
       <className>org.jivesoftware.smackx.httpauthorizationrequest.provider.ConfirmIQProvider</className>
-    </extensionProvider>
+    </iqProvider>
 
     <!-- XEP-0264: Jingle Content Thumbnails -->
     <extensionProvider>
@@ -333,8 +333,8 @@
     <!-- XEP-0420: Stanza Content Encryption (SCE) -->
     <extensionProvider>
       <elementName>content</elementName>
-      <namespace>urn:xmpp:sce:0</namespace>
-      <className>org.jivesoftware.smackx.stanza_content_encryption.provider.ContentElementProvider</className>
+      <namespace>urn:xmpp:sce:1</namespace>
+      <className>org.jivesoftware.smackx.stanza_content_encryption.provider.EnvelopeElementProvider</className>
     </extensionProvider>
 
     <!-- XEP-0422: Message Fastening -->
