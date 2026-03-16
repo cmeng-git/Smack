@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub, 2019 Florian Schmaus
  *
@@ -16,11 +16,11 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * Abstract JingleContentTransportInfo element.
  */
-public interface JingleContentTransportInfo extends FullyQualifiedElement {
+public interface JingleContentTransportInfo extends XmlElement {
 
 }

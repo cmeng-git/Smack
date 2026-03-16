@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2014-2019 Florian Schmaus
+ * Copyright © 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.junit.Test;
+import org.jxmpp.JxmppContext;
 
 public class ProviderManagerTest {
 
@@ -37,10 +39,10 @@ public class ProviderManagerTest {
         assertTrue(SmackConfiguration.isSmackInitialized());
     }
 
-    public static class TestIQProvider extends IQProvider<IQ> {
+    public static class TestIQProvider extends IqProvider<IQ> {
 
         @Override
-        public IQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) {
+        public IQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) {
             return null;
         }
 

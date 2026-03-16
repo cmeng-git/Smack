@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -85,7 +85,7 @@ public class RosterGroup extends Manager {
                 item.removeGroupName(this.name);
                 item.addGroupName(name);
                 packet.addRosterItem(item);
-                connection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+                connection().sendIqRequestAndWaitForResponse(packet);
             }
         }
     }
@@ -116,7 +116,7 @@ public class RosterGroup extends Manager {
      * Returns the roster entry associated with the given XMPP address or
      * <code>null</code> if the user is not an entry in the group.
      *
-     * @param user the XMPP address of the user (eg "jsmith@example.com").
+     * @param user the XMPP address of the user (e.g."jsmith@example.com").
      * @return the roster entry or <code>null</code> if it does not exist in the group.
      */
     public RosterEntry getEntry(Jid user) {
@@ -180,7 +180,7 @@ public class RosterGroup extends Manager {
                 item.addGroupName(getName());
                 packet.addRosterItem(item);
                 // Wait up to a certain number of seconds for a reply from the server.
-                connection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+                connection().sendIqRequestAndWaitForResponse(packet);
             }
         }
     }
@@ -211,7 +211,7 @@ public class RosterGroup extends Manager {
                 item.removeGroupName(this.getName());
                 packet.addRosterItem(item);
                 // Wait up to a certain number of seconds for a reply from the server.
-                connection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+                connection().sendIqRequestAndWaitForResponse(packet);
             }
         }
     }

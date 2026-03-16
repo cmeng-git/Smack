@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015-2020 Florian Schmaus
  *
@@ -34,8 +34,11 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+
 import org.jxmpp.jid.DomainBareJid;
 
+@SpecificationReference(document = "XEP-0060", version = "1.26.0")
 public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final PubSubManager pubSubManagerOne;
@@ -83,19 +86,8 @@ public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
     }
 
     /**
-
-     */
-
-    /**
      * Asserts that an error is returned when a publish request to a node that is both
      * 'notification-only' as well as 'transient' contains an item element.
-     *
-     * <p>From XEP-0060 § 7.1.3.6:</p>
-     * <blockquote>
-     * If the event type is notification + transient and the publisher provides an item,
-     * the service MUST bounce the publication request with a &lt;bad-request/&gt; error
-     * and a pubsub-specific error condition of &lt;item-forbidden/&gt;.
-     * </blockquote>
      *
      * @throws NoResponseException if there was no response from the remote entity.
      * @throws XMPPErrorException if there was an XMPP error returned.
@@ -104,7 +96,9 @@ public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
      * @see <a href="https://xmpp.org/extensions/xep-0060.html#publisher-publish-error-badrequest">
      *     7.1.3.6 Request Does Not Match Configuration</a>
      */
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "7.1.3.6", quote =
+        "If the event type is notification + transient and the publisher provides an item, the service MUST bounce " +
+        "the publication request with a <bad-request/> error and a pubsub-specific error condition of <item-forbidden/>.")
     public void transientNotificationOnlyNodeWithItemTest() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         final String nodename = "sinttest-transient-notificationonly-withitem-nodename-" + testRunId;
         final String itemId = "sinttest-transient-notificationonly-withitem-itemid-" + testRunId;
@@ -120,7 +114,7 @@ public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
         // Add a dummy payload. If there is no payload, but just an item ID, then ejabberd will *not* return an error,
         // which I believe to be non-compliant behavior (although, granted, the XEP is not very clear about this). A user
         // which sends an empty item with ID to an node that is configured to be notification-only and transient probably
-        // does something wrong, as the item's ID will never appear anywhere. Hence it would be nice if the user would be
+        // does something wrong, as the item's ID will never appear anywhere. Hence, it would be nice if the user would be
         // made aware of this issue by returning an error. Sadly ejabberd does not do so.
         // See also https://github.com/processone/ejabberd/issues/2864#issuecomment-500741915
         final StandardExtensionElement dummyPayload = StandardExtensionElement.builder("dummy-payload",
@@ -132,9 +126,9 @@ public class PubSubIntegrationTest extends AbstractSmackIntegrationTest {
 
                 Item item = new PayloadItem<>(itemId, dummyPayload);
                 leafNode.publish(item);
-            });
-            assertEquals(StanzaError.Type.MODIFY, e.getStanzaError().getType());
-            assertNotNull(e.getStanzaError().getExtension("item-forbidden", "http://jabber.org/protocol/pubsub#errors"));
+            }, "Expected an error after publishing item " + itemId + " (but none occurred).");
+            assertEquals(StanzaError.Type.MODIFY, e.getStanzaError().getType(), "Unexpected error type");
+            assertNotNull(e.getStanzaError().getExtension("item-forbidden", "http://jabber.org/protocol/pubsub#errors"), "Expected error to contain 'item-forbidden', but it did not.");
         }
         finally {
             pubSubManagerOne.deleteNode(nodename);

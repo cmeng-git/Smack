@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2019-2020 Florian Schmaus
+ * Copyright 2019-2021 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import org.jivesoftware.smack.fsm.StateDescriptorGraph;
 import org.jivesoftware.smack.fsm.StateDescriptorGraph.GraphVertex;
 import org.jivesoftware.smack.util.CollectionUtil;
 
+import org.jxmpp.JxmppContext;
+
 public final class ModularXmppClientToServerConnectionConfiguration extends ConnectionConfiguration {
 
     final Set<ModularXmppClientToServerConnectionModuleDescriptor> moduleDescriptors;
@@ -54,13 +56,17 @@ public final class ModularXmppClientToServerConnectionConfiguration extends Conn
         }
 
         try {
-            initialStateDescriptorVertex = StateDescriptorGraph.constructStateDescriptorGraph(backwardEdgeStateDescriptors);
+            initialStateDescriptorVertex = StateDescriptorGraph.constructStateDescriptorGraph(backwardEdgeStateDescriptors, builder.failOnUnknownStates);
         }
         catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                         | NoSuchMethodException | SecurityException e) {
             // TODO: Depending on the exact exception thrown, this potentially indicates an invalid connection
             // configuration, e.g. there is no edge from disconnected to connected.
             throw new IllegalStateException(e);
+        }
+
+        for (ModularXmppClientToServerConnectionModuleDescriptor moduleDescriptor : moduleDescriptors) {
+            moduleDescriptor.validateConfiguration(this);
         }
     }
 
@@ -79,7 +85,11 @@ public final class ModularXmppClientToServerConnectionConfiguration extends Conn
     }
 
     public static Builder builder() {
-        return new Builder();
+        return builder(getDefaultJxmppContext());
+    }
+
+    public static Builder builder(JxmppContext jxmppContext) {
+        return new Builder(jxmppContext);
     }
 
     public static final class Builder
@@ -87,7 +97,10 @@ public final class ModularXmppClientToServerConnectionConfiguration extends Conn
 
         private final Map<Class<? extends ModularXmppClientToServerConnectionModuleDescriptor>, ModularXmppClientToServerConnectionModuleDescriptor> modulesDescriptors = new HashMap<>();
 
-        private Builder() {
+        private boolean failOnUnknownStates;
+
+        private Builder(JxmppContext jxmppContext) {
+            super(jxmppContext);
             SmackConfiguration.addAllKnownModulesTo(this);
         }
 
@@ -96,7 +109,7 @@ public final class ModularXmppClientToServerConnectionConfiguration extends Conn
             return new ModularXmppClientToServerConnectionConfiguration(this);
         }
 
-        void addModule(ModularXmppClientToServerConnectionModuleDescriptor connectionModule) {
+        public void addModule(ModularXmppClientToServerConnectionModuleDescriptor connectionModule) {
             Class<? extends ModularXmppClientToServerConnectionModuleDescriptor> moduleDescriptorClass = connectionModule.getClass();
             if (modulesDescriptors.containsKey(moduleDescriptorClass)) {
                 throw new IllegalArgumentException("A connection module for " + moduleDescriptorClass + " is already configured");
@@ -156,6 +169,17 @@ public final class ModularXmppClientToServerConnectionConfiguration extends Conn
 
         public Builder removeAllModules() {
             modulesDescriptors.clear();
+            return getThis();
+        }
+
+        /**
+         * Fail if there are unknown states in Smack's state descriptor graph. This method is used mostly for testing
+         * the internals of Smack. Users can safely ignore it.
+         *
+         * @return a reference to this builder.
+         */
+        public Builder failOnUnknownStates() {
+            failOnUnknownStates = true;
             return getThis();
         }
 

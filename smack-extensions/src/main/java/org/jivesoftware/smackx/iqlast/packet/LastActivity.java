@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software, 2014-2019 Florian Schmaus
  *
@@ -20,11 +20,13 @@ package org.jivesoftware.smackx.iqlast.packet;
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 
 /**
@@ -44,11 +46,13 @@ public class LastActivity extends IQ {
     public long lastActivity = -1;
     public String message;
 
+    @SuppressWarnings("this-escape")
     public LastActivity() {
         super(ELEMENT, NAMESPACE);
         setType(IQ.Type.get);
     }
 
+    @SuppressWarnings("this-escape")
     public LastActivity(Jid to) {
         this();
         setTo(to);
@@ -100,10 +104,10 @@ public class LastActivity extends IQ {
      *
      * @author Derek DeMoro
      */
-    public static class Provider extends IQProvider<LastActivity> {
+    public static class Provider extends IqProvider<LastActivity> {
 
         @Override
-        public LastActivity parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public LastActivity parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             LastActivity lastActivity = new LastActivity();
             String seconds = parser.getAttributeValue("", "seconds");
             if (seconds != null) {

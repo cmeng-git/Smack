@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2014 Florian Schmaus
+ * Copyright 2003-2007 Jive Software, 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
  */
 package org.jivesoftware.smackx.time.packet;
 
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.IQ;
-
-import org.jxmpp.util.XmppDateTime;
+import org.jivesoftware.smack.packet.IqData;
+import org.jivesoftware.smack.util.Objects;
 
 /**
  * A Time IQ packet, which is used by XMPP clients to exchange their respective local
@@ -33,113 +33,86 @@ import org.jxmpp.util.XmppDateTime;
  * @see <a href="http://www.xmpp.org/extensions/xep-0202.html">XEP-202</a>
  * @author Florian Schmaus
  */
-public class Time extends IQ {
+public class Time extends IQ implements TimeView {
+
     public static final String NAMESPACE = "urn:xmpp:time";
     public static final String ELEMENT = "time";
 
-    private static final Logger LOGGER = Logger.getLogger(Time.class.getName());
+    private final ZonedDateTime zonedDateTime;
 
-    private String utc;
-    private String tzo;
+    @SuppressWarnings("this-escape")
+    public Time(TimeBuilder timeBuilder) {
+        super(timeBuilder, ELEMENT, NAMESPACE);
+        zonedDateTime = timeBuilder.getZonedDateTime();
 
-    public Time() {
-        super(ELEMENT, NAMESPACE);
-        setType(Type.get);
+        Type type = getType();
+        switch (type) {
+        case get:
+            if (zonedDateTime != null) {
+                throw new IllegalArgumentException("Time requests must not have time set");
+            }
+            break;
+        case result:
+            Objects.requireNonNull(zonedDateTime, "Must have set a time value");
+            break;
+        case error:
+            // Nothing to check.
+            break;
+        case set:
+            throw new IllegalArgumentException("Invalid IQ type");
+        }
     }
 
-    /**
-     * Creates a new Time instance using the specified calendar instance as
-     * the time value to send.
-     *
-     * @param cal the time value.
-     */
-    public Time(Calendar cal) {
-        super(ELEMENT, NAMESPACE);
-        tzo = XmppDateTime.asString(cal.getTimeZone());
-        // Convert local time to the UTC time.
-        utc = XmppDateTime.formatXEP0082Date(cal.getTime());
+    @Override
+    public ZonedDateTime getZonedDateTime() {
+        return zonedDateTime;
     }
 
     /**
      * Returns the local time or <code>null</code> if the time hasn't been set.
      *
      * @return the local time.
+     * @deprecated use {@link #getZonedDateTime()} instead.
      */
+    // TODO: Remove in Smack 4.6
+    @Deprecated
     public Date getTime() {
-        if (utc == null) {
-            return null;
-        }
-        Date date = null;
-        try {
-            date = XmppDateTime.parseDate(utc);
-        }
-        catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error getting local time", e);
-        }
-        return date;
-    }
+        if (zonedDateTime == null) return null;
 
-    /**
-     * Sets the time using the local time.
-     *
-     * @param time the current local time.
-     */
-    public void setTime(Date time) {
-    }
-
-    /**
-     * Returns the time as a UTC formatted String using the format CCYY-MM-DDThh:mm:ssZ.
-     *
-     * @return the time as a UTC formatted String.
-     */
-    public String getUtc() {
-        return utc;
-    }
-
-    /**
-     * Sets the time using UTC formatted String in the format CCYY-MM-DDThh:mm:ssZ.
-     *
-     * @param utc the time using a formatted String.
-     */
-    public void setUtc(String utc) {
-        this.utc = utc;
-    }
-
-    /**
-     * Returns the time zone.
-     *
-     * @return the time zone.
-     */
-    public String getTzo() {
-        return tzo;
-    }
-
-    /**
-     * Sets the time zone offset.
-     *
-     * @param tzo the time zone offset.
-     */
-    public void setTzo(String tzo) {
-        this.tzo = tzo;
-    }
-
-    public static Time createResponse(IQ request) {
-        Time time = new Time(Calendar.getInstance());
-        time.setType(Type.result);
-        time.setTo(request.getFrom());
-        return time;
+        return Date.from(zonedDateTime.toInstant());
     }
 
     @Override
     protected IQChildElementXmlStringBuilder getIQChildElementBuilder(IQChildElementXmlStringBuilder buf) {
-        if (utc != null) {
+        if (zonedDateTime != null) {
             buf.rightAngleBracket();
-            buf.append("<utc>").append(utc).append("</utc>");
-            buf.append("<tzo>").append(tzo).append("</tzo>");
+            buf.element("utc", getUtc());
+            buf.element("tzo", getTzo());
         } else {
             buf.setEmptyElement();
         }
 
         return buf;
+    }
+
+    public static TimeBuilder builder(XMPPConnection connection) {
+        return new TimeBuilder(connection);
+    }
+
+    public static TimeBuilder builder(IqData iqData) {
+        return new TimeBuilder(iqData);
+    }
+
+    public static TimeBuilder builder(String stanzaId) {
+        return new TimeBuilder(stanzaId);
+    }
+
+    public static TimeBuilder builder(Time timeRequest, Calendar calendar) {
+        IqData iqData = IqData.createResponseData(timeRequest);
+        return builder(iqData).setTime(calendar);
+    }
+
+    public static TimeBuilder builder(Time timeRequest) {
+        return builder(timeRequest, Calendar.getInstance());
     }
 }

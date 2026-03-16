@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2014 Andriy Tsykholyas
  *
@@ -70,7 +70,7 @@ public class HttpOverXmppReqProviderTest {
     private static HttpOverXmppReq parseReq(String string) throws Exception {
         HttpOverXmppReqProvider provider = new HttpOverXmppReqProvider();
         XmlPullParser parser = PacketParserUtils.getParserFor(string);
-        IQ iq = provider.parse(parser);
+        IQ iq = provider.parse(parser, null);
         assertTrue(iq instanceof HttpOverXmppReq);
         return  (HttpOverXmppReq) iq;
     }

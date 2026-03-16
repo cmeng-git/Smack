@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2015-2020 Florian Schmaus
+ * Copyright 2003-2007 Jive Software, 2015-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,16 +204,8 @@ public final class PepManager extends Manager {
                         extensionElementType, pepEventListener);
 
         synchronized (pepEventListeners) {
-            if (listenerToCouplingMap.containsKey(pepEventListener)) {
-                return false;
-            }
-            listenerToCouplingMap.put(pepEventListener, pepEventListenerCoupling);
-            /*
-             * TODO: Replace the above with the below using putIfAbsent() if Smack's minimum required Android SDK level
-             * is 24 or higher. PepEventListenerCoupling<?> currentPepEventListenerCoupling =
-             * listenerToCouplingMap.putIfAbsent(pepEventListener, pepEventListenerCoupling); if
-             * (currentPepEventListenerCoupling != null) { return false; }
-             */
+            var currentPepEventListenerCoupling = listenerToCouplingMap.putIfAbsent(pepEventListener, pepEventListenerCoupling);
+            if (currentPepEventListenerCoupling != null) return false;
 
             boolean listenerForNodeExisted = pepEventListeners.put(node, pepEventListenerCoupling);
             if (!listenerForNodeExisted) {
@@ -249,32 +241,6 @@ public final class PepManager extends Manager {
     }
 
     /**
-     * Adds a listener to PEPs. The listener will be fired anytime PEP events are received from remote XMPP clients.
-     *
-     * @param pepListener a roster exchange listener.
-     * @return true if pepListener was added.
-     * @deprecated use {@link #addPepEventListener(String, Class, PepEventListener)} instead.
-     */
-    // TODO: Remove in Smack 4.5
-    @Deprecated
-    public boolean addPepListener(PepListener pepListener) {
-        return pepListeners.add(pepListener);
-    }
-
-    /**
-     * Removes a listener from PEP events.
-     *
-     * @param pepListener a roster exchange listener.
-     * @return true, if pepListener was removed.
-     * @deprecated use {@link #removePepEventListener(PepEventListener)} instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    public boolean removePepListener(PepListener pepListener) {
-        return pepListeners.remove(pepListener);
-    }
-
-    /**
      * Publish an event.
      *
      * @param nodeId the ID of the node to publish on.
@@ -288,7 +254,7 @@ public final class PepManager extends Manager {
      */
     public LeafNode publish(String nodeId, Item item) throws NotConnectedException, InterruptedException,
                     NoResponseException, XMPPErrorException, NotALeafNodeException {
-        // PEP nodes are auto created if not existent. Hence Use PubSubManager.tryToPublishAndPossibleAutoCreate() here.
+        // PEP nodes are auto created if not existent. Hence, use PubSubManager.tryToPublishAndPossibleAutoCreate() here.
         return pepPubSubManager.tryToPublishAndPossibleAutoCreate(nodeId, item);
     }
 

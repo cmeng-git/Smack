@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015-2020 Florian Schmaus
  *
@@ -18,9 +18,11 @@ package org.igniterealtime.smack.inttest.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeoutException;
 
 import org.jivesoftware.smack.util.Async;
 
@@ -60,7 +62,18 @@ public class ResultSyncPointTest {
         assertThrows(TestException.class, () -> rsp.waitForResult(60 * 1000));
     }
 
-    private static class TestException extends Exception {
+    @Test
+    public void testTimeout() throws Exception {
+        final MultiResultSyncPoint<String, Exception> rsp = new MultiResultSyncPoint<>(2);
+        try {
+            rsp.waitForResults(100);
+            fail("A timeout exception should have been thrown.");
+        } catch (TimeoutException e) {
+            // Expected
+        }
+    }
+
+    private static final class TestException extends Exception {
 
         /**
          *

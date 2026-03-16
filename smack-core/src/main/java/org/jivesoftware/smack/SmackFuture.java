@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017-2020 Florian Schmaus
+ * Copyright 2017-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +34,6 @@ import javax.net.SocketFactory;
 
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.util.CallbackRecipient;
-import org.jivesoftware.smack.util.Consumer;
 import org.jivesoftware.smack.util.ExceptionCallback;
 import org.jivesoftware.smack.util.SuccessCallback;
 
@@ -75,6 +75,10 @@ public abstract class SmackFuture<V, E extends Exception> implements Future<V>, 
 
     @Override
     public final synchronized boolean isDone() {
+        return result != null || exception != null || cancelled;
+    }
+
+    public final synchronized boolean wasSuccessful() {
         return result != null;
     }
 
@@ -160,6 +164,10 @@ public abstract class SmackFuture<V, E extends Exception> implements Future<V>, 
 
     public V getIfAvailable() {
         return result;
+    }
+
+    public E getExceptionIfAvailable() {
+        return exception;
     }
 
     private boolean callbacksInvoked;
@@ -329,6 +337,11 @@ public abstract class SmackFuture<V, E extends Exception> implements Future<V>, 
         InternalSmackFuture<V, E> future = new InternalSmackFuture<>();
         future.setResult(result);
         return future;
+    }
+
+    public static boolean await(Collection<? extends SmackFuture<?, ?>> futures, long timeout)
+                    throws InterruptedException {
+        return await(futures, timeout, TimeUnit.MILLISECONDS);
     }
 
     public static boolean await(Collection<? extends SmackFuture<?, ?>> futures, long timeout, TimeUnit unit) throws InterruptedException {

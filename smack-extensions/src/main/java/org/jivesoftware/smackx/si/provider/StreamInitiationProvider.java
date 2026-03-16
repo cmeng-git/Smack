@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -22,9 +22,10 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
@@ -33,6 +34,7 @@ import org.jivesoftware.smackx.si.packet.StreamInitiation.File;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jivesoftware.smackx.xdata.provider.DataFormProvider;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.util.XmppDateTime;
 
 /**
@@ -41,11 +43,12 @@ import org.jxmpp.util.XmppDateTime;
  * @author Alexander Wenckus
  *
  */
-public class StreamInitiationProvider extends IQProvider<StreamInitiation> {
+public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
     private static final Logger LOGGER = Logger.getLogger(StreamInitiationProvider.class.getName());
 
+    @SuppressWarnings("JavaUtilDate")
     @Override
-    public StreamInitiation parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public StreamInitiation parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         // si
         String id = parser.getAttributeValue("", "id");
         String mimeType = parser.getAttributeValue("", "mime-type");

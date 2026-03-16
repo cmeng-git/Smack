@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2019-2020 Florian Schmaus
+ * Copyright 2019-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,9 +46,11 @@ import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.SecurityRequiredByClientException;
 import org.jivesoftware.smack.SmackException.SecurityRequiredByServerException;
 import org.jivesoftware.smack.SmackException.SmackCertificateException;
+import org.jivesoftware.smack.SmackException.SmackWrappedException;
 import org.jivesoftware.smack.SmackFuture;
 import org.jivesoftware.smack.SmackFuture.InternalSmackFuture;
 import org.jivesoftware.smack.SmackReactor.SelectionKeyAttachment;
@@ -58,6 +59,7 @@ import org.jivesoftware.smack.XmppInputOutputFilter;
 import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection.ConnectedButUnauthenticatedStateDescriptor;
 import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection.LookupRemoteConnectionEndpointsStateDescriptor;
 import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnectionModule;
+import org.jivesoftware.smack.c2s.StreamOpenAndCloseFactory;
 import org.jivesoftware.smack.c2s.XmppClientToServerTransport;
 import org.jivesoftware.smack.c2s.internal.ModularXmppClientToServerConnectionInternal;
 import org.jivesoftware.smack.c2s.internal.WalkStateGraphContext;
@@ -68,6 +70,7 @@ import org.jivesoftware.smack.fsm.StateTransitionResult;
 import org.jivesoftware.smack.internal.SmackTlsContext;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StartTls;
+import org.jivesoftware.smack.packet.StreamClose;
 import org.jivesoftware.smack.packet.StreamOpen;
 import org.jivesoftware.smack.packet.TlsFailure;
 import org.jivesoftware.smack.packet.TlsProceed;
@@ -78,14 +81,12 @@ import org.jivesoftware.smack.tcp.rce.RemoteXmppTcpConnectionEndpoints;
 import org.jivesoftware.smack.tcp.rce.RemoteXmppTcpConnectionEndpoints.Result;
 import org.jivesoftware.smack.tcp.rce.Rfc6120TcpRemoteConnectionEndpoint;
 import org.jivesoftware.smack.util.CollectionUtil;
-import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.UTF8;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smack.util.rce.RemoteConnectionEndpointLookupFailure;
-import org.jivesoftware.smack.xml.XmlPullParser;
-import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.util.JidUtil;
 import org.jxmpp.xml.splitter.Utf8ByteXmppXmlSplitter;
@@ -115,7 +116,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
     private Iterator<CharSequence> outgoingCharSequenceIterator;
 
     private final List<TopLevelStreamElement> currentlyOutgoingElements = new ArrayList<>();
-    private final Map<ByteBuffer, List<TopLevelStreamElement>> bufferToElementMap = new IdentityHashMap<>();
+    private final IdentityHashMap<ByteBuffer, List<TopLevelStreamElement>> bufferToElementMap = new IdentityHashMap<>();
 
     private ByteBuffer outgoingBuffer;
     private ByteBuffer filteredOutgoingBuffer;
@@ -137,11 +138,10 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
     private int sslEngineDelegatedTasks;
     private int maxPendingSslEngineDelegatedTasks;
 
-    // TODO: Use LongAdder once Smack's minimum Android API level is 24 or higher.
-    private final AtomicLong setWriteInterestAfterChannelSelectedCallback = new AtomicLong();
-    private final AtomicLong reactorThreadAlreadyRacing = new AtomicLong();
-    private final AtomicLong afterOutgoingElementsQueueModifiedSetInterestOps = new AtomicLong();
-    private final AtomicLong rejectedChannelSelectedCallbacks = new AtomicLong();
+    private final LongAdder setWriteInterestAfterChannelSelectedCallback = new LongAdder();
+    private final LongAdder reactorThreadAlreadyRacing = new LongAdder();
+    private final LongAdder afterOutgoingElementsQueueModifiedSetInterestOps = new LongAdder();
+    private final LongAdder rejectedChannelSelectedCallbacks = new LongAdder();
 
     private Jid lastDestinationAddress;
 
@@ -211,6 +211,8 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             }
 
             final String prefixXmlns = "xmlns:" + prefix;
+            // TODO: Use the return value of onStreamOpen(), which now returns the
+            // corresponding stream close tag, instead of creating it here.
             final StringBuilder streamClose = new StringBuilder(32);
             final StringBuilder streamOpen = new StringBuilder(256);
 
@@ -222,7 +224,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             }
             streamOpen.append("stream");
             streamClose.append("stream>");
-            for (Entry<String, String> entry : attributes.entrySet()) {
+            for (Map.Entry<String, String> entry : attributes.entrySet()) {
                 String attributeName = entry.getKey();
                 String attributeValue = entry.getValue();
                 switch (attributeName) {
@@ -251,14 +253,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             this.streamOpen = streamOpen.toString();
             this.streamClose = streamClose.toString();
 
-            XmlPullParser streamOpenParser;
-            try {
-                streamOpenParser = PacketParserUtils.getParserFor(this.streamOpen);
-            } catch (XmlPullParserException | IOException e) {
-                // Should never happen.
-                throw new AssertionError(e);
-            }
-            connectionInternal.onStreamOpen(streamOpenParser);
+            connectionInternal.onStreamOpen(this.streamOpen);
         }
 
         @Override
@@ -279,7 +274,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         boolean newPendingOutputFilterData = false;
 
         if (!channelSelectedCallbackLock.tryLock()) {
-            rejectedChannelSelectedCallbacks.incrementAndGet();
+            rejectedChannelSelectedCallbacks.increment();
             return;
         }
 
@@ -375,11 +370,11 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                         newPendingOutputFilterData |= outputResult.pendingFilterData;
                         outputFilterInputData = outputResult.filteredOutputData;
                         if (outputFilterInputData != null) {
-                            outputFilterInputData.flip();
+                            ((java.nio.Buffer) outputFilterInputData).flip();
                         }
                     }
 
-                    // It is ok if outpuFilterInputData is 'null' here, this is expected behavior.
+                    // It is ok if outputFilterInputData is 'null' here, this is expected behavior.
                     if (outputFilterInputData != null && outputFilterInputData.hasRemaining()) {
                         filteredOutgoingBuffer = outputFilterInputData;
                     } else {
@@ -465,7 +460,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                 }
 
                 int bytesRead;
-                incomingBuffer.clear();
+                ((java.nio.Buffer) incomingBuffer).clear();
                 try {
                     bytesRead = selectedSocketChannel.read(incomingBuffer);
                 } catch (IOException e) {
@@ -480,7 +475,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                     // read() may return -1 if the input side of a socket is shut down.
                      // Note that we do not call notifyConnectionError() here because the connection may be
                     // cleanly shutdown which would also cause read() to return '-1. I assume that this socket
-                    // will be selected again, on which read() would throw an IOException, which will be catched
+                    // will be selected again, on which read() would throw an IOException, which will be caught
                     // and invoke notifyConnectionError() (see a few lines above).
                     /*
                     IOException exception = new IOException("NIO read() returned " + bytesRead);
@@ -505,11 +500,14 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                     newInterestedOps |= SelectionKey.OP_WRITE;
                 }
 
-                callbackBytesRead += bytesRead;
+                if (bytesRead > 0) {
+                    callbackBytesRead += bytesRead;
+                    this.connectionInternal.notifyDataReceived();
+                }
 
                 ByteBuffer filteredIncomingBuffer = incomingBuffer;
                 for (ListIterator<XmppInputOutputFilter> it = connectionInternal.getXmppInputOutputFilterEndIterator(); it.hasPrevious();) {
-                    filteredIncomingBuffer.flip();
+                    ((java.nio.Buffer) filteredIncomingBuffer).flip();
 
                     ByteBuffer newFilteredIncomingBuffer;
                     try {
@@ -524,7 +522,8 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                     filteredIncomingBuffer = newFilteredIncomingBuffer;
                 }
 
-                final int bytesReadAfterFilter = filteredIncomingBuffer.flip().remaining();
+                ((java.nio.Buffer) filteredIncomingBuffer).flip();
+                final int bytesReadAfterFilter = filteredIncomingBuffer.remaining();
 
                 totalBytesReadAfterFilter += bytesReadAfterFilter;
 
@@ -551,7 +550,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         // Check the queue again to prevent lost wakeups caused by elements inserted before we
         // called resetReactorThreadRacing() a few lines above.
         if (!connectionInternal.outgoingElementsQueue.isEmpty()) {
-            setWriteInterestAfterChannelSelectedCallback.incrementAndGet();
+            setWriteInterestAfterChannelSelectedCallback.increment();
             newInterestedOps |= SelectionKey.OP_WRITE;
         }
 
@@ -576,13 +575,34 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
 
     final class XmppTcpNioTransport extends XmppClientToServerTransport {
 
-        protected XmppTcpNioTransport(ModularXmppClientToServerConnectionInternal connectionInternal) {
+        XmppTcpNioTransport(ModularXmppClientToServerConnectionInternal connectionInternal) {
             super(connectionInternal);
+        }
+
+        @Override
+        public StreamOpenAndCloseFactory getStreamOpenAndCloseFactory() {
+            return new StreamOpenAndCloseFactory() {
+                @Override
+                public StreamOpen createStreamOpen(DomainBareJid to, CharSequence from, String id, String lang) {
+                    String xmlLang = connectionInternal.connection.getConfiguration().getXmlLang();
+                    StreamOpen streamOpen = new StreamOpen(to, from, id, xmlLang, StreamOpen.StreamContentNamespace.client);
+                    return streamOpen;
+                }
+                @Override
+                public StreamClose createStreamClose() {
+                    return StreamClose.INSTANCE;
+                }
+            };
         }
 
         @Override
         protected void resetDiscoveredConnectionEndpoints() {
             discoveredTcpEndpoints = null;
+        }
+
+        @Override
+        public boolean hasUseableConnectionEndpoints() {
+            return discoveredTcpEndpoints != null;
         }
 
         @Override
@@ -618,7 +638,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         @Override
         protected void loadConnectionEndpoints(LookupConnectionEndpointsSuccess lookupConnectionEndpointsSuccess) {
             // The API contract stats that we will be given the instance we handed out with lookupConnectionEndpoints,
-            // which must be of type DiscoveredTcpEndpoints here. Hence if we can not cast it, then there is an internal
+            // which must be of type DiscoveredTcpEndpoints here. Hence, if we can not cast it, then there is an internal
             // Smack error.
             discoveredTcpEndpoints = (DiscoveredTcpEndpoints) lookupConnectionEndpointsSuccess;
         }
@@ -649,7 +669,6 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             return tlsState.engine.getSession();
         }
 
-        @Override
         public boolean isConnected() {
             SocketChannel socketChannel = XmppTcpTransportModule.this.socketChannel;
             if (socketChannel == null) {
@@ -689,15 +708,15 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         final SelectionKeyAttachment selectionKeyAttachment = this.selectionKeyAttachment;
         if (selectionKeyAttachment != null && selectionKeyAttachment.isReactorThreadRacing()) {
             // A reactor thread is already racing to the channel selected callback and will take care of this.
-            reactorThreadAlreadyRacing.incrementAndGet();
+            reactorThreadAlreadyRacing.increment();
             return;
         }
 
-        afterOutgoingElementsQueueModifiedSetInterestOps.incrementAndGet();
+        afterOutgoingElementsQueueModifiedSetInterestOps.increment();
 
         // Add OP_WRITE to the interested Ops, since we have now new things to write. Note that this may cause
         // multiple reactor threads to race to the channel selected callback in case we perform this right after
-        // a select() returned with this selection key in the selected-key set. Hence we use tryLock() in the
+        // a select() returned with this selection key in the selected-key set. Hence, we use tryLock() in the
         // channel selected callback to keep the invariant that only exactly one thread is performing the
         // callback.
         // Note that we need to perform setInterestedOps() *without* holding the channelSelectedCallbackLock, as
@@ -732,10 +751,10 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         return new EstablishingTcpConnectionState(stateDescriptor, connectionInternal);
     }
 
-    final class EstablishingTcpConnectionState extends State {
+    final class EstablishingTcpConnectionState extends State.AbstractTransport {
         private EstablishingTcpConnectionState(EstablishingTcpConnectionStateDescriptor stateDescriptor,
                         ModularXmppClientToServerConnectionInternal connectionInternal) {
-            super(stateDescriptor, connectionInternal);
+            super(tcpNioTransport, stateDescriptor, connectionInternal);
         }
 
         @Override
@@ -759,6 +778,10 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
 
             connectionInternal.setTransport(tcpNioTransport);
 
+            // TODO: It appears this should be done in a generic way. I'd assume we always
+            // have to wait for stream features after the connection was established. If this is true then consider
+            // moving this into State.AbstractTransport. But I am not yet 100% positive that this is the case for every
+            // transport. Hence, keep it here for now.
             connectionInternal.newStreamOpenWaitForFeaturesSequence("stream features after initial connection");
 
             return new TcpSocketConnectedResult(remoteAddress);
@@ -962,7 +985,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
 
             ByteBuffer[] outputDataArray = pendingOutputData.toArray(new ByteBuffer[pendingOutputData.size()]);
 
-            myNetData.clear();
+            ((java.nio.Buffer) myNetData).clear();
 
             while (true) {
                 SSLEngineResult result;
@@ -1019,7 +1042,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                         newCapacity = 2 * myNetData.capacity();
                     }
                     ByteBuffer newMyNetData = ByteBuffer.allocateDirect(newCapacity);
-                    myNetData.flip();
+                    ((java.nio.Buffer) myNetData).flip();
                     newMyNetData.put(myNetData);
                     myNetData = newMyNetData;
                     continue;
@@ -1042,12 +1065,12 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                 int accumulatedDataBytes = pendingInputData.remaining() + inputData.remaining();
                 accumulatedData = ByteBuffer.allocate(accumulatedDataBytes);
                 accumulatedData.put(pendingInputData)
-                               .put(inputData)
-                               .flip();
+                               .put(inputData);
+                ((java.nio.Buffer) accumulatedData).flip();
                 pendingInputData = null;
             }
 
-            peerAppData.clear();
+            ((java.nio.Buffer) peerAppData).clear();
 
             while (true) {
                 SSLEngineResult result;
@@ -1072,7 +1095,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                         // A delegated task is asynchronously running. Take care of the remaining accumulatedData.
                         addAsPendingInputData(accumulatedData);
                         // Return here, as the async task created by handleHandshakeStatus will continue calling the
-                        // cannelSelectedCallback.
+                        // channelSelectedCallback.
                         return null;
                     case NEED_UNWRAP:
                         continue;
@@ -1096,7 +1119,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
                 switch (engineResultStatus) {
                 case OK:
                     // SSLEngine's unwrap() may not consume all bytes from the source buffer. If this is the case, then
-                    // simply perform another unwrap until accumlatedData has no remaining bytes.
+                    // simply perform another unwrap until accumulatedData has no remaining bytes.
                     if (accumulatedData.hasRemaining()) {
                         continue;
                     }
@@ -1125,7 +1148,8 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             // higher layer. That is, here 'byteBuffer' is typically 'incomingBuffer', which is a direct buffer only
             // allocated once per connection for performance reasons and hence re-used for read() calls.
             pendingInputData = ByteBuffer.allocate(byteBuffer.remaining());
-            pendingInputData.put(byteBuffer).flip();
+            pendingInputData.put(byteBuffer);
+            ((java.nio.Buffer) pendingInputData).flip();
 
             pendingInputFilterData = pendingInputData.hasRemaining();
         }
@@ -1181,7 +1205,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             return handshakeStatus == TlsHandshakeStatus.successful || handshakeStatus == TlsHandshakeStatus.failed;
         }
 
-        private void waitForHandshakeFinished() throws InterruptedException, CertificateException, SSLException, SmackException, XMPPException {
+        private void waitForHandshakeFinished() throws InterruptedException, CertificateException, SSLException, SmackWrappedException, NoResponseException {
             connectionInternal.waitForConditionOrThrowConnectionException(() -> isHandshakeFinished(), "TLS handshake to finish");
 
             if (handshakeStatus == TlsHandshakeStatus.failed) {
@@ -1214,8 +1238,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
         }
 
         @Override
-        public void waitUntilInputOutputClosed() throws IOException, CertificateException, InterruptedException,
-                SmackException, XMPPException {
+        public void waitUntilInputOutputClosed() throws IOException, CertificateException, InterruptedException, SmackWrappedException, NoResponseException {
             waitForHandshakeFinished();
         }
 
@@ -1299,7 +1322,7 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             try {
                 socketChannel.close();
             } catch (IOException e) {
-
+                LOGGER.log(Level.FINE, "Closing the socket channel failed", e);
             }
         }
 
@@ -1348,11 +1371,11 @@ public class XmppTcpTransportModule extends ModularXmppClientToServerConnectionM
             readRatio = (double) totalBytesRead / totalBytesReadAfterFilter;
 
             handledChannelSelectedCallbacks = connection.handledChannelSelectedCallbacks;
-            setWriteInterestAfterChannelSelectedCallback = connection.setWriteInterestAfterChannelSelectedCallback.get();
-            reactorThreadAlreadyRacing = connection.reactorThreadAlreadyRacing.get();
+            setWriteInterestAfterChannelSelectedCallback = connection.setWriteInterestAfterChannelSelectedCallback.sum();
+            reactorThreadAlreadyRacing = connection.reactorThreadAlreadyRacing.sum();
             afterOutgoingElementsQueueModifiedSetInterestOps = connection.afterOutgoingElementsQueueModifiedSetInterestOps
-                    .get();
-            rejectedChannelSelectedCallbacks = connection.rejectedChannelSelectedCallbacks.get();
+                    .sum();
+            rejectedChannelSelectedCallbacks = connection.rejectedChannelSelectedCallbacks.sum();
 
             totalCallbackRequests = handledChannelSelectedCallbacks + rejectedChannelSelectedCallbacks;
 

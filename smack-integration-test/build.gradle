@@ -1,23 +1,26 @@
-apply plugin: 'application'
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+	id 'org.igniterealtime.smack.application-conventions'
+}
 
 description = """\
 Smack integration tests."""
 
-mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
-applicationDefaultJvmArgs = ["-enableassertions"]
 
-dependencies {
-	api project(':smack-java8-full')
-	api project(':smack-resolver-dnsjava')
-	compile 'org.reflections:reflections:0.9.11'
-	compile 'eu.geekplace.javapinning:java-pinning-java7:1.1.0-alpha1'
-	compile group: 'commons-io', name: 'commons-io', version: "$commonsIoVersion"
-	api "org.junit.jupiter:junit-jupiter-api:$junitVersion"
-	testFixturesApi(testFixtures(project(":smack-core")))
-	testCompile "org.jxmpp:jxmpp-jid:$jxmppVersion:tests"
+application {
+	mainClass = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
 }
 
-run {
-	// Pass all system properties down to the "application" run
-	systemProperties System.getProperties()
+dependencies {
+	api project(':smack-java11-full')
+	api project(':smack-websocket-okhttp')
+	api project(':smack-resolver-dnsjava')
+	implementation project(':smack-websocket-java11')
+	implementation "com.google.guava:guava:${guavaVersion}"
+	implementation "org.reflections:reflections:${orgReflectionsVersion}"
+	api 'eu.geekplace.javapinning:java-pinning-java11:1.3.0'
+	implementation group: 'commons-io', name: 'commons-io', version: "$commonsIoVersion"
+	api "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+	testFixturesApi(testFixtures(project(":smack-core")))
+	testImplementation "org.jxmpp:jxmpp-jid:$jxmppVersion:tests"
 }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -18,9 +18,11 @@ package org.jivesoftware.smackx.muclight.provider;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
@@ -28,6 +30,7 @@ import org.jivesoftware.smackx.muclight.MUCLightAffiliation;
 import org.jivesoftware.smackx.muclight.MUCLightRoomConfiguration;
 import org.jivesoftware.smackx.muclight.element.MUCLightInfoIQ;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -37,15 +40,15 @@ import org.jxmpp.jid.impl.JidCreate;
  * @author Fernando Ramirez
  *
  */
-public class MUCLightInfoIQProvider extends IQProvider<MUCLightInfoIQ> {
+public class MUCLightInfoIQProvider extends IqProvider<MUCLightInfoIQ> {
 
     @Override
-    public MUCLightInfoIQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+    public MUCLightInfoIQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
         String version = null;
         String roomName = null;
         String subject = null;
-        HashMap<String, String> customConfigs = null;
-        HashMap<Jid, MUCLightAffiliation> occupants = new HashMap<>();
+        Map<String, String> customConfigs = null;
+        Map<Jid, MUCLightAffiliation> occupants = new HashMap<>();
 
         outerloop: while (true) {
             XmlPullParser.Event eventType = parser.next();
@@ -96,8 +99,8 @@ public class MUCLightInfoIQProvider extends IQProvider<MUCLightInfoIQ> {
         return new MUCLightInfoIQ(version, new MUCLightRoomConfiguration(roomName, subject, customConfigs), occupants);
     }
 
-    private static HashMap<Jid, MUCLightAffiliation> iterateOccupants(XmlPullParser parser) throws XmlPullParserException, IOException {
-        HashMap<Jid, MUCLightAffiliation> occupants = new HashMap<>();
+    private static Map<Jid, MUCLightAffiliation> iterateOccupants(XmlPullParser parser) throws XmlPullParserException, IOException {
+        Map<Jid, MUCLightAffiliation> occupants = new HashMap<>();
         int depth = parser.getDepth();
 
         outerloop: while (true) {

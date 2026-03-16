@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -17,12 +17,13 @@
 package org.jivesoftware.smackx.disco.packet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.IQ;
@@ -84,17 +85,6 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
     }
 
     /**
-     * Deprecated.
-     *
-     * @deprecated use {@link DiscoverInfoBuilder} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public DiscoverInfo() {
-        super(ELEMENT, NAMESPACE);
-    }
-
-    /**
      * Copy constructor.
      *
      * @param d TODO javadoc me please
@@ -114,83 +104,9 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
         identitiesSet.addAll(d.identitiesSet);
     }
 
-    /**
-     * Adds a new feature to the discovered information.
-     *
-     * @param feature the discovered feature
-     * @return true if the feature did not already exist.
-     * @deprecated use {@link DiscoverInfoBuilder#addFeature(String)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public boolean addFeature(String feature) {
-        return addFeature(new Feature(feature));
-    }
-
-    /**
-     * Adds a collection of features to the packet. Does noting if featuresToAdd is null.
-     *
-     * @param featuresToAdd TODO javadoc me please
-     * @deprecated use {@link DiscoverInfoBuilder#addFeatures(Collection)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public void addFeatures(Collection<String> featuresToAdd) {
-        if (featuresToAdd == null) return;
-        for (String feature : featuresToAdd) {
-            addFeature(feature);
-        }
-    }
-
-    /**
-     * Deprecated.
-     *
-     * @param feature the future.
-     * @return true if the feature is new.
-     * @deprecated use {@link DiscoverInfoBuilder#addFeature(DiscoverInfo.Feature)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public boolean addFeature(Feature feature) {
-        features.add(feature);
-        boolean featureIsNew = featuresSet.add(feature);
-        if (!featureIsNew) {
-            containsDuplicateFeatures = true;
-        }
-        return featureIsNew;
-    }
-
     @Override
     public List<Feature> getFeatures() {
         return Collections.unmodifiableList(features);
-    }
-
-    /**
-     * Adds a new identity of the requested entity to the discovered information.
-     *
-     * @param identity the discovered entity's identity
-     * @deprecated use {@link DiscoverInfoBuilder#addIdentity(DiscoverInfo.Identity)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public void addIdentity(Identity identity) {
-        identities.add(identity);
-        identitiesSet.add(identity.getKey());
-    }
-
-    /**
-     * Adds identities to the DiscoverInfo stanza.
-     *
-     * @param identitiesToAdd TODO javadoc me please
-     * @deprecated use {@link DiscoverInfoBuilder#addIdentities(Collection)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public void addIdentities(Collection<Identity> identitiesToAdd) {
-        if (identitiesToAdd == null) return;
-        for (Identity identity : identitiesToAdd) {
-            addIdentity(identity);
-        }
     }
 
     @Override
@@ -215,7 +131,7 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
      *
      * @param category category the category to look for.
      * @param type type the type to look for.
-     * @return a list of Identites with the given category and type.
+     * @return a list of Identities with the given category and type.
      */
     public List<Identity> getIdentities(String category, String type) {
         List<Identity> res = new ArrayList<>(identities.size());
@@ -233,22 +149,6 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
     }
 
     /**
-     * Sets the node attribute that supplements the 'jid' attribute. A node is merely
-     * something that is associated with a JID and for which the JID can provide information.<p>
-     *
-     * Node attributes SHOULD be used only when trying to provide or query information which
-     * is not directly addressable.
-     *
-     * @param node the node attribute that supplements the 'jid' attribute
-     * @deprecated use {@link DiscoverInfoBuilder#setNode(String)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public void setNode(String node) {
-        this.node = StringUtils.requireNullOrNotEmpty(node, "The node can not be the empty string");
-    }
-
-    /**
      * Returns true if the specified feature is part of the discovered information.
      *
      * @param feature the feature to check
@@ -256,6 +156,18 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
      */
     public boolean containsFeature(CharSequence feature) {
         return features.contains(new Feature(feature));
+    }
+
+    public boolean containsFeatures(String... features) {
+        var featuresList = Arrays.asList(features);
+        return containsFeatures(featuresList);
+    }
+
+    public boolean containsFeatures(Collection<? extends CharSequence> features) {
+        return this.features.stream()
+                        .map(f -> f.getVar())
+                        .collect(Collectors.toList())
+                        .containsAll(features.stream().map(f -> f.toString()).collect(Collectors.toList()));
     }
 
     public static boolean nullSafeContainsFeature(DiscoverInfo discoverInfo, CharSequence feature) {
@@ -286,7 +198,7 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
      * @return true if duplicate identities where found, otherwise false
      */
     public boolean containsDuplicateIdentities() {
-        List<Identity> checkedIdentities = new LinkedList<>();
+        List<Identity> checkedIdentities = new ArrayList<>(identities.size());
         for (Identity i : identities) {
             for (Identity i2 : checkedIdentities) {
                 if (i.equals(i2))
@@ -308,18 +220,6 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
 
     public DiscoverInfoBuilder asBuilder(String stanzaId) {
         return new DiscoverInfoBuilder(this, stanzaId);
-    }
-
-    /**
-     * Deprecated, do not use.
-     *
-     * @deprecated use {@link #asBuilder(String)} instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    @Override
-    public DiscoverInfo clone() {
-        return new DiscoverInfo(this);
     }
 
     public static DiscoverInfoBuilder builder(XMPPConnection connection) {
@@ -569,9 +469,15 @@ public class DiscoverInfo extends IQ implements DiscoverInfoView {
 
         @Override
         public boolean equals(Object obj) {
-            return EqualsUtil.equals(this, obj, (e, o) -> {
-                e.append(variable, o.variable);
-            });
+            if (obj instanceof Feature) {
+                var otherFeature = (Feature) obj;
+                return variable.equals(otherFeature.variable);
+            }
+            if (obj instanceof CharSequence) {
+                var otherFeature = obj.toString();
+                return variable.equals(otherFeature);
+            }
+            return false;
         }
 
         @Override

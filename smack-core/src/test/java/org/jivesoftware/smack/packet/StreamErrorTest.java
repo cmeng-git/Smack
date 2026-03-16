@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -23,8 +23,8 @@ import java.io.IOException;
 
 import org.jivesoftware.smack.packet.StreamError.Condition;
 import org.jivesoftware.smack.parsing.SmackParsingException;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.test.util.SmackTestUtil;
-import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
@@ -47,7 +47,7 @@ public class StreamErrorTest {
                 "</stream:stream>";
 
         XmlPullParser parser = SmackTestUtil.getParserFor(xml, "error", parserKind);
-        StreamError error = PacketParserUtils.parseStreamError(parser);
+        StreamError error = ElementParserUtils.parseStreamError(parser);
 
         assertNotNull(error);
         assertEquals(Condition.conflict, error.getCondition());
@@ -69,7 +69,7 @@ public class StreamErrorTest {
                 "</stream:stream>";
 
         XmlPullParser parser = SmackTestUtil.getParserFor(xml, "error", parserKind);
-        StreamError error = PacketParserUtils.parseStreamError(parser);
+        StreamError error = ElementParserUtils.parseStreamError(parser);
 
         assertNotNull(error);
         assertEquals(Condition.conflict, error.getCondition());
@@ -96,12 +96,12 @@ public class StreamErrorTest {
                 "</stream:stream>";
 
         XmlPullParser parser = SmackTestUtil.getParserFor(xml, "error", parserKind);
-        StreamError error = PacketParserUtils.parseStreamError(parser);
+        StreamError error = ElementParserUtils.parseStreamError(parser);
 
         assertNotNull(error);
         assertEquals(Condition.conflict, error.getCondition());
         assertEquals("Replaced by new connection", error.getDescriptiveText());
-        ExtensionElement appSpecificElement = error.getExtension("appSpecificElement", "myns");
+        XmlElement appSpecificElement = error.getExtension("appSpecificElement", "myns");
         assertNotNull(appSpecificElement);
     }
 
@@ -117,7 +117,7 @@ public class StreamErrorTest {
                         "</stream:stream>";
 
         XmlPullParser parser = SmackTestUtil.getParserFor(xml, "error", parserKind);
-        StreamError error = PacketParserUtils.parseStreamError(parser);
+        StreamError error = ElementParserUtils.parseStreamError(parser);
 
         assertNotNull(error);
         assertEquals(Condition.not_well_formed, error.getCondition());

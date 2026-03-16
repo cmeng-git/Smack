@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -26,8 +26,8 @@ import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.address.packet.MultipleAddresses;
-import org.jivesoftware.smackx.address.packet.MultipleAddresses.Type;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 
 /**
@@ -39,7 +39,7 @@ public class MultipleAddressesProvider extends ExtensionElementProvider<Multiple
 
     @Override
     public MultipleAddresses parse(XmlPullParser parser,
-                    int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
+                    int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException,
                     IOException {
         MultipleAddresses multipleAddresses = new MultipleAddresses();
         outerloop: while (true) {
@@ -50,8 +50,8 @@ public class MultipleAddressesProvider extends ExtensionElementProvider<Multiple
                 switch (name) {
                 case MultipleAddresses.Address.ELEMENT:
                     String typeString = parser.getAttributeValue("", "type");
-                    Type type = Type.valueOf(typeString);
-                    Jid jid = ParserUtils.getJidAttribute(parser, "jid");
+                    MultipleAddresses.Type type = MultipleAddresses.Type.valueOf(typeString);
+                    Jid jid = ParserUtils.getJidAttribute(parser, "jid", jxmppContext);
                     String node = parser.getAttributeValue("", "node");
                     String desc = parser.getAttributeValue("", "desc");
                     boolean delivered = "true".equals(parser.getAttributeValue("", "delivered"));

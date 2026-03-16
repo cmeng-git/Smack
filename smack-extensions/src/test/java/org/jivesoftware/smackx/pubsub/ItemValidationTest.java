@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2011 Robin Collier
  *
@@ -21,9 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.jivesoftware.smack.ThreadedDummyConnection;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.NamedElement;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.XmlElement;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.test.util.SmackTestSuite;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
@@ -101,8 +102,8 @@ public class ItemValidationTest extends SmackTestSuite {
                  "</event>" +
             "</message>");
 
-        Stanza message = PacketParserUtils.parseMessage(parser);
-        ExtensionElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
+        Stanza message = ElementParserUtils.parseMessage(parser);
+        XmlElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
 
         assertTrue(eventExt instanceof EventElement);
         EventElement event = (EventElement) eventExt;
@@ -131,8 +132,8 @@ public class ItemValidationTest extends SmackTestSuite {
                  "</event>" +
             "</message>");
 
-        Stanza message = PacketParserUtils.parseMessage(parser);
-        ExtensionElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
+        Stanza message = ElementParserUtils.parseMessage(parser);
+        XmlElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
         EventElement event = (EventElement) eventExt;
         NamedElement itemExt = ((ItemsExtension) event.getExtensions().get(0)).items.get(0);
 
@@ -177,8 +178,8 @@ public class ItemValidationTest extends SmackTestSuite {
                  "</event>" +
             "</message>");
 
-        Stanza message = PacketParserUtils.parseMessage(parser);
-        ExtensionElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
+        Stanza message = ElementParserUtils.parseMessage(parser);
+        XmlElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
         EventElement event = (EventElement) eventExt;
         NamedElement itemExt = ((ItemsExtension) event.getExtensions().get(0)).items.get(0);
 
@@ -209,8 +210,8 @@ public class ItemValidationTest extends SmackTestSuite {
                  "</event>" +
             "</message>");
 
-        Stanza message = PacketParserUtils.parseMessage(parser);
-        ExtensionElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
+        Stanza message = ElementParserUtils.parseMessage(parser);
+        XmlElement eventExt = message.getExtension(PubSubNamespace.event.getXmlns());
 
         assertTrue(eventExt instanceof EventElement);
         EventElement event = (EventElement) eventExt;

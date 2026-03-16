@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -34,7 +34,13 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -154,6 +160,7 @@ public class EnhancedDebugger extends SmackDebugger {
     private ReaderListener readerListener;
     private WriterListener writerListener;
 
+    @SuppressWarnings("JavaUtilDate")
     private Date creationTime = new Date();
 
     // Statistics variables
@@ -171,6 +178,7 @@ public class EnhancedDebugger extends SmackDebugger {
 
     JTabbedPane tabbedPane;
 
+    @SuppressWarnings("this-escape")
     public EnhancedDebugger(XMPPConnection connection) {
         super(connection);
 
@@ -419,38 +427,11 @@ public class EnhancedDebugger extends SmackDebugger {
         // Create a special Reader that wraps the main Reader and logs data to the GUI.
         ObservableReader debugReader = new ObservableReader(reader);
         readerListener = new ReaderListener() {
-            @Override
-            public void read(final String str) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (EnhancedDebuggerWindow.PERSISTED_DEBUGGER &&
-                                !EnhancedDebuggerWindow.getInstance().isVisible()) {
-                            // Do not add content if the parent is not visible
-                            return;
-                        }
+            private final PriorityBlockingQueue<String> buffer = new PriorityBlockingQueue<>();
 
-                        int index = str.lastIndexOf(">");
-                        if (index != -1) {
-                            if (receivedText.getLineCount() >= EnhancedDebuggerWindow.MAX_TABLE_ROWS) {
-                                try {
-                                    receivedText.replaceRange("", 0, receivedText.getLineEndOffset(0));
-                                }
-                                catch (BadLocationException e) {
-                                    LOGGER.log(Level.SEVERE, "Error with line offset, MAX_TABLE_ROWS is set too low: " + EnhancedDebuggerWindow.MAX_TABLE_ROWS, e);
-                                }
-                            }
-                            receivedText.append(str.substring(0, index + 1));
-                            receivedText.append(NEWLINE);
-                            if (str.length() > index) {
-                                receivedText.append(str.substring(index + 1));
-                            }
-                        }
-                        else {
-                            receivedText.append(str);
-                        }
-                    }
-                });
+            @Override
+            public void read(final String string) {
+                addBatched(string, buffer, receivedText);
             }
         };
         debugReader.addReaderListener(readerListener);
@@ -458,34 +439,11 @@ public class EnhancedDebugger extends SmackDebugger {
         // Create a special Writer that wraps the main Writer and logs data to the GUI.
         ObservableWriter debugWriter = new ObservableWriter(writer);
         writerListener = new WriterListener() {
+            private final PriorityBlockingQueue<String> buffer = new PriorityBlockingQueue<>();
+
             @Override
-            public void write(final String str) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (EnhancedDebuggerWindow.PERSISTED_DEBUGGER &&
-                                !EnhancedDebuggerWindow.getInstance().isVisible()) {
-                            // Do not add content if the parent is not visible
-                            return;
-                        }
-
-                        if (sentText.getLineCount() >= EnhancedDebuggerWindow.MAX_TABLE_ROWS) {
-                            try {
-                                sentText.replaceRange("", 0, sentText.getLineEndOffset(0));
-                            }
-                            catch (BadLocationException e) {
-                                LOGGER.log(Level.SEVERE, "Error with line offset, MAX_TABLE_ROWS is set too low: " + EnhancedDebuggerWindow.MAX_TABLE_ROWS, e);
-                            }
-                        }
-
-                        sentText.append(str);
-                        if (str.endsWith(">")) {
-                            sentText.append(NEWLINE);
-                        }
-                    }
-                });
-
-
+            public void write(final String string) {
+                addBatched(string, buffer, sentText);
             }
         };
         debugWriter.addWriterListener(writerListener);
@@ -495,6 +453,50 @@ public class EnhancedDebugger extends SmackDebugger {
         reader = debugReader;
         writer = debugWriter;
 
+    }
+
+    private static void addBatched(String string, PriorityBlockingQueue<String> buffer, JTextArea jTextArea) {
+        buffer.add(string);
+
+        SwingUtilities.invokeLater(() -> {
+            List<String> linesToAdd = new ArrayList<>();
+            String data;
+            Instant start = Instant.now();
+            try {
+                // To reduce overhead/increase performance, try to process up to a certain amount of lines at the
+                // same time, when they arrive in rapid succession.
+                while (linesToAdd.size() < 50
+                                && Duration.between(start, Instant.now()).compareTo(Duration.ofMillis(100)) < 0
+                                && (data = buffer.poll(10, TimeUnit.MILLISECONDS)) != null) {
+                    linesToAdd.add(data);
+                }
+            } catch (InterruptedException e) {
+                LOGGER.log(Level.FINER, "Interrupted wait-for-poll in addBatched(). Process all data now.", e);
+            }
+
+            if (linesToAdd.isEmpty()) {
+                return;
+            }
+
+            if (EnhancedDebuggerWindow.PERSISTED_DEBUGGER && !EnhancedDebuggerWindow.getInstance().isVisible()) {
+                // Do not add content if the parent is not visible
+                return;
+            }
+
+            // Delete lines from the top, if lines to be added will exceed the maximum.
+            int linesToDelete = jTextArea.getLineCount() + linesToAdd.size() - EnhancedDebuggerWindow.MAX_TABLE_ROWS;
+            if (linesToDelete > 0) {
+                try {
+                    jTextArea.replaceRange("", 0, jTextArea.getLineEndOffset(linesToDelete - 1));
+                } catch (BadLocationException e) {
+                    LOGGER.log(Level.SEVERE, "Error with line offset, MAX_TABLE_ROWS is set too low: "
+                                    + EnhancedDebuggerWindow.MAX_TABLE_ROWS, e);
+                }
+            }
+
+            // Add the new content.
+            jTextArea.append(String.join(NEWLINE, linesToAdd));
+        });
     }
 
     private void addAdhocPacketPanel() {
@@ -756,6 +758,7 @@ public class EnhancedDebugger extends SmackDebugger {
      * @param dateFormatter the SimpleDateFormat to use to format Dates
      * @param packet        the read stanza to add to the table
      */
+    @SuppressWarnings("JavaUtilDate")
     private void addReadPacketToTable(final SimpleDateFormat dateFormatter, final TopLevelStreamElement packet) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -827,6 +830,7 @@ public class EnhancedDebugger extends SmackDebugger {
      * @param dateFormatter the SimpleDateFormat to use to format Dates
      * @param packet        the sent stanza to add to the table
      */
+    @SuppressWarnings("JavaUtilDate")
     private void addSentPacketToTable(final SimpleDateFormat dateFormatter, final TopLevelStreamElement packet) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override

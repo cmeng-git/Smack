@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016-2020 Florian Schmaus
  *
@@ -34,8 +34,11 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+
 import org.jxmpp.jid.Jid;
 
+@SpecificationReference(document = "XEP-0347", version = "0.5.1")
 public class IoTDiscoveryIntegrationTest extends AbstractSmackIntegrationTest {
 
     private final IoTDiscoveryManager discoveryManagerOne;
@@ -60,7 +63,7 @@ public class IoTDiscoveryIntegrationTest extends AbstractSmackIntegrationTest {
         registerThing(discoveryManagerOne, thing);
 
         IoTClaimed iotClaimed = discoveryManagerTwo.claimThing(thing.getMetaTags());
-        assertEquals(conOne.getUser().asBareJid(), iotClaimed.getJid());
+        assertEquals(conOne.getUser().asBareJid(), iotClaimed.getJid(), "Thing claimed by an unexpected JID");
 
         discoveryManagerTwo.disownThing(iotClaimed.getJid());
 

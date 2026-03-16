@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018-2020 Paul Schaub, 2017-2020 Florian Schmaus.
  *
@@ -42,6 +42,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.util.Async;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.ox.callback.backup.AskForBackupCodeCallback;
 import org.jivesoftware.smackx.ox.callback.backup.SecretKeyBackupSelectionCallback;
@@ -79,9 +80,8 @@ import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.pgpainless.key.OpenPgpV4Fingerprint;
-import org.pgpainless.key.collection.PGPKeyRing;
 import org.pgpainless.key.protection.SecretKeyRingProtector;
-import org.pgpainless.util.BCUtil;
+import org.pgpainless.key.util.KeyRingUtils;
 
 /**
  * Entry point for Smacks API for OpenPGP for XMPP.
@@ -247,6 +247,7 @@ public final class OpenPgpManager extends Manager {
      * @throws SmackException.NotLoggedInException if we are not logged in.
      * @throws PGPException if something goes wrong during key loading/generating
      */
+    @SuppressWarnings("JavaUtilDate")
     public void announceSupportAndPublish()
             throws NoSuchAlgorithmException, NoSuchProviderException, InterruptedException,
             PubSubException.NotALeafNodeException, XMPPException.XMPPErrorException,
@@ -296,27 +297,27 @@ public final class OpenPgpManager extends Manager {
         throwIfNoProviderSet();
         OpenPgpStore store = provider.getStore();
 
-        PGPKeyRing keys = generateKeyRing(ourJid);
+        PGPSecretKeyRing keys = generateKeyRing(ourJid);
         importKeyRing(ourJid, keys);
 
-        OpenPgpV4Fingerprint fingerprint = new OpenPgpV4Fingerprint(keys.getSecretKeys());
+        OpenPgpV4Fingerprint fingerprint = new OpenPgpV4Fingerprint(keys);
 
         store.setTrust(ourJid, fingerprint, OpenPgpTrustStore.Trust.trusted);
 
         return fingerprint;
     }
 
-    public PGPKeyRing generateKeyRing(BareJid ourJid)
+    public PGPSecretKeyRing generateKeyRing(BareJid ourJid)
             throws PGPException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
         throwIfNoProviderSet();
-        PGPKeyRing keys = provider.getStore().generateKeyRing(ourJid);
+        PGPSecretKeyRing keys = provider.getStore().generateKeyRing(ourJid);
         return keys;
     }
 
-    private void importKeyRing(BareJid ourJid, PGPKeyRing keyRing) throws IOException, PGPException {
+    private void importKeyRing(BareJid ourJid, PGPSecretKeyRing secretKeys) throws IOException, PGPException {
         try {
-            provider.getStore().importSecretKey(ourJid, keyRing.getSecretKeys());
-            provider.getStore().importPublicKey(ourJid, keyRing.getPublicKeys());
+            provider.getStore().importSecretKey(ourJid, secretKeys);
+            provider.getStore().importPublicKey(ourJid, KeyRingUtils.publicKeyRingFrom(secretKeys));
         } catch (MissingUserIdOnKeyException e) {
             // This should never throw, since we set our jid literally one line above this comment.
             throw new AssertionError(e);
@@ -425,7 +426,7 @@ public final class OpenPgpManager extends Manager {
      *
      * @see <a href="https://xmpp.org/extensions/xep-0373.html#synchro-pep">XEP-0373 §5</a>
      *
-     * @param selectKeyCallback callback, which will receive the users choice of which keys will be backed up. @param selectKeyCallback
+     * @param selectKeyCallback callback, which will receive the users choice of which keys will be backed up.
      * @param passphrase secret key passphrase
      *
      * @throws InterruptedException if the thread is interrupted.
@@ -515,7 +516,7 @@ public final class OpenPgpManager extends Manager {
         PGPSecretKeyRing secretKeys = SecretKeyBackupHelper.restoreSecretKeyBackup(backup, backupCode);
         OpenPgpV4Fingerprint fingerprint = new OpenPgpV4Fingerprint(secretKeys);
         provider.getStore().importSecretKey(getJidOrThrow(), secretKeys);
-        provider.getStore().importPublicKey(getJidOrThrow(), BCUtil.publicKeyRingFromSecretKeyRing(secretKeys));
+        provider.getStore().importPublicKey(getJidOrThrow(), KeyRingUtils.publicKeyRingFrom(secretKeys));
 
         getOpenPgpSelf().trust(fingerprint);
 
@@ -631,7 +632,7 @@ public final class OpenPgpManager extends Manager {
     }
 
     /**
-     * Create a {@link PubkeyElement} which contains the given {@code data} base64 encoded.
+     * Create a {@link PubkeyElement} which contains the given {@code date} base64 encoded.
      *
      * @param bytes byte representation of an OpenPGP public key
      * @param date date of creation of the element

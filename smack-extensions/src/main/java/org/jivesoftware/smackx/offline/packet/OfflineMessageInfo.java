@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -26,7 +26,10 @@ import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.offline.OfflineMessageManager;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * OfflineMessageInfo is an extension included in the retrieved offline messages requested by
@@ -109,7 +112,7 @@ public class OfflineMessageInfo implements ExtensionElement {
          */
         @Override
         public OfflineMessageInfo parse(XmlPullParser parser,
-                        int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
+                        int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException,
                         IOException {
             OfflineMessageInfo info = new OfflineMessageInfo();
             boolean done = false;

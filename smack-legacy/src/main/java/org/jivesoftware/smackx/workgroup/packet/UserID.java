@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -19,6 +19,8 @@ package org.jivesoftware.smackx.workgroup.packet;
 
 import java.io.IOException;
 
+import javax.xml.namespace.QName;
+
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
@@ -26,6 +28,7 @@ import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 
 public class UserID implements ExtensionElement {
@@ -39,6 +42,8 @@ public class UserID implements ExtensionElement {
      * Namespace of the stanza extension.
      */
     public static final String NAMESPACE = "http://jivesoftware.com/protocol/workgroup";
+
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT_NAME);
 
     private final Jid userID;
 
@@ -74,9 +79,9 @@ public class UserID implements ExtensionElement {
     public static class Provider extends ExtensionElementProvider<UserID> {
 
         @Override
-        public UserID parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public UserID parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws XmlPullParserException, IOException {
-            Jid userID = ParserUtils.getJidAttribute(parser, "id");
+            Jid userID = ParserUtils.getJidAttribute(parser, "id", jxmppContext);
 
             // Advance to end of extension.
             parser.next();

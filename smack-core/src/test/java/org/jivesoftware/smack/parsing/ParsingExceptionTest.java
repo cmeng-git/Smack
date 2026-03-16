@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -25,6 +25,7 @@ import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.provider.ProviderManager;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.test.util.TestUtils;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
@@ -32,6 +33,7 @@ import org.jivesoftware.smack.xml.XmlPullParser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.jxmpp.JxmppContext;
 
 public class ParsingExceptionTest {
 
@@ -68,7 +70,7 @@ public class ParsingExceptionTest {
         int parserDepth = parser.getDepth();
         CharSequence content = null;
         try {
-            PacketParserUtils.parseMessage(parser);
+            ElementParserUtils.parseMessage(parser);
         } catch (Exception e) {
             content = PacketParserUtils.parseContentDepth(parser, parserDepth, false);
         }
@@ -80,7 +82,7 @@ public class ParsingExceptionTest {
         public static final String NAMESPACE = "http://smack.jivesoftware.org/exception";
 
         @Override
-        public ExtensionElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws IOException {
+        public ExtensionElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws IOException {
             throw new IOException("Test Exception");
         }
 

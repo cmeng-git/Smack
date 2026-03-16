@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -20,6 +20,8 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
@@ -66,6 +68,7 @@ public class Bytestream extends IQ {
      * @param SID The session ID related to the negotiation.
      * @see #setSessionID(String)
      */
+    @SuppressWarnings("this-escape")
     public Bytestream(final String SID) {
         this();
         setSessionID(SID);
@@ -275,7 +278,8 @@ public class Bytestream extends IQ {
      */
     public static class StreamHost extends BytestreamExtensionElement {
 
-        public static String ELEMENTNAME = "streamhost";
+        public static final String ELEMENT = "streamhost";
+        public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
         private final Jid jid;
 
@@ -295,7 +299,7 @@ public class Bytestream extends IQ {
          * @param port port of the stream host.
          */
         public StreamHost(final Jid jid, final String address, int port) {
-            this(jid, InternetAddress.from(address), port);
+            this(jid, InternetAddress.fromIgnoringZoneId(address), port);
         }
 
         public StreamHost(Jid jid, InetAddress address, int port) {
@@ -344,7 +348,7 @@ public class Bytestream extends IQ {
 
         @Override
         public String getElementName() {
-            return ELEMENTNAME;
+            return QNAME.getLocalPart();
         }
 
         @Override
@@ -375,7 +379,8 @@ public class Bytestream extends IQ {
      */
     public static class StreamHostUsed extends BytestreamExtensionElement {
 
-        public static String ELEMENTNAME = "streamhost-used";
+        public static final String ELEMENT = "streamhost-used";
+        public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
         private final Jid jid;
 
@@ -399,7 +404,7 @@ public class Bytestream extends IQ {
 
         @Override
         public String getElementName() {
-            return ELEMENTNAME;
+            return QNAME.getLocalPart();
         }
 
         @Override
@@ -418,7 +423,8 @@ public class Bytestream extends IQ {
      */
     public static class Activate extends BytestreamExtensionElement {
 
-        public static String ELEMENTNAME = "activate";
+        public static final String ELEMENT = "activate";
+        public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
         private final Jid target;
 
@@ -442,7 +448,7 @@ public class Bytestream extends IQ {
 
         @Override
         public String getElementName() {
-            return ELEMENTNAME;
+            return QNAME.getLocalPart();
         }
 
         @Override

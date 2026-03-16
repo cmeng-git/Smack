@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -23,12 +23,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.workgroup.util.MetaDataUtils;
+
+import org.jxmpp.JxmppContext;
 
 public class ChatMetadata extends IQ {
 
@@ -81,10 +84,10 @@ public class ChatMetadata extends IQ {
      *
      * @author Derek DeMoro
      */
-    public static class Provider extends IQProvider<ChatMetadata> {
+    public static class Provider extends IqProvider<ChatMetadata> {
 
         @Override
-        public ChatMetadata parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public ChatMetadata parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws XmlPullParserException, IOException {
             final ChatMetadata chatM = new ChatMetadata();
 

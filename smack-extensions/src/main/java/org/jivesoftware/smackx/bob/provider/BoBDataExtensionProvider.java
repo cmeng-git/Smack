@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Florian Schmaus
  *
@@ -23,14 +23,17 @@ import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.util.Pair;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.bob.BoBData;
 import org.jivesoftware.smackx.bob.ContentId;
 import org.jivesoftware.smackx.bob.element.BoBDataExtension;
 
+import org.jxmpp.JxmppContext;
+
 public class BoBDataExtensionProvider extends ExtensionElementProvider<BoBDataExtension> {
 
     @Override
-    public BoBDataExtension parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+    public BoBDataExtension parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                     throws XmlPullParserException, IOException {
         Pair<ContentId, BoBData> parserResult = BoBProviderUtil.parseContentIdAndBobData(parser, initialDepth,
                         xmlEnvironment);

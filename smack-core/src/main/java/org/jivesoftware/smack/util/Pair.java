@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2020 Florian Schmaus.
+ * Copyright 2020-2024 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ public final class Pair<F, S> {
         this.second = second;
     }
 
-    public static <F extends Object, S extends Object> Pair<F, S> create(F first, S second) {
+    public static <F, S> Pair<F, S> create(F first, S second) {
         return new Pair<>(first, second);
     }
 
-    public static <F extends Object, S extends Object> Pair<F, S> createAndInitHashCode(F first, S second) {
+    @SuppressWarnings("ReturnValueIgnored")
+    public static <F, S> Pair<F, S> createAndInitHashCode(F first, S second) {
         Pair<F, S> pair = new Pair<>(first, second);
         pair.hashCode();
         return pair;

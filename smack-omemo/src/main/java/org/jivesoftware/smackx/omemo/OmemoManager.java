@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub, 2020 Florian Schmaus
  *
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
@@ -36,6 +37,7 @@ import java.util.logging.Logger;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.Manager;
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -73,6 +75,7 @@ import org.jivesoftware.smackx.omemo.util.OmemoConstants;
 import org.jivesoftware.smackx.pep.PepEventListener;
 import org.jivesoftware.smackx.pep.PepManager;
 import org.jivesoftware.smackx.pubsub.PubSubException;
+import org.jivesoftware.smackx.pubsub.PubSubManager;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 
 import org.jxmpp.jid.BareJid;
@@ -631,7 +634,7 @@ public final class OmemoManager extends Manager {
      * @throws SmackException.NoResponseException if there was no response from the remote entity.
      * @throws IOException if an I/O error occurred.
      */
-    public synchronized HashMap<OmemoDevice, OmemoFingerprint> getActiveFingerprints(BareJid contact)
+    public synchronized Map<OmemoDevice, OmemoFingerprint> getActiveFingerprints(BareJid contact)
             throws SmackException.NotLoggedInException, CorruptedOmemoKeyException,
             CannotEstablishOmemoSessionException, SmackException.NotConnectedException, InterruptedException,
             SmackException.NoResponseException, IOException {
@@ -639,7 +642,7 @@ public final class OmemoManager extends Manager {
             throw new SmackException.NotLoggedInException();
         }
 
-        HashMap<OmemoDevice, OmemoFingerprint> fingerprints = new HashMap<>();
+        Map<OmemoDevice, OmemoFingerprint> fingerprints = new HashMap<>();
         OmemoCachedDeviceList deviceList = getOmemoService().getOmemoStoreBackend().loadCachedDeviceList(getOwnDevice(),
                 contact);
 
@@ -725,6 +728,50 @@ public final class OmemoManager extends Manager {
             throws SmackException.NotLoggedInException, InterruptedException, XMPPException.XMPPErrorException,
             SmackException.NotConnectedException, SmackException.NoResponseException, IOException, PubSubException.NotALeafNodeException {
         getOmemoService().purgeDeviceList(new LoggedInOmemoManager(this));
+    }
+
+    public List<Exception> purgeEverything() throws NotConnectedException, InterruptedException, IOException {
+        List<Exception> exceptions = new ArrayList<>(5);
+        PubSubManager pm = PubSubManager.getInstanceFor(getConnection(), getOwnJid());
+        try {
+            requestDeviceListUpdateFor(getOwnJid());
+        } catch (SmackException.NoResponseException | PubSubException.NotALeafNodeException
+                        | XMPPException.XMPPErrorException e) {
+            exceptions.add(e);
+        }
+
+        OmemoCachedDeviceList deviceList = OmemoService.getInstance().getOmemoStoreBackend()
+                .loadCachedDeviceList(getOwnDevice(), getOwnJid());
+
+        for (int id : deviceList.getAllDevices()) {
+            try {
+                pm.getLeafNode(OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(id)).deleteAllItems();
+            } catch (SmackException.NoResponseException | PubSubException.NotALeafNodeException
+                            | XMPPException.XMPPErrorException | PubSubException.NotAPubSubNodeException e) {
+                exceptions.add(e);
+            }
+
+            try {
+                pm.deleteNode(OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(id));
+            } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+                exceptions.add(e);
+            }
+        }
+
+        try {
+            pm.getLeafNode(OmemoConstants.PEP_NODE_DEVICE_LIST).deleteAllItems();
+        } catch (SmackException.NoResponseException | PubSubException.NotALeafNodeException
+                        | XMPPException.XMPPErrorException | PubSubException.NotAPubSubNodeException e) {
+            exceptions.add(e);
+        }
+
+        try {
+            pm.deleteNode(OmemoConstants.PEP_NODE_DEVICE_LIST);
+        } catch (SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
+            exceptions.add(e);
+        }
+
+        return exceptions;
     }
 
     /**

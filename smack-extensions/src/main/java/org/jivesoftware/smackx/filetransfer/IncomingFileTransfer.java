@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -51,7 +51,7 @@ import org.jivesoftware.smack.util.CloseableUtil;
  * The second way that a file can be received through this class is by invoking
  * the {@link #receiveFile(File)} method. This method returns immediately and
  * takes as its parameter a file on the local file system where the file
- * recieved from the transfer will be put.
+ * received from the transfer will be put.
  *
  * @author Alexander Wenckus
  */
@@ -111,7 +111,7 @@ public class IncomingFileTransfer extends FileTransfer {
      * @param file The location to save the file.
      * @throws SmackException when the file transfer fails
      * @throws IOException if an I/O error occurred.
-     * @throws IllegalArgumentException This exception is thrown when the the provided file is
+     * @throws IllegalArgumentException This exception is thrown when the provided file is
      *         either null, or cannot be written to.
      */
     public void receiveFile(final File file) throws SmackException, IOException {

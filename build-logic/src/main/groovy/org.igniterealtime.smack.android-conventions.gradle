@@ -1,0 +1,10 @@
+plugins {
+	id 'ru.vyarus.animalsniffer'
+	id 'org.igniterealtime.smack.global-conventions'
+}
+dependencies {
+	signature "net.sf.androidscents.signature:android-api-level-${smackMinAndroidSdk}:8.0.0_r2@signature"
+}
+animalsniffer {
+	sourceSets = [sourceSets.main]
+}

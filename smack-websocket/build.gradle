@@ -1,0 +1,13 @@
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+	id 'org.igniterealtime.smack.android-conventions'
+}
+
+description = """\
+Smack for XMPP connections over WebSocket (RFC 7395)."""
+
+dependencies {
+	api project(':smack-core')
+
+	testFixturesApi(testFixtures(project(':smack-core')))
+}

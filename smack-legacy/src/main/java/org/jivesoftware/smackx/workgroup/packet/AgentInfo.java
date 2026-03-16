@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -20,10 +20,13 @@ package org.jivesoftware.smackx.workgroup.packet;
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * IQ stanza for retrieving and changing the Agent personal information.
@@ -104,10 +107,10 @@ public class AgentInfo extends IQ {
      *
      * @author Gaston Dombiak
      */
-    public static class Provider extends IQProvider<AgentInfo> {
+    public static class Provider extends IqProvider<AgentInfo> {
 
         @Override
-        public AgentInfo parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public AgentInfo parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             AgentInfo answer = new AgentInfo();
 
             boolean done = false;

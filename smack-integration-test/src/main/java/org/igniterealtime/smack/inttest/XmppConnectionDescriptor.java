@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2018-2020 Florian Schmaus
+ * Copyright 2018-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,22 @@
 package org.igniterealtime.smack.inttest;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.util.Consumer;
+import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection;
+import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnectionConfiguration;
+import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnectionModuleDescriptor;
+import org.jivesoftware.smack.websocket.XmppWebSocketTransportModuleDescriptor;
+import org.jivesoftware.smack.websocket.impl.WebSocketFactory;
 
 public final class XmppConnectionDescriptor<
     C extends AbstractXMPPConnection,
@@ -63,15 +66,6 @@ public final class XmppConnectionDescriptor<
     }
 
     public C construct(Configuration sinttestConfiguration,
-                    ConnectionConfigurationBuilderApplier... customConnectionConfigurationAppliers)
-                    throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-                    InvocationTargetException {
-        List<ConnectionConfigurationBuilderApplier> customConnectionConfigurationAppliersList = new ArrayList<ConnectionConfigurationBuilderApplier>(
-                        Arrays.asList(customConnectionConfigurationAppliers));
-        return construct(sinttestConfiguration, customConnectionConfigurationAppliersList);
-    }
-
-    public C construct(Configuration sinttestConfiguration,
             Collection<ConnectionConfigurationBuilderApplier> customConnectionConfigurationAppliers)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         CCB connectionConfigurationBuilder = getNewBuilder();
@@ -82,6 +76,7 @@ public final class XmppConnectionDescriptor<
             customConnectionConfigurationApplier.applyConfigurationTo(connectionConfigurationBuilder);
         }
         sinttestConfiguration.configurationApplier.applyConfigurationTo(connectionConfigurationBuilder);
+
         ConnectionConfiguration connectionConfiguration = connectionConfigurationBuilder.build();
         CC concreteConnectionConfiguration = connectionConfigurationClass.cast(connectionConfiguration);
 
@@ -134,6 +129,32 @@ public final class XmppConnectionDescriptor<
         return new Builder<>(connectionClass, connectionConfigurationClass, connectionConfigurationBuilderClass);
     }
 
+    public static XmppConnectionDescriptor<ModularXmppClientToServerConnection, ModularXmppClientToServerConnectionConfiguration, ModularXmppClientToServerConnectionConfiguration.Builder> buildWebsocketDescriptor(
+                    String nickname, Class<? extends WebSocketFactory> factoryClass)
+                    throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+                    InvocationTargetException, NoSuchMethodException, SecurityException {
+        WebSocketFactory factory;
+        try {
+            Field instanceField = factoryClass.getField("INSTANCE");
+            factory = (WebSocketFactory) instanceField.get(null);
+        } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
+            factory = factoryClass.getConstructor().newInstance();
+        }
+        WebSocketFactory finalFactory = factory;
+
+        return XmppConnectionDescriptor.buildWith(ModularXmppClientToServerConnection.class, ModularXmppClientToServerConnectionConfiguration.class, ModularXmppClientToServerConnectionConfiguration.Builder.class)
+        .withNickname(nickname)
+        .applyExtraConfiguration(cb -> {
+            cb.removeAllModules();
+            ModularXmppClientToServerConnectionModuleDescriptor webSocketModuleDescriptor =
+                            XmppWebSocketTransportModuleDescriptor.getBuilder(cb)
+                            .setWebSocketFactory(finalFactory)
+                            .build();
+            cb.addModule(webSocketModuleDescriptor);
+        })
+        .build();
+    }
+
     public static final class Builder<C extends AbstractXMPPConnection, CC extends ConnectionConfiguration, CCB extends ConnectionConfiguration.Builder<?, CC>> {
         private final Class<C> connectionClass;
         private final Class<CC> connectionConfigurationClass;
@@ -152,7 +173,13 @@ public final class XmppConnectionDescriptor<
             nickname = connectionClass.getSimpleName();
         }
 
+        // TODO Remove in Smack 4.6
+        @Deprecated // Replaced by applyExtraConfiguration(Consumer<CCB> extraBuilder)
         public Builder<C, CC, CCB> applyExtraConfguration(Consumer<CCB> extraBuilder) {
+            return applyExtraConfiguration(extraBuilder);
+        }
+
+        public Builder<C, CC, CCB> applyExtraConfiguration(Consumer<CCB> extraBuilder) {
             this.extraBuilder = extraBuilder;
             return this;
         }

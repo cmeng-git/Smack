@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2018 Paul Schaub, 2019 Florian Schmaus
+ * Copyright © 2018 Paul Schaub, 2019-2021 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,12 @@ import java.text.ParseException;
 import java.util.Date;
 
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.parsing.SmackParsingException.SmackTextParseException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.jivesoftware.smackx.last_interaction.element.IdleElement;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.util.XmppDateTime;
 
 public class IdleProvider extends ExtensionElementProvider<IdleElement> {
@@ -34,14 +33,9 @@ public class IdleProvider extends ExtensionElementProvider<IdleElement> {
     public static final IdleProvider TEST_INSTANCE = new IdleProvider();
 
     @Override
-    public IdleElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws SmackTextParseException {
+    public IdleElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws ParseException {
         String dateString = parser.getAttributeValue(null, IdleElement.ATTR_SINCE);
-        Date since;
-        try {
-            since = XmppDateTime.parseXEP0082Date(dateString);
-        } catch (ParseException e) {
-            throw new SmackParsingException.SmackTextParseException(e);
-        }
+        Date since = XmppDateTime.parseXEP0082Date(dateString);
         return new IdleElement(since);
     }
 }

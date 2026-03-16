@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2012-2018 Florian Schmaus
+ * Copyright 2012-2026 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.iqrequest.AbstractIqRequestHandler;
 import org.jivesoftware.smack.iqrequest.IQRequestHandler.Mode;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.IQ.Type;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.util.ExceptionCallback;
@@ -120,7 +119,7 @@ public final class PingManager extends Manager {
         ServiceDiscoveryManager sdm = ServiceDiscoveryManager.getInstanceFor(connection);
         sdm.addFeature(Ping.NAMESPACE);
 
-        connection.registerIQRequestHandler(new AbstractIqRequestHandler(Ping.ELEMENT, Ping.NAMESPACE, Type.get, Mode.async) {
+        connection.registerIQRequestHandler(new AbstractIqRequestHandler(Ping.ELEMENT, Ping.NAMESPACE, IQ.Type.get, Mode.async) {
             @Override
             public IQ handleIQRequest(IQ iqRequest) {
                 Ping ping = (Ping) iqRequest;
@@ -151,11 +150,11 @@ public final class PingManager extends Manager {
 
         // We may received an error response from an intermediate service returning an error like
         // 'remote-server-not-found' or 'remote-server-timeout' to us (which would fake the 'from' address,
-        // see RFC 6120 § 8.3.1 2.). Or the recipient could became unavailable.
+        // see RFC 6120 § 8.3.1 2.). Or the recipient could become unavailable.
 
         // Sticking with the current rules of RFC 6120/6121, it is undecidable at this point whether we received an
         // error response from the pinged entity or not. This is because a service-unavailable error condition is
-        // *required* (as per the RFCs) to be send back in both relevant cases:
+        // *required* (as per the RFCs) to be sent back in both relevant cases:
         // 1. When the receiving entity is unaware of the IQ request type. RFC 6120 § 8.4.:
         //    "If an intended recipient receives an IQ stanza of type "get" or
         //    "set" containing a child element qualified by a namespace it does
@@ -245,7 +244,7 @@ public final class PingManager extends Manager {
     }
 
     /**
-     * Same as calling {@link #ping(Jid, long)} with the defaultpacket reply
+     * Same as calling {@link #ping(Jid, long)} with the default packet reply
      * timeout.
      *
      * @param jid The id of the entity the ping is being sent to
@@ -417,11 +416,11 @@ public final class PingManager extends Manager {
             // Ping has been disabled
             return;
         }
-        long lastStanzaReceived = connection.getLastStanzaReceived();
-        if (lastStanzaReceived > 0) {
+        long lastDataReceived = connection.getLastDataReceived();
+        if (lastDataReceived > 0) {
             long now = System.currentTimeMillis();
             // Delta since the last stanza was received
-            int deltaInSeconds = (int)  ((now - lastStanzaReceived) / 1000);
+            int deltaInSeconds = (int)  ((now - lastDataReceived) / 1000);
             // If the delta is small then the ping interval, then we can defer the ping
             if (deltaInSeconds < pingInterval) {
                 maybeSchedulePingServerTask(deltaInSeconds);

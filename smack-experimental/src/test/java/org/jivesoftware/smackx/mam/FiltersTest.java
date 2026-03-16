@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2016 Fernando Ramirez, 2018-2020 Florian Schmaus
+ * Copyright 2016 Fernando Ramirez, 2018-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.jivesoftware.smackx.mam.MamManager.MamQueryArgs;
-import org.jivesoftware.smackx.mam.element.MamElements;
+import org.jivesoftware.smackx.mam.element.MamVersion;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class FiltersTest extends MamTest {
 
     private static String getMamXMemberWith(List<String> fieldsNames, List<? extends CharSequence> fieldsValues) {
         String xml = "<x xmlns='jabber:x:data' type='submit'>" + "<field var='FORM_TYPE'>" + "<value>"
-                + MamElements.NAMESPACE + "</value>" + "</field>";
+                + MamVersion.MAM2.getNamespace() + "</value>" + "</field>";
 
         for (int i = 0; i < fieldsNames.size() && i < fieldsValues.size(); i++) {
             xml += "<field var='" + fieldsNames.get(i) + "'>" + "<value>" + fieldsValues.get(i) + "</value>"
@@ -46,12 +46,13 @@ public class FiltersTest extends MamTest {
         return xml;
     }
 
+    @SuppressWarnings("JavaUtilDate")
     @Test
     public void checkStartDateFilter() throws Exception {
         Date date = new Date();
 
         MamQueryArgs mamQueryArgs = MamQueryArgs.builder().limitResultsSince(date).build();
-        DataForm dataForm = mamQueryArgs.getDataForm();
+        DataForm dataForm = mamQueryArgs.getDataForm(MamVersion.MAM2);
 
         List<String> fields = new ArrayList<>();
         fields.add("start");
@@ -61,12 +62,13 @@ public class FiltersTest extends MamTest {
         assertEquals(getMamXMemberWith(fields, values), dataForm.toXML().toString());
     }
 
+    @SuppressWarnings("JavaUtilDate")
     @Test
     public void checkEndDateFilter() throws Exception {
         Date date = new Date();
 
         MamQueryArgs mamQueryArgs = MamQueryArgs.builder().limitResultsBefore(date).build();
-        DataForm dataForm = mamQueryArgs.getDataForm();
+        DataForm dataForm = mamQueryArgs.getDataForm(MamVersion.MAM2);
 
         List<String> fields = new ArrayList<>();
         fields.add("end");
@@ -81,7 +83,7 @@ public class FiltersTest extends MamTest {
         Jid jid = JidTestUtil.BARE_JID_1;
 
         MamQueryArgs mamQueryArgs = MamQueryArgs.builder().limitResultsToJid(jid).build();
-        DataForm dataForm = mamQueryArgs.getDataForm();
+        DataForm dataForm = mamQueryArgs.getDataForm(MamVersion.MAM2);
 
         List<String> fields = new ArrayList<>();
         fields.add("with");

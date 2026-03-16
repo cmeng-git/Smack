@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019-2020 Florian Schmaus
  *
@@ -45,5 +45,13 @@ public final class IqData extends AbstractIqBuilder<IqData> {
     @Override
     public Stanza build() {
         throw new UnsupportedOperationException();
+    }
+
+    public static IqData createResponseData(IqView request) {
+        return createResponse(request, IQ.ResponseType.result);
+    }
+
+    public static IqData createErrorResponseDAta(IqView request) {
+        return createResponse(request, IQ.ResponseType.error);
     }
 }

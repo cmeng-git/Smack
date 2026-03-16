@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Paul Schaub
  *
@@ -23,12 +23,15 @@ import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.message_retraction.element.RetractElement;
+
+import org.jxmpp.JxmppContext;
 
 public class RetractElementProvider extends ExtensionElementProvider<RetractElement> {
 
     @Override
-    public RetractElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public RetractElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         return new RetractElement();
     }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -19,38 +19,44 @@ package org.jivesoftware.smackx.muc.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.muc.packet.MUCOwner;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * The MUCOwnerProvider parses MUCOwner packets. (@see MUCOwner)
  *
  * @author Gaston Dombiak
  */
-public class MUCOwnerProvider extends IQProvider<MUCOwner> {
+public class MUCOwnerProvider extends IqProvider<MUCOwner> {
 
     @Override
-    public MUCOwner parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public MUCOwner parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment,
+                    JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         MUCOwner mucOwner = new MUCOwner();
         boolean done = false;
         while (!done) {
             XmlPullParser.Event eventType = parser.next();
             if (eventType == XmlPullParser.Event.START_ELEMENT) {
                 if (parser.getName().equals("item")) {
-                    mucOwner.addItem(MUCParserUtils.parseItem(parser));
+                    var item = MUCParserUtils.parseItem(parser, jxmppContext);
+                    mucOwner.addItem(item);
                 }
                 else if (parser.getName().equals("destroy")) {
-                    mucOwner.setDestroy(MUCParserUtils.parseDestroy(parser));
+                    var destory = MUCParserUtils.parseDestroy(parser, jxmppContext);
+                    mucOwner.setDestroy(destory);
                 }
                 // Otherwise, it must be a packet extension.
                 else {
-                    PacketParserUtils.addExtensionElement(mucOwner, parser, xmlEnvironment);
+                    PacketParserUtils.addExtensionElement(mucOwner, parser, xmlEnvironment, jxmppContext);
                 }
             }
             else if (eventType == XmlPullParser.Event.END_ELEMENT) {

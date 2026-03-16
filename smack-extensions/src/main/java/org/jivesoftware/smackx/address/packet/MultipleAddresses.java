@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -93,7 +93,7 @@ public class MultipleAddresses implements ExtensionElement {
 
     /**
      * Returns the list of addresses that matches the specified type. Examples of address
-     * type are: TO, CC, BCC, etc..
+     * type are: TO, CC, BCC, etc.
      *
      * @param type Examples of address type are: TO, CC, BCC, etc.
      * @return the list of addresses that matches the specified type.
@@ -134,6 +134,7 @@ public class MultipleAddresses implements ExtensionElement {
     public static final class Address implements ExtensionElement {
 
         public static final String ELEMENT = "address";
+        public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
         private final Type type;
         private Jid jid;
@@ -192,12 +193,12 @@ public class MultipleAddresses implements ExtensionElement {
 
         @Override
         public String getElementName() {
-            return ELEMENT;
+            return QNAME.getLocalPart();
         }
 
         @Override
         public String getNamespace() {
-            return NAMESPACE;
+            return QNAME.getNamespaceURI();
         }
 
         @Override

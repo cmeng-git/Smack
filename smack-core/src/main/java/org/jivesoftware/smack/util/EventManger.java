@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015 Florian Schmaus
  *
@@ -87,7 +87,7 @@ public class EventManger<K, R, E extends Exception> {
         return true;
     }
 
-    private static class Reference<V> {
+    private static final class Reference<V> {
         volatile V eventResult;
     }
 

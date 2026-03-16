@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2019 Florian Schmaus
  *
@@ -16,7 +16,7 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.StringUtils;
@@ -25,7 +25,7 @@ import org.jivesoftware.smack.util.XmlStringBuilder;
 /**
  * Jingle content element.
  */
-public final class JingleContent implements FullyQualifiedElement {
+public final class JingleContent implements XmlElement {
 
     public static final String ELEMENT = "content";
     public static final String NAMESPACE = Jingle.NAMESPACE;
@@ -71,7 +71,7 @@ public final class JingleContent implements FullyQualifiedElement {
     private final JingleContentTransport transport;
 
     /**
-     * Creates a content description..
+     * Creates a content description.
      */
     private JingleContent(Creator creator, String disposition, String name, Senders senders,
                     JingleContentDescription description, JingleContentTransport transport) {

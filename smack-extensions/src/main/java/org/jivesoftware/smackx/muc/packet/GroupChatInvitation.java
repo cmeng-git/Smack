@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software.
+ * Copyright 2003-2007 Jive Software, 2020 Paul Schaub.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,49 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jivesoftware.smackx.muc.packet;
-
-import java.io.IOException;
 
 import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Stanza;
-import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.ExtensionElementProvider;
+import org.jivesoftware.smack.util.EqualsUtil;
+import org.jivesoftware.smack.util.HashCode;
+import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.XmlStringBuilder;
-import org.jivesoftware.smack.xml.XmlPullParser;
-import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.jid.EntityBareJid;
 
 /**
  * A group chat invitation stanza extension, which is used to invite other
- * users to a group chat room. To invite a user to a group chat room, address
- * a new message to the user and set the room name appropriately, as in the
- * following code example:
+ * users to a group chat room.
  *
- * <pre>
- * Message message = new Message("user@chat.example.com");
- * message.setBody("Join me for a group chat!");
- * message.addExtension(new GroupChatInvitation("room@chat.example.com"););
- * con.sendStanza(message);
- * </pre>
- *
- * To listen for group chat invitations, use a StanzaExtensionFilter for the
- * <code>x</code> element name and <code>jabber:x:conference</code> namespace, as in the
- * following code example:
- *
- * <pre>
- * PacketFilter filter = new StanzaExtensionFilter("x", "jabber:x:conference");
- * // Create a stanza collector or stanza listeners using the filter...
- * </pre>
- *
- * <b>Note</b>: this protocol is outdated now that the Multi-User Chat (MUC) XEP is available
- * (<a href="http://www.xmpp.org/extensions/jep-0045.html">XEP-45</a>). However, most
- * existing clients still use this older protocol. Once MUC support becomes more
- * widespread, this API may be deprecated.
+ * This implementation now conforms to XEP-0249: Direct MUC Invitations,
+ * while staying backwards compatible to legacy MUC invitations.
  *
  * @author Matt Tucker
+ * @author Paul Schaub
  */
 public class GroupChatInvitation implements ExtensionElement {
 
@@ -72,7 +51,17 @@ public class GroupChatInvitation implements ExtensionElement {
 
     public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
-    private final String roomAddress;
+    public static final String ATTR_CONTINUE = "continue";
+    public static final String ATTR_JID = "jid";
+    public static final String ATTR_PASSWORD = "password";
+    public static final String ATTR_REASON = "reason";
+    public static final String ATTR_THREAD = "thread";
+
+    private final EntityBareJid roomAddress;
+    private final String reason;
+    private final String password;
+    private final String thread;
+    private final boolean continueAsOneToOneChat;
 
     /**
      * Creates a new group chat invitation to the specified room address.
@@ -82,8 +71,68 @@ public class GroupChatInvitation implements ExtensionElement {
      *
      * @param roomAddress the address of the group chat room.
      */
-    public GroupChatInvitation(String roomAddress) {
-        this.roomAddress = roomAddress;
+    public GroupChatInvitation(EntityBareJid roomAddress) {
+        this(roomAddress, null, null, false, null);
+    }
+
+    /**
+     * Creates a new group chat invitation to the specified room address.
+     * GroupChat room addresses are in the form <code>room@service</code>,
+     * where <code>service</code> is the name of group chat server, such as
+     * <code>chat.example.com</code>.
+     *
+     * @param roomAddress the address of the group chat room.
+     * @param reason the purpose for the invitation
+     * @param password specifies a password needed for entry
+     * @param continueAsOneToOneChat specifies if the groupchat room continues a one-to-one chat having the designated thread
+     * @param thread the thread to continue
+     */
+    public GroupChatInvitation(EntityBareJid roomAddress,
+                               String reason,
+                               String password,
+                               boolean continueAsOneToOneChat,
+                               String thread) {
+        this.roomAddress = Objects.requireNonNull(roomAddress);
+        this.reason = reason;
+        this.password = password;
+        this.continueAsOneToOneChat = continueAsOneToOneChat;
+        this.thread = thread;
+    }
+
+    /**
+     * Returns the purpose for the invitation.
+     *
+     * @return the address of the group chat room.
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * Returns the password needed for entry.
+     *
+     * @return the password needed for entry
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Returns the thread to continue.
+     *
+     * @return the thread to continue.
+     */
+    public String getThread() {
+        return thread;
+    }
+
+    /**
+     * Returns whether the groupchat room continues a one-to-one chat.
+     *
+     * @return whether the groupchat room continues a one-to-one chat.
+     */
+    public boolean continueAsOneToOneChat() {
+        return continueAsOneToOneChat;
     }
 
     /**
@@ -93,7 +142,7 @@ public class GroupChatInvitation implements ExtensionElement {
      *
      * @return the address of the group chat room.
      */
-    public String getRoomAddress() {
+    public EntityBareJid getRoomAddress() {
         return roomAddress;
     }
 
@@ -110,9 +159,35 @@ public class GroupChatInvitation implements ExtensionElement {
     @Override
     public XmlStringBuilder toXML(org.jivesoftware.smack.packet.XmlEnvironment enclosingNamespace) {
         XmlStringBuilder xml = new XmlStringBuilder(this);
-        xml.attribute("jid", getRoomAddress());
+        xml.jidAttribute(getRoomAddress());
+        xml.optAttribute(ATTR_REASON, getReason());
+        xml.optAttribute(ATTR_PASSWORD, getPassword());
+        xml.optAttribute(ATTR_THREAD, getThread());
+        xml.optBooleanAttribute(ATTR_CONTINUE, continueAsOneToOneChat());
+
         xml.closeEmptyElement();
         return xml;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsUtil.equals(this, obj, (equalsBuilder, other) -> equalsBuilder
+                        .append(getRoomAddress(), other.getRoomAddress())
+                        .append(getPassword(), other.getPassword())
+                        .append(getReason(), other.getReason())
+        .append(continueAsOneToOneChat(), other.continueAsOneToOneChat())
+        .append(getThread(), other.getThread()));
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCode.builder()
+                .append(getRoomAddress())
+                .append(getPassword())
+                .append(getReason())
+                .append(continueAsOneToOneChat())
+                .append(getThread())
+                .build();
     }
 
     /**
@@ -124,16 +199,4 @@ public class GroupChatInvitation implements ExtensionElement {
         return packet.getExtension(GroupChatInvitation.class);
     }
 
-    public static class Provider extends ExtensionElementProvider<GroupChatInvitation> {
-
-        @Override
-        public GroupChatInvitation parse(XmlPullParser parser,
-                        int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
-                        IOException {
-            String roomAddress = parser.getAttributeValue("", "jid");
-            // Advance to end of extension.
-            parser.next();
-            return new GroupChatInvitation(roomAddress);
-        }
-    }
 }

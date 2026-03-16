@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -16,8 +16,10 @@
  */
 package org.jivesoftware.smackx.jingleold.listeners;
 
+import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 
 import org.jivesoftware.smackx.jingleold.JingleSession;
 import org.jivesoftware.smackx.jingleold.media.PayloadType;
@@ -32,16 +34,18 @@ public interface JingleSessionListener extends JingleListener {
      * Notification that the session has been established. Arguments specify
      * the payload type and transport to use.
      *
-     * @param pt            the Payload tyep to use
+     * @param pt            the Payload type to use
      * @param remoteCandidate            the remote candidate to use for connecting to the remote
      *                      service.
      * @param localCandidate            the local candidate where we must listen for connections
      * @param jingleSession Session that called the method
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
+     * @throws XMPPErrorException if there was an XMPP error returned.
+     * @throws NoResponseException if there was no response from the remote entity.
      */
     void sessionEstablished(PayloadType pt, TransportCandidate remoteCandidate,
-                                   TransportCandidate localCandidate, JingleSession jingleSession) throws NotConnectedException, InterruptedException;
+                                   TransportCandidate localCandidate, JingleSession jingleSession) throws NotConnectedException, InterruptedException, NoResponseException, XMPPErrorException;
 
     /**
      * Notification that the session was declined.

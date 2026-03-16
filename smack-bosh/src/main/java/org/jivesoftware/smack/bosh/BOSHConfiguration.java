@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2009 Jive Software.
  *
@@ -25,6 +25,8 @@ import java.util.Map;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.proxy.ProxyInfo;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Configuration to use while establishing the connection to the XMPP server via
  * HTTP binding.
@@ -47,10 +49,14 @@ public final class BOSHConfiguration extends ConnectionConfiguration {
             }
         }
         https = builder.https;
-        if (builder.file.charAt(0) != '/') {
-            file = '/' + builder.file;
+        if (builder.file != null)  {
+            if (builder.file.charAt(0) != '/') {
+                file = '/' + builder.file;
+            } else {
+                file = builder.file;
+            }
         } else {
-            file = builder.file;
+            file = null;
         }
         httpHeaders = builder.httpHeaders;
     }
@@ -77,7 +83,7 @@ public final class BOSHConfiguration extends ConnectionConfiguration {
     }
 
     public URI getURI() throws URISyntaxException {
-        String uri = (https ? "https://" : "http://") + getHostString() + ":" + this.port + file;
+        String uri = (https ? "https://" : "http://") + getHostString() + ":" + this.port + (file != null ? file : "");
         return new URI(uri);
     }
 
@@ -86,7 +92,11 @@ public final class BOSHConfiguration extends ConnectionConfiguration {
     }
 
     public static Builder builder() {
-        return new Builder();
+        return builder(getDefaultJxmppContext());
+    }
+
+    public static Builder builder(JxmppContext jxmppContext) {
+        return new Builder(jxmppContext);
     }
 
     public static final class Builder extends ConnectionConfiguration.Builder<Builder, BOSHConfiguration> {
@@ -94,7 +104,8 @@ public final class BOSHConfiguration extends ConnectionConfiguration {
         private String file;
         private Map<String, String> httpHeaders = new HashMap<>();
 
-        private Builder() {
+        private Builder(JxmppContext jxmppContext) {
+            super(jxmppContext);
         }
 
         public Builder setUseHttps(boolean useHttps) {

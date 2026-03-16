@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2005 Jive Software.
  *
@@ -52,7 +52,7 @@ public class SharedGroupManager {
         SharedGroupsInfo info = new SharedGroupsInfo();
         info.setType(IQ.Type.get);
 
-        SharedGroupsInfo result = connection.createStanzaCollectorAndSend(info).nextResultOrThrow();
+        SharedGroupsInfo result = connection.sendIqRequestAndWaitForResponse(info);
         return result.getGroups();
     }
 }

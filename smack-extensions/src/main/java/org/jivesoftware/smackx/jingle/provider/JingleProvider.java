@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017-2022 Florian Schmaus
+ * Copyright 2017-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package org.jivesoftware.smackx.jingle.provider;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.StandardExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.parsing.StandardExtensionElementProvider;
@@ -41,6 +41,7 @@ import org.jivesoftware.smackx.jingle.element.JingleReason.Reason;
 import org.jivesoftware.smackx.jingle.element.UnknownJingleContentDescription;
 import org.jivesoftware.smackx.jingle.element.UnknownJingleContentTransport;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.FullJid;
 
 public class JingleProvider extends IqProvider<Jingle> {
@@ -48,7 +49,8 @@ public class JingleProvider extends IqProvider<Jingle> {
     private static final Logger LOGGER = Logger.getLogger(JingleProvider.class.getName());
 
     @Override
-    public Jingle parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public Jingle parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment,
+                    JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         Jingle.Builder builder = Jingle.builder(iqData);
 
         String actionString = parser.getAttributeValue("", Jingle.ACTION_ATTRIBUTE_NAME);
@@ -57,10 +59,10 @@ public class JingleProvider extends IqProvider<Jingle> {
             builder.setAction(action);
         }
 
-        FullJid initiator = ParserUtils.getFullJidAttribute(parser, Jingle.INITIATOR_ATTRIBUTE_NAME);
+        FullJid initiator = ParserUtils.getFullJidAttribute(parser, Jingle.INITIATOR_ATTRIBUTE_NAME, jxmppContext);
         builder.setInitiator(initiator);
 
-        FullJid responder = ParserUtils.getFullJidAttribute(parser, Jingle.RESPONDER_ATTRIBUTE_NAME);
+        FullJid responder = ParserUtils.getFullJidAttribute(parser, Jingle.RESPONDER_ATTRIBUTE_NAME, jxmppContext);
         builder.setResponder(responder);
 
         String sessionId = parser.getAttributeValue("", Jingle.SESSION_ID_ATTRIBUTE_NAME);
@@ -78,7 +80,7 @@ public class JingleProvider extends IqProvider<Jingle> {
                     builder.addJingleContent(content);
                     break;
                 case JingleReason.ELEMENT:
-                    JingleReason reason = parseJingleReason(parser);
+                    JingleReason reason = parseJingleReason(parser, jxmppContext);
                     builder.setReason(reason);
                     break;
                 default:
@@ -172,14 +174,14 @@ public class JingleProvider extends IqProvider<Jingle> {
         return builder.build();
     }
 
-    public static JingleReason parseJingleReason(XmlPullParser parser)
+    public static JingleReason parseJingleReason(XmlPullParser parser, JxmppContext jxmppContext)
                     throws XmlPullParserException, IOException, SmackParsingException {
         ParserUtils.assertAtStartTag(parser);
         final int initialDepth = parser.getDepth();
         final String jingleNamespace = parser.getNamespace();
 
         JingleReason.Reason reason = null;
-        ExtensionElement element = null;
+        XmlElement element = null;
         String text = null;
 
         // 'sid' is only set if the reason is 'alternative-session'.
@@ -205,7 +207,8 @@ public class JingleProvider extends IqProvider<Jingle> {
                         break;
                     }
                 } else {
-                    element = PacketParserUtils.parseExtensionElement(elementName, namespace, parser, null);
+                    // TODO: Pass proper XmlEnvironment here.
+                    element = PacketParserUtils.parseExtensionElement(elementName, namespace, parser, null, jxmppContext);
                 }
                 break;
             case END_ELEMENT:

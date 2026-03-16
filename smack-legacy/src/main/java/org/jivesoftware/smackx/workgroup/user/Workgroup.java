@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -33,11 +33,11 @@ import org.jivesoftware.smack.filter.AndFilter;
 import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.XmlElement;
 
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
@@ -91,7 +91,7 @@ public class Workgroup {
 
     /**
      * Creates a new workgroup instance using the specified workgroup JID
-     * (eg support@workgroup.example.com) and XMPP connection. The connection must have
+     * (e.g.support@workgroup.example.com) and XMPP connection. The connection must have
      * undergone a successful login before being used to construct an instance of
      * this class.
      *
@@ -99,6 +99,7 @@ public class Workgroup {
      * @param connection   an XMPP connection which must have already undergone a
      *                     successful login.
      */
+    @SuppressWarnings("this-escape")
     public Workgroup(EntityBareJid workgroupJID, XMPPConnection connection) {
         // Login must have been done before passing in connection.
         if (!connection.isAuthenticated()) {
@@ -136,8 +137,8 @@ public class Workgroup {
             }
         });
 
-        /**
-         * Internal handling of an invitation.Recieving an invitation removes the user from the queue.
+        /*
+         * Internal handling of an invitation. Receiving an invitation removes the user from the queue.
          */
         MultiUserChatManager.getInstanceFor(connection).addInvitationListener(
                 new org.jivesoftware.smackx.muc.InvitationListener() {
@@ -162,7 +163,7 @@ public class Workgroup {
     }
 
     /**
-     * Returns the name of this workgroup (eg support@example.com).
+     * Returns the name of this workgroup (e.g.support@example.com).
      *
      * @return the name of the workgroup.
      */
@@ -355,7 +356,7 @@ public class Workgroup {
 
         JoinQueuePacket joinPacket = new JoinQueuePacket(workgroupJID, answerForm, userID);
 
-        connection.createStanzaCollectorAndSend(joinPacket).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(joinPacket);
         // Notify listeners that we've joined the queue.
         fireQueueJoinedEvent();
     }
@@ -436,7 +437,7 @@ public class Workgroup {
         }
 
         DepartQueuePacket departPacket = new DepartQueuePacket(this.workgroupJID);
-        connection.createStanzaCollectorAndSend(departPacket).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(departPacket);
 
         // Notify listeners that we're no longer in the queue.
         fireQueueDepartedEvent();
@@ -463,7 +464,7 @@ public class Workgroup {
 
     /**
      * Adds an invitation listener that will be notified of groupchat invitations
-     * from the workgroup for the the user that created this Workgroup instance.
+     * from the workgroup for the user that created this Workgroup instance.
      *
      * @param invitationListener the invitation listener.
      */
@@ -516,8 +517,8 @@ public class Workgroup {
         if (packet instanceof Message) {
             Message msg = (Message) packet;
             // Check to see if the user left the queue.
-            ExtensionElement pe = msg.getExtensionElement("depart-queue", "http://jabber.org/protocol/workgroup");
-            ExtensionElement queueStatus = msg.getExtensionElement("queue-status", "http://jabber.org/protocol/workgroup");
+            XmlElement pe = msg.getExtensionElement("depart-queue", "http://jabber.org/protocol/workgroup");
+            XmlElement queueStatus = msg.getExtensionElement("queue-status", "http://jabber.org/protocol/workgroup");
 
             if (pe != null) {
                 fireQueueDepartedEvent();
@@ -657,7 +658,7 @@ public class Workgroup {
         request.setType(IQ.Type.get);
         request.setTo(workgroupJID);
 
-        ChatSettings response = connection.createStanzaCollectorAndSend(request).nextResultOrThrow();
+        ChatSettings response = connection.sendIqRequestAndWaitForResponse(request);
 
         return response;
     }
@@ -697,7 +698,7 @@ public class Workgroup {
         request.setType(IQ.Type.get);
         request.setTo(workgroupJID);
 
-        return connection.createStanzaCollectorAndSend(request).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(request);
     }
 
     /**
@@ -714,7 +715,7 @@ public class Workgroup {
         request.setType(IQ.Type.get);
         request.setTo(workgroupJID);
 
-        return connection.createStanzaCollectorAndSend(request).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(request);
     }
 
     /**
@@ -731,13 +732,13 @@ public class Workgroup {
         request.setType(IQ.Type.get);
         request.setTo(workgroupJID);
 
-        return connection.createStanzaCollectorAndSend(request).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(request);
     }
 
     /**
-     * Asks the workgroup for it's Properties.
+     * Asks the workgroup for its Properties.
      *
-     * @param jid the jid of the user who's information you would like the workgroup to retreive.
+     * @param jid the jid of the user whose information you would like the workgroup to retrieve.
      * @return the WorkgroupProperties for the specified workgroup.
      * @throws XMPPErrorException if there was an XMPP error returned.
      * @throws NoResponseException if there was no response from the remote entity.
@@ -750,8 +751,8 @@ public class Workgroup {
         request.setType(IQ.Type.get);
         request.setTo(workgroupJID);
 
-        return connection.createStanzaCollectorAndSend(
-                        request).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(
+                        request);
     }
 
 
@@ -771,8 +772,8 @@ public class Workgroup {
         workgroupForm.setType(IQ.Type.get);
         workgroupForm.setTo(workgroupJID);
 
-        WorkgroupForm response = connection.createStanzaCollectorAndSend(
-                        workgroupForm).nextResultOrThrow();
+        WorkgroupForm response = connection.sendIqRequestAndWaitForResponse(
+                        workgroupForm);
         return Form.from(response);
     }
 }

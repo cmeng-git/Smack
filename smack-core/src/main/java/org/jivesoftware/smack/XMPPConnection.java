@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2009 Jive Software.
  *
@@ -16,18 +16,21 @@
  */
 package org.jivesoftware.smack;
 
+import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
+import org.jivesoftware.smack.SmackException.OutgoingQueueFullException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.filter.IQReplyFilter;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.iqrequest.IQRequestHandler;
 import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.MessageBuilder;
@@ -36,43 +39,42 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaFactory;
-import org.jivesoftware.smack.util.Consumer;
-import org.jivesoftware.smack.util.Predicate;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.util.XmppElementUtil;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityFullJid;
 
 /**
- * The XMPPConnection interface provides an interface for connections to an XMPP server and
+ * The XMPPConnection interface provides an interface for connections from a client to an XMPP server and
  * implements shared methods which are used by the different types of connections (e.g.
- * <code>XMPPTCPConnection</code> or <code>XMPPBOSHConnection</code>). To create a connection to an XMPP server
+ * {@link org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection} or <code>XMPPTCPConnection</code>). To create a connection to an XMPP server
  * a simple usage of this API might look like the following:
  *
- * <pre>
- * // Create a connection to the igniterealtime.org XMPP server.
- * XMPPTCPConnection con = new XMPPTCPConnection("igniterealtime.org");
- * // Connect to the server
- * con.connect();
- * // Most servers require you to login before performing other tasks.
- * con.login("jsmith", "mypass");
- * // Start a new conversation with John Doe and send him a message.
- * ChatManager chatManager = ChatManager.getInstanceFor(con);
- * chatManager.addIncomingListener(new IncomingChatMessageListener() {
- *     public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) {
- *         // Print out any messages we get back to standard out.
- *         System.out.println("Received message: " + message);
- *     }
- * });
- * Chat chat = chatManager.chatWith("jdoe@igniterealtime.org");
- * chat.send("Howdy!");
- * // Disconnect from the server
- * con.disconnect();
- * </pre>
+ * <pre>{@code
+ * // Create the configuration for this new connection
+ * XMPPTCPConnectionConfiguration.Builder configBuilder = XMPPTCPConnectionConfiguration.builder();
+ * configBuilder.setUsernameAndPassword("username", "password");
+ * configBuilder.setXmppDomain("jabber.org");
+ *
+ * AbstractXMPPConnection connection = new XMPPTCPConnection(configBuilder.build());
+ * connection.connect();
+ * connection.login();
+ *
+ * Message message = connection.getStanzaFactory().buildMessageStanza()
+ *     .to("mark@example.org)
+ *     .setBody("Hi, how are you?")
+ *     .build();
+ * connection.sendStanza(message);
+ *
+ * connection.disconnect();
+ * }</pre>
  * <p>
  * Note that the XMPPConnection interface does intentionally not declare any methods that manipulate
  * the connection state, e.g. <code>connect()</code>, <code>disconnect()</code>. You should use the
- * most specific connection type, e.g. <code>XMPPTCPConnection</code> as declared type and use the
+ * most-generic superclass connection type that is able to provide the methods you require. In most cases
+ * this should be {@link AbstractXMPPConnection}. And use or hand out instances of the
  * XMPPConnection interface when you don't need to manipulate the connection state.
  * </p>
  * <p>
@@ -80,30 +82,51 @@ import org.jxmpp.jid.EntityFullJid;
  * disconnected and then connected again. Listeners of the XMPPConnection will be retained across
  * connections.
  * </p>
+ * <h2>Processing Incoming Stanzas</h2>
+ * Smack provides a flexible framework for processing incoming stanzas using two constructs:
+ * <ul>
+ *  <li>{@link StanzaCollector}: lets you synchronously wait for new stanzas</li>
+ *  <li>{@link StanzaListener}: an interface for asynchronously notifying you of incoming stanzas</li>
+ * </ul>
+ *
  * <h2>Incoming Stanza Listeners</h2>
  * Most callbacks (listeners, handlers, …) than you can add to a connection come in three different variants:
  * <ul>
- * <li>standard</li>
- * <li>async (asynchronous)</li>
- * <li>sync (synchronous)</li>
+ * <li>asynchronous - e.g., {@link #addAsyncStanzaListener(StanzaListener, StanzaFilter)}</li>
+ * <li>synchronous  - e.g., {@link #addSyncStanzaListener(StanzaListener, StanzaFilter)}</li>
+ * <li>other        - e.g., {@link #addStanzaListener(StanzaListener, StanzaFilter)}</li>
  * </ul>
  * <p>
- * Standard callbacks are invoked concurrently, but it is ensured that the same callback is never run concurrently.
- * The callback's identity is used as key for that. The events delivered to the callback preserve the order of the
- * causing events of the connection.
- * </p>
- * <p>
- * Asynchronous callbacks are run decoupled from the connections main event loop. Hence a callback triggered by
+ * Asynchronous callbacks are run decoupled from the connections main event loop. Hence, a callback triggered by
  * stanza B may (appear to) invoked before a callback triggered by stanza A, even though stanza A arrived before B.
  * </p>
  * <p>
- * Synchronous callbacks are run synchronous to the main event loop of a connection. Hence they are invoked in the
- * exact order of how events happen there, most importantly the arrival order of incoming stanzas. You should only
- * use synchronous callbacks in rare situations.
+ * Synchronous callbacks are invoked concurrently, but it is ensured that the same callback is never run concurrently
+ * and that they are executed in order. That is, if both stanza A and B trigger the same callback, and A arrives before
+ * B, then the callback will be invoked with A first, and then B. Furthermore, those callbacks are not executed within
+ * the main loop. However it is still advisable that those callbacks do not block or only block briefly.
  * </p>
+ * <p>
+ * Other callbacks are run synchronous to the main event loop of a connection and are executed within the main loop.
+ * <b>This means that if such a callback blocks, the main event loop also blocks, which can easily cause deadlocks.
+ * Therefore, you should avoid using those callbacks unless you know what you are doing.</b>
+ * </p>
+ * <h2>Stanza Filters</h2>
+ * Stanza filters allow you to define the predicates for which listeners or collectors should be invoked. For more
+ * information about stanza filters, see {@link org.jivesoftware.smack.filter}.
+ * <h2>Provider Architecture</h2>
+ * XMPP is an extensible protocol. Smack allows for this extensible with its provider architecture that allows to
+ * plug-in providers that are able to parse the various XML extension elements used for XMPP's extensibility. For
+ * more information see {@link org.jivesoftware.smack.provider}.
+ * <h2>Debugging</h2>
+ * See {@link org.jivesoftware.smack.debugger} for Smack's API to debug XMPP connections.
+ * <h2>Modular Connection Architecture</h2>
+ * Smack's new modular connection architecture will one day replace the monolithic architecture. Its main entry
+ * point {@link org.jivesoftware.smack.c2s.ModularXmppClientToServerConnection} has more information.
  *
  * @author Matt Tucker
  * @author Guenther Niess
+ * @author Florian Schmaus
  */
 public interface XMPPConnection {
 
@@ -139,6 +162,14 @@ public interface XMPPConnection {
      * @return the full XMPP address of the user logged in.
      */
     EntityFullJid getUser();
+
+    /**
+     * Returns the local address currently in use for this connection, or <code>null</code> if
+     * this is invalid for the type of underlying connection.
+     *
+     * @return the local address currently in use for this connection
+     */
+    InetAddress getLocalAddress();
 
     /**
      * Returns the stream ID for this connection, which is the value set by the server
@@ -199,6 +230,8 @@ public interface XMPPConnection {
      * */
     void sendStanza(Stanza stanza) throws NotConnectedException, InterruptedException;
 
+    void sendStanzaNonBlocking(Stanza stanza) throws NotConnectedException, OutgoingQueueFullException;
+
     /**
      * Try to send the given stanza. Returns {@code true} if the stanza was successfully put into the outgoing stanza
      * queue, otherwise, if {@code false} is returned, the stanza could not be scheduled for sending (for example
@@ -210,10 +243,13 @@ public interface XMPPConnection {
      * </p>
      *
      * @param stanza the stanza to send.
-     * @return {@code true} if the stanza was successfully scheduled to be send, {@code false} otherwise.
+     * @return {@code true} if the stanza was successfully scheduled to be sent, {@code false} otherwise.
      * @throws NotConnectedException if the connection is not connected.
      * @since 4.4.0
+     * @deprecated use {@link #sendStanzaNonBlocking(Stanza)} instead.
      */
+    // TODO: Remove in Smack 4.7.
+    @Deprecated
     boolean trySendStanza(Stanza stanza) throws NotConnectedException;
 
     /**
@@ -230,11 +266,14 @@ public interface XMPPConnection {
      * @param stanza the stanza to send.
      * @param timeout how long to wait before giving up, in units of {@code unit}.
      * @param unit a {@code TimeUnit} determining how to interpret the {@code timeout} parameter.
-     * @return {@code true} if the stanza was successfully scheduled to be send, {@code false} otherwise.
+     * @return {@code true} if the stanza was successfully scheduled to be sent, {@code false} otherwise.
      * @throws NotConnectedException if the connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      * @since 4.4.0
+     * @deprecated use {@link #sendStanzaNonBlocking(Stanza)} instead.
      */
+    // TODO: Remove in Smack 4.7.
+    @Deprecated
     boolean trySendStanza(Stanza stanza, long timeout, TimeUnit unit)  throws NotConnectedException, InterruptedException;
 
     /**
@@ -250,6 +289,8 @@ public interface XMPPConnection {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     void sendNonza(Nonza nonza) throws NotConnectedException, InterruptedException;
+
+    void sendNonzaNonBlocking(Nonza stanza) throws NotConnectedException, OutgoingQueueFullException;
 
     /**
      * Adds a connection listener to this connection that will be notified when
@@ -278,6 +319,7 @@ public interface XMPPConnection {
      * @throws InterruptedException if the calling thread was interrupted.
      * @since 4.3
      */
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     <I extends IQ> I sendIqRequestAndWaitForResponse(IQ request)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException;
 
@@ -350,15 +392,16 @@ public interface XMPPConnection {
     /**
      * Registers a stanza listener with this connection. The listener will be invoked when a (matching) incoming stanza
      * is received. The stanza filter determines which stanzas will be delivered to the listener. It is guaranteed that
-     * the same listener will not be invoked concurrently and the the order of invocation will reflect the order in
+     * the same listener will not be invoked concurrently and the order of invocation will reflect the order in
      * which the stanzas have been received. If the same stanza listener is added again with a different filter, only
      * the new filter will be used.
      *
      * @param stanzaListener the stanza listener to notify of new received stanzas.
      * @param stanzaFilter the stanza filter to use.
+     * @return a handle which can be used in try-with-resources statements.
      * @since 4.4.0
      */
-    void addStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
+    ListenerHandle addStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
 
     /**
      * Removes a stanza listener for received stanzas from this connection.
@@ -370,7 +413,7 @@ public interface XMPPConnection {
     boolean removeStanzaListener(StanzaListener stanzaListener);
 
     /**
-     *  Registers a <b>synchronous</b> stanza listener with this connection. A stanza listener will be invoked only when
+     * Registers a <b>synchronous</b> stanza listener with this connection. A stanza listener will be invoked only when
      * an incoming stanza is received. A stanza filter determines which stanzas will be delivered to the listener. If
      * the same stanza listener is added again with a different filter, only the new filter will be used.
      * <p>
@@ -383,10 +426,10 @@ public interface XMPPConnection {
      *
      * @param stanzaListener the stanza listener to notify of new received stanzas.
      * @param stanzaFilter the stanza filter to use.
-     * @see #addStanzaInterceptor(StanzaListener, StanzaFilter)
+     * @return a handle which can be used in try-with-resources statements.
      * @since 4.1
      */
-    void addSyncStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
+    ListenerHandle addSyncStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
 
     /**
      * Removes a stanza listener for received stanzas from this connection.
@@ -409,10 +452,10 @@ public interface XMPPConnection {
      *
      * @param stanzaListener the stanza listener to notify of new received stanzas.
      * @param stanzaFilter the stanza filter to use.
-     * @see #addStanzaInterceptor(StanzaListener, StanzaFilter)
+     * @return a handle which can be used in try-with-resources statements.
      * @since 4.1
     */
-    void addAsyncStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
+    ListenerHandle addAsyncStanzaListener(StanzaListener stanzaListener, StanzaFilter stanzaFilter);
 
     /**
      * Removes an <b>asynchronous</b> stanza listener for received stanzas from this connection.
@@ -442,34 +485,6 @@ public interface XMPPConnection {
      * @param stanzaListener the stanza listener to remove.
      */
     void removeStanzaSendingListener(StanzaListener stanzaListener);
-
-    /**
-     * Registers a stanza interceptor with this connection. The interceptor will be
-     * invoked every time a stanza is about to be sent by this connection. Interceptors
-     * may modify the stanza to be sent. A stanza filter determines which stanzas
-     * will be delivered to the interceptor.
-     *
-     * <p>
-     * NOTE: For a similar functionality on incoming stanzas, see {@link #addAsyncStanzaListener(StanzaListener, StanzaFilter)}.
-     * </p>
-     *
-     * @param stanzaInterceptor the stanza interceptor to notify of stanzas about to be sent.
-     * @param stanzaFilter      the stanza filter to use.
-     * @deprecated use {@link #addMessageInterceptor(Consumer, Predicate)} or {@link #addPresenceInterceptor(Consumer, Predicate)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    void addStanzaInterceptor(StanzaListener stanzaInterceptor, StanzaFilter stanzaFilter);
-
-    /**
-     * Removes a stanza interceptor.
-     *
-     * @param stanzaInterceptor the stanza interceptor to remove.
-     * @deprecated use {@link #removeMessageInterceptor(Consumer)} or {@link #removePresenceInterceptor(Consumer)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    void removeStanzaInterceptor(StanzaListener stanzaInterceptor);
 
     /**
      * Registers a stanza interceptor with this connection. The interceptor will be
@@ -576,28 +591,12 @@ public interface XMPPConnection {
      * server, or <code>null</code> if the server doesn't support that feature.
      *
      * @param <F> {@link ExtensionElement} type of the feature.
-     * @param element TODO javadoc me please
-     * @param namespace TODO javadoc me please
-     * @return a stanza extensions of the feature or <code>null</code>
-     * @deprecated use {@link #getFeature(Class)} instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    default <F extends FullyQualifiedElement> F getFeature(String element, String namespace) {
-        QName qname = new QName(namespace, element);
-        return getFeature(qname);
-    }
-
-    /**
-     * Get the feature stanza extensions for a given stream feature of the
-     * server, or <code>null</code> if the server doesn't support that feature.
-     *
-     * @param <F> {@link ExtensionElement} type of the feature.
      * @param qname the qualified name of the XML element of feature.
      * @return a stanza extensions of the feature or <code>null</code>
      * @since 4.4
      */
-    <F extends FullyQualifiedElement> F getFeature(QName qname);
+    @SuppressWarnings("TypeParameterUnusedInFormals")
+    <F extends XmlElement> F getFeature(QName qname);
 
     /**
      * Get the feature stanza extensions for a given stream feature of the
@@ -608,7 +607,7 @@ public interface XMPPConnection {
      * @return a stanza extensions of the feature or <code>null</code>
      * @since 4.4
      */
-    default <F extends FullyQualifiedElement> F getFeature(Class<F> featureClass) {
+    default <F extends XmlElement> F getFeature(Class<F> featureClass) {
         QName qname = XmppElementUtil.getQNameFor(featureClass);
         return getFeature(qname);
     }
@@ -715,4 +714,16 @@ public interface XMPPConnection {
      * @return the timestamp in milliseconds
      */
     long getLastStanzaReceived();
+
+    /**
+     * Returns the timestamp in milliseconds when the last data was received.
+     *
+     * @return the timestamp in milliseconds
+     */
+    long getLastDataReceived();
+
+    default JxmppContext getJxmppContext() {
+        return JxmppContext.getDefaultContext();
+    };
+
 }

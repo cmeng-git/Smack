@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -20,13 +20,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.blocking.element.UnblockContactsIQ;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -37,10 +39,10 @@ import org.jxmpp.jid.impl.JidCreate;
  * @see <a href="http://xmpp.org/extensions/xep-0191.html">XEP-0191: Blocking
  *      Command</a>
  */
-public class UnblockContactsIQProvider extends IQProvider<UnblockContactsIQ> {
+public class UnblockContactsIQProvider extends IqProvider<UnblockContactsIQ> {
 
     @Override
-    public UnblockContactsIQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+    public UnblockContactsIQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
         List<Jid> jids = null;
 
         outerloop: while (true) {

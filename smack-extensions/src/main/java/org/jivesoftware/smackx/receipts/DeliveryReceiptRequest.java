@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2013-2014 the original author or authors
  *
@@ -28,6 +28,8 @@ import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Represents a <b>message delivery receipt request</b> entry as specified by
@@ -114,7 +116,7 @@ public class DeliveryReceiptRequest implements ExtensionElement {
     public static class Provider extends ExtensionElementProvider<DeliveryReceiptRequest> {
         @Override
         public DeliveryReceiptRequest parse(XmlPullParser parser,
-                        int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
+                        int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException,
                         IOException {
             return new DeliveryReceiptRequest();
         }

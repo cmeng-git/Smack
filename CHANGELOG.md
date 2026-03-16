@@ -1,5 +1,31 @@
 # Smack Changelog
 
+# 4.4.8 -- 2024-04-02
+
+### Improvement
+
+[SMACK-941](https://igniterealtime.atlassian.net/browse/SMACK-941) Suppress "roster not loaded while processing presence" warning if its caused by the reflected self-presence
+
+### Bug
+
+[SMACK-938](https://igniterealtime.atlassian.net/browse/SMACK-938) Busy loop in SmackReactor
+
+[SMACK-940](https://igniterealtime.atlassian.net/browse/SMACK-940) Ignore IPv6 Zone IDs in incoming streamhost candidates
+
+# 4.4.7 -- 2023-11-25
+
+### Improvement
+
+- [SMACK-929](https://igniterealtime.atlassian.net/browse/SMACK-929) Ignore IPv6 Zone IDs in incoming Jingle candidates
+- [SMACK-934](https://igniterealtime.atlassian.net/browse/SMACK-934) Deprecate and remove ChatMarkersManager.isSupportedByServer\(\)
+- [SMACK-937](https://igniterealtime.atlassian.net/browse/SMACK-937) Avoid unnecessary feature lookups by making the EntityCaps listener synchronous
+
+### Bug
+
+- [SMACK-927](https://igniterealtime.atlassian.net/browse/SMACK-927) Deadlock due to recveive listeners may be invoked after AbstractXMPPConnection.invokeStanzaCollectorsAndNotifyRecvListeners\(\) returned
+- [SMACK-930](https://igniterealtime.atlassian.net/browse/SMACK-930) Rename ELEMENT 'candidate-activated' to 'activated' per XEP-0260
+- [SMACK-931](https://igniterealtime.atlassian.net/browse/SMACK-931) IQ error stanza generation does not allow adding of an extension element
+
 # 4.4.6 -- 2022-06-29
 
 ### Bug

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -18,15 +18,18 @@ package org.jivesoftware.smackx.muclight.provider;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
-import org.jivesoftware.smack.packet.IQ.Type;
+import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.muclight.element.MUCLightBlockingIQ;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -37,12 +40,12 @@ import org.jxmpp.stringprep.XmppStringprepException;
  * @author Fernando Ramirez
  *
  */
-public class MUCLightBlockingIQProvider extends IQProvider<MUCLightBlockingIQ> {
+public class MUCLightBlockingIQProvider extends IqProvider<MUCLightBlockingIQ> {
 
     @Override
-    public MUCLightBlockingIQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
-        HashMap<Jid, Boolean> rooms = null;
-        HashMap<Jid, Boolean> users = null;
+    public MUCLightBlockingIQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
+        Map<Jid, Boolean> rooms = null;
+        Map<Jid, Boolean> users = null;
 
         outerloop: while (true) {
             XmlPullParser.Event eventType = parser.next();
@@ -65,11 +68,11 @@ public class MUCLightBlockingIQProvider extends IQProvider<MUCLightBlockingIQ> {
         }
 
         MUCLightBlockingIQ mucLightBlockingIQ = new MUCLightBlockingIQ(rooms, users);
-        mucLightBlockingIQ.setType(Type.result);
+        mucLightBlockingIQ.setType(IQ.Type.result);
         return mucLightBlockingIQ;
     }
 
-    private static HashMap<Jid, Boolean> parseBlocking(XmlPullParser parser, HashMap<Jid, Boolean> map)
+    private static Map<Jid, Boolean> parseBlocking(XmlPullParser parser, Map<Jid, Boolean> map)
             throws XmppStringprepException, XmlPullParserException, IOException {
         if (map == null) {
             map = new HashMap<>();

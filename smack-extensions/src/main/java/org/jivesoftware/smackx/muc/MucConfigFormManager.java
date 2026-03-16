@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015-2020 Florian Schmaus
+ * Copyright 2015-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,21 @@ package org.jivesoftware.smackx.muc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 
 import org.jivesoftware.smackx.muc.MultiUserChatException.MucConfigurationNotSupportedException;
+import org.jivesoftware.smackx.xdata.BooleanFormField;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.form.FillableForm;
 import org.jivesoftware.smackx.xdata.form.FilledForm;
 import org.jivesoftware.smackx.xdata.form.Form;
+import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.util.JidUtil;
@@ -52,6 +57,8 @@ public class MucConfigFormManager {
 
     private static final String HASH_ROOMCONFIG = "#roomconfig";
 
+    private static final Logger LOGGER = Logger.getLogger(MucConfigFormManager.class.getName());
+
     public static final String FORM_TYPE = MultiUserChatConstants.NAMESPACE + HASH_ROOMCONFIG;
 
                     /**
@@ -60,6 +67,13 @@ public class MucConfigFormManager {
      * @see <a href="http://xmpp.org/extensions/xep-0045.html#owner">XEP-0045 § 10. Owner Use Cases</a>
      */
     public static final String MUC_ROOMCONFIG_ROOMOWNERS = "muc#roomconfig_roomowners";
+
+    /**
+     * The constant String {@value}.
+     *
+     * @see <a href="http://xmpp.org/extensions/xep-0045.html#owner">XEP-0045 § 10. Owner Use Cases</a>
+     */
+    public static final String MUC_ROOMCONFIG_ROOMADMINS = "muc#roomconfig_roomadmins";
 
     /**
      * The constant String {@value}.
@@ -78,9 +92,39 @@ public class MucConfigFormManager {
      */
     public static final String MUC_ROOMCONFIG_ROOMSECRET = "muc#roomconfig_roomsecret";
 
+    /**
+     * The constant String {@value}.
+     */
+    public static final String MUC_ROOMCONFIG_MODERATEDROOM = "muc#roomconfig_moderatedroom";
+
+    /**
+     * The constant String {@value}.
+     */
+    public static final String MUC_ROOMCONFIG_PUBLICLYSEARCHABLEROOM = "muc#roomconfig_publicroom";
+
+    /**
+     * The constant String {@value}.
+     */
+    public static final String MUC_ROOMCONFIG_ROOMNAME = "muc#roomconfig_roomname";
+
+    /**
+     * The constant String {@value}.
+     */
+    public static final String MUC_ROOMCONFIG_ENABLE_PUBLIC_LOGGING = "muc#roomconfig_enablelogging";
+
+    /**
+     * The constant String {@value}.
+     */
+    public static final String MUC_ROOMCONFIG_CHANGE_SUBJECT = "muc#roomconfig_changesubject";
+
+    public static final String MUC_ROOMCONFIG_WHOIS = "muc#roomconfig_whois";
+
+    public static final String MUC_ROOMCONFIG_MAXUSERS = "muc#roomconfig_maxusers";
+
     private final MultiUserChat multiUserChat;
     private final FillableForm answerForm;
     private final List<Jid> owners;
+    private final List<Jid> admins;
 
     /**
      * Create a new MUC config form manager.
@@ -114,6 +158,18 @@ public class MucConfigFormManager {
             // roomowners not supported, this should barely be the case
             owners = null;
         }
+
+        FormField roomAdminsFormField = answerForm.getDataForm().getField(MUC_ROOMCONFIG_ROOMADMINS);
+        if (roomAdminsFormField != null) {
+            // Set 'admins' to the currently configured admins
+            List<? extends CharSequence> adminStrings = roomAdminsFormField.getValues();
+            admins = new ArrayList<>(adminStrings.size());
+            JidUtil.jidsFrom(adminStrings, admins, null);
+        }
+        else {
+            // roomadmins not supported, this should barely be the case
+            admins = null;
+        }
     }
 
     /**
@@ -123,6 +179,15 @@ public class MucConfigFormManager {
      */
     public boolean supportsRoomOwners() {
         return owners != null;
+    }
+
+    /**
+     * Check if the room supports room admins.
+     * @return <code>true</code> if supported, <code>false</code> if not.
+     * @see #MUC_ROOMCONFIG_ROOMADMINS
+     */
+    public boolean supportsRoomAdmins() {
+        return admins != null;
     }
 
     /**
@@ -143,12 +208,38 @@ public class MucConfigFormManager {
     }
 
     /**
+     * Set the admins of the room.
+     *
+     * @param newAdmins a collection of JIDs to become the new admins of the room.
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the MUC service does not support this option.
+     * @see #MUC_ROOMCONFIG_ROOMADMINS
+     */
+    public MucConfigFormManager setRoomAdmins(Collection<? extends Jid> newAdmins) throws MucConfigurationNotSupportedException {
+        if (!supportsRoomAdmins()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_ROOMADMINS);
+        }
+        admins.clear();
+        admins.addAll(newAdmins);
+        return this;
+    }
+
+    /**
      * Check if the room supports a members only configuration.
      *
      * @return <code>true</code> if supported, <code>false</code> if not.
      */
     public boolean supportsMembersOnly() {
         return answerForm.hasField(MUC_ROOMCONFIG_MEMBERSONLY);
+    }
+
+    /**
+     * Check if the room supports being moderated in the configuration.
+     *
+     * @return <code>true</code> if supported, <code>false</code> if not.
+     */
+    public boolean supportsModeration() {
+        return answerForm.hasField(MUC_ROOMCONFIG_MODERATEDROOM);
     }
 
     /**
@@ -173,6 +264,89 @@ public class MucConfigFormManager {
             throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_MEMBERSONLY);
         }
         answerForm.setAnswer(MUC_ROOMCONFIG_MEMBERSONLY, isMembersOnly);
+        return this;
+    }
+
+
+    /**
+     * Make the room moderated.
+     *
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the requested MUC configuration is not supported by the MUC service.
+     */
+    public MucConfigFormManager makeModerated() throws MucConfigurationNotSupportedException {
+        return setModerated(true);
+    }
+
+    /**
+     * Set if the room is members only. Rooms are not members only per default.
+     *
+     * @param isModerated if the room should be moderated.
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the requested MUC configuration is not supported by the MUC service.
+     */
+    public MucConfigFormManager setModerated(boolean isModerated) throws MucConfigurationNotSupportedException {
+        if (!supportsModeration()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_MODERATEDROOM);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_MODERATEDROOM, isModerated);
+        return this;
+    }
+
+
+    /**
+     * Check if the room supports its visibility being controlled via configuration.
+     *
+     * @return <code>true</code> if supported, <code>false</code> if not.
+     */
+    public boolean supportsPublicRoom() {
+        return answerForm.hasField(MUC_ROOMCONFIG_PUBLICLYSEARCHABLEROOM);
+    }
+
+    /**
+     * Make the room publicly searchable.
+     *
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the requested MUC configuration is not supported by the MUC service.
+     */
+    public MucConfigFormManager makePublic() throws MucConfigurationNotSupportedException {
+        return setPublic(true);
+    }
+
+    /**
+     * Make the room hidden (not publicly searchable).
+     *
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the requested MUC configuration is not supported by the MUC service.
+     */
+    public MucConfigFormManager makeHidden() throws MucConfigurationNotSupportedException {
+        return setPublic(false);
+    }
+
+    /**
+     * Set if the room is publicly searchable (i.e. visible via discovery requests to the MUC service).
+     *
+     * @param isPublic if the room should be publicly searchable.
+     * @return a reference to this object.
+     * @throws MucConfigurationNotSupportedException if the requested MUC configuration is not supported by the MUC service.
+     */
+    public MucConfigFormManager setPublic(boolean isPublic) throws MucConfigurationNotSupportedException {
+        if (!supportsPublicRoom()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_PUBLICLYSEARCHABLEROOM);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_PUBLICLYSEARCHABLEROOM, isPublic);
+        return this;
+    }
+
+    public boolean supportsRoomname() {
+        return answerForm.hasField(MUC_ROOMCONFIG_ROOMNAME);
+    }
+
+    public MucConfigFormManager setRoomName(String roomName) throws MucConfigurationNotSupportedException {
+        if (!supportsRoomname()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_ROOMNAME);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_ROOMNAME, roomName);
         return this;
     }
 
@@ -217,11 +391,31 @@ public class MucConfigFormManager {
      */
     public MucConfigFormManager setIsPasswordProtected(boolean isPasswordProtected)
                     throws MucConfigurationNotSupportedException {
-        if (!supportsMembersOnly()) {
+        if (!supportsPasswordProtected()) {
             throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_PASSWORDPROTECTEDROOM);
         }
         answerForm.setAnswer(MUC_ROOMCONFIG_PASSWORDPROTECTEDROOM, isPasswordProtected);
         return this;
+    }
+
+    public boolean supportsPublicLogging() {
+        return answerForm.hasField(MUC_ROOMCONFIG_ENABLE_PUBLIC_LOGGING);
+    }
+
+    public MucConfigFormManager setPublicLogging(boolean enabled) throws MucConfigurationNotSupportedException {
+        if (!supportsPublicLogging()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_ENABLE_PUBLIC_LOGGING);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_ENABLE_PUBLIC_LOGGING, enabled);
+        return this;
+    }
+
+    public MucConfigFormManager enablePublicLogging() throws MucConfigurationNotSupportedException {
+        return setPublicLogging(true);
+    }
+
+    public MucConfigFormManager disablPublicLogging() throws MucConfigurationNotSupportedException {
+        return setPublicLogging(false);
     }
 
     /**
@@ -242,6 +436,77 @@ public class MucConfigFormManager {
         return this;
     }
 
+    public boolean supportsChangeSubjectByOccupant() {
+        return answerForm.hasField(MUC_ROOMCONFIG_CHANGE_SUBJECT);
+    }
+
+    public boolean occupantsAreAllowedToChangeSubject() throws MucConfigurationNotSupportedException {
+        if (!supportsChangeSubjectByOccupant()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_CHANGE_SUBJECT);
+        }
+        return answerForm.getField(MUC_ROOMCONFIG_CHANGE_SUBJECT).ifPossibleAsOrThrow(BooleanFormField.class).getValueAsBoolean();
+    }
+
+    public MucConfigFormManager setChangeSubjectByOccupant(boolean enabled) throws MucConfigurationNotSupportedException {
+        if (!supportsChangeSubjectByOccupant()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_CHANGE_SUBJECT);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_CHANGE_SUBJECT, enabled);
+        return this;
+    }
+
+    public MucConfigFormManager allowOccupantsToChangeSubject() throws MucConfigurationNotSupportedException {
+        return setChangeSubjectByOccupant(true);
+    }
+
+    public MucConfigFormManager disallowOccupantsToChangeSubject() throws MucConfigurationNotSupportedException {
+        return setChangeSubjectByOccupant(false);
+    }
+
+    enum WhoisAllowedBy {
+        moderators,
+        anyone,
+    }
+
+    public boolean supportsWhoisAllowedBy() {
+        return answerForm.hasField(MUC_ROOMCONFIG_WHOIS);
+    }
+
+    public MucConfigFormManager setWhoisAllowedBy(WhoisAllowedBy whoisAllowedBy)
+                    throws MucConfigurationNotSupportedException {
+        if (!supportsWhoisAllowedBy()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_WHOIS);
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_WHOIS, whoisAllowedBy.name());
+        return this;
+    }
+
+    public boolean supportsMaxUsers() {
+        return answerForm.hasField(MUC_ROOMCONFIG_MAXUSERS);
+    }
+
+    public List<Integer> getPossibleMaxUsersValues() throws MucConfigurationNotSupportedException {
+        if (!supportsMaxUsers()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_MAXUSERS);
+        }
+        return answerForm.getField(MUC_ROOMCONFIG_MAXUSERS)
+                        .getValuesAsString()
+                        .stream()
+                        .map(s -> Integer.valueOf(s))
+                        .collect(Collectors.toList());
+    }
+
+    public MucConfigFormManager setMaxUsers(int maxUsers) throws MucConfigurationNotSupportedException {
+        if (!supportsMaxUsers()) {
+            throw new MucConfigurationNotSupportedException(MUC_ROOMCONFIG_MAXUSERS);
+        }
+        if (maxUsers < 1) {
+            throw new IllegalArgumentException();
+        }
+        answerForm.setAnswer(MUC_ROOMCONFIG_MAXUSERS, maxUsers);
+        return this;
+    }
+
     /**
      * Submit the configuration as {@link FilledForm} to the room.
      *
@@ -255,6 +520,37 @@ public class MucConfigFormManager {
         if (owners != null) {
             answerForm.setAnswer(MUC_ROOMCONFIG_ROOMOWNERS, JidUtil.toStringList(owners));
         }
+        if (admins != null) {
+            answerForm.setAnswer(MUC_ROOMCONFIG_ROOMADMINS, JidUtil.toStringList(admins));
+        }
         multiUserChat.sendConfigurationForm(answerForm);
+    }
+
+    public void cancel() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
+        var cancelDataForm = DataForm.builder(DataForm.Type.cancel).build();
+        multiUserChat.sendAsMucOwner(cancelDataForm);
+    }
+
+    public interface MucConfigApplier {
+        void apply(MucConfigFormManager manager)
+                        throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException, MucConfigurationNotSupportedException;
+    }
+
+    public MultiUserChat applyAndSubmit(MucConfigApplier applier)
+                    throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException, MucConfigurationNotSupportedException {
+        try {
+            applier.apply(this);
+            submitConfigurationForm();
+        } catch (XMPPErrorException | InterruptedException | MucConfigurationNotSupportedException e) {
+            try {
+                cancel();
+            } catch (NoResponseException | XMPPErrorException | NotConnectedException
+                            | InterruptedException cancelException) {
+                LOGGER.log(Level.SEVERE, "Exception while canceling MUC configuration for " + multiUserChat, e);
+            }
+            throw e;
+        }
+
+        return multiUserChat;
     }
 }

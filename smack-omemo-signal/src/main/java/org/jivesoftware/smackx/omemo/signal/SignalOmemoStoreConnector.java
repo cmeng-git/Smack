@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -120,6 +120,22 @@ public class SignalOmemoStoreConnector
         // Disable internal trust management. Instead we use OmemoStore.isTrustedOmemoIdentity() before encrypting
         // for a recipient.
         return true;
+    }
+
+    @Override
+    public IdentityKey getIdentity(SignalProtocolAddress address) {
+        OmemoDevice device;
+        try {
+            device = asOmemoDevice(address);
+        } catch (XmppStringprepException e) {
+            throw new AssertionError(e);
+        }
+
+        try {
+            return omemoStore.loadOmemoIdentityKey(getOurDevice(), device);
+        } catch (IOException | CorruptedOmemoKeyException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

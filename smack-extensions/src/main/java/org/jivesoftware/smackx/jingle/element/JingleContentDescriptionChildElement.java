@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2014-2019 Florian Schmaus
  *
@@ -16,12 +16,12 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * An element found usually in 'description' elements.
  *
  */
-public interface JingleContentDescriptionChildElement extends FullyQualifiedElement {
+public interface JingleContentDescriptionChildElement extends XmlElement {
 
 }

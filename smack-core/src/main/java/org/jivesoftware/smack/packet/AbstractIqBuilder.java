@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019-2020 Florian Schmaus
  *
@@ -40,16 +40,18 @@ public abstract class AbstractIqBuilder<IB extends AbstractIqBuilder<IB>> extend
         super(stanzaId);
     }
 
+    // TODO: Deprecate and use corresponding method in IqData instead.
     public static IqData createResponse(IqView request) {
         return createResponse(request, IQ.ResponseType.result);
     }
 
+    // TODO: Deprecate and use corresponding method in IqData instead.
     public static IqData createErrorResponse(IqView request) {
         return createResponse(request, IQ.ResponseType.error);
     }
 
     protected static IqData createResponse(IqView request, IQ.ResponseType responseType) {
-        if (!(request.getType() == IQ.Type.get || request.getType() == IQ.Type.set)) {
+        if (!request.isRequestIQ()) {
             throw new IllegalArgumentException("IQ request must be of type 'set' or 'get'. Original IQ: " + request);
         }
 

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -31,9 +31,10 @@ import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.StanzaError.Condition;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
@@ -41,6 +42,8 @@ import org.jivesoftware.smackx.iqprivate.packet.DefaultPrivateData;
 import org.jivesoftware.smackx.iqprivate.packet.PrivateData;
 import org.jivesoftware.smackx.iqprivate.packet.PrivateDataIQ;
 import org.jivesoftware.smackx.iqprivate.provider.PrivateDataProvider;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Manages private data, which is a mechanism to allow users to store arbitrary XML
@@ -163,8 +166,8 @@ public final class PrivateDataManager extends Manager {
         // Create an IQ packet to get the private data.
         IQ privateDataGet = new PrivateDataIQ(elementName, namespace);
 
-        PrivateDataIQ response = connection().createStanzaCollectorAndSend(
-                        privateDataGet).nextResultOrThrow();
+        PrivateDataIQ response = connection().sendIqRequestAndWaitForResponse(
+                        privateDataGet);
         return response.getPrivateData();
     }
 
@@ -183,7 +186,7 @@ public final class PrivateDataManager extends Manager {
         // Create an IQ packet to set the private data.
         IQ privateDataSet = new PrivateDataIQ(privateData);
 
-        connection().createStanzaCollectorAndSend(privateDataSet).nextResultOrThrow();
+        connection().sendIqRequestAndWaitForResponse(privateDataSet);
     }
 
     private static final PrivateData DUMMY_PRIVATE_DATA = new PrivateData() {
@@ -234,10 +237,10 @@ public final class PrivateDataManager extends Manager {
     /**
      * An IQ provider to parse IQ results containing private data.
      */
-    public static class PrivateDataIQProvider extends IQProvider<PrivateDataIQ> {
+    public static class PrivateDataIQProvider extends IqProvider<PrivateDataIQ> {
 
         @Override
-        public PrivateDataIQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public PrivateDataIQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws XmlPullParserException, IOException {
             PrivateData privateData = null;
             boolean done = false;
@@ -250,7 +253,7 @@ public final class PrivateDataManager extends Manager {
                     PrivateDataProvider provider = getPrivateDataProvider(elementName, namespace);
                     // If there is a registered provider, use it.
                     if (provider != null) {
-                        privateData = provider.parsePrivateData(parser);
+                        privateData = provider.parsePrivateData(parser, jxmppContext);
                     }
                     // Otherwise, use a DefaultPrivateData instance to store the private data.
                     else {

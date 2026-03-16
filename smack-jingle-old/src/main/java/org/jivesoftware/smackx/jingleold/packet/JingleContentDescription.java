@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2005 Jive Software.
  *
@@ -105,7 +105,7 @@ public abstract class JingleContentDescription implements ExtensionElement {
      *
      * @return a list for the audio payloads in the packet.
      */
-    public ArrayList<JinglePayloadType> getJinglePayloadTypesList() {
+    public List<JinglePayloadType> getJinglePayloadTypesList() {
         synchronized (payloads) {
             return new ArrayList<>(payloads);
         }
@@ -116,7 +116,7 @@ public abstract class JingleContentDescription implements ExtensionElement {
      *
      * @return a list of PayloadType.Audio
      */
-    public ArrayList<PayloadType.Audio> getAudioPayloadTypesList() {
+    public List<PayloadType.Audio> getAudioPayloadTypesList() {
         ArrayList<PayloadType.Audio> result = new ArrayList<>();
         Iterator<JinglePayloadType> jinglePtsIter = getJinglePayloadTypes();
 
@@ -184,6 +184,7 @@ public abstract class JingleContentDescription implements ExtensionElement {
          *
          * @param pt the payload type.
          */
+        @SuppressWarnings("this-escape")
         public Audio(final JinglePayloadType pt) {
             super();
             addJinglePayloadType(pt);

@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2014-2020 Florian Schmaus
+ * Copyright 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
@@ -69,52 +70,6 @@ public class TLSUtils {
     }
 
     /**
-     * Enable only TLS. Connections created with the given ConnectionConfiguration will only support TLS.
-     * <p>
-     * According to the <a
-     * href="https://raw.githubusercontent.com/stpeter/manifesto/master/manifesto.txt">Encrypted
-     * XMPP Manifesto</a>, TLSv1.2 shall be deployed, providing fallback support for SSLv3 and
-     * TLSv1.1. This method goes one step beyond and upgrades the handshake to use TLSv1 or better.
-     * This method requires the underlying OS to support all of TLSv1.2 , 1.1 and 1.0.
-     * </p>
-     *
-     * @param builder the configuration builder to apply this setting to
-     * @param <B> Type of the ConnectionConfiguration builder.
-     *
-     * @return the given builder
-     * @deprecated use {@link #setEnabledTlsProtocolsToRecommended(org.jivesoftware.smack.ConnectionConfiguration.Builder)} instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    public static <B extends ConnectionConfiguration.Builder<B, ?>> B setTLSOnly(B builder) {
-        builder.setEnabledSSLProtocols(new String[] { PROTO_TLSV1_2,  PROTO_TLSV1_1, PROTO_TLSV1 });
-        return builder;
-    }
-
-    /**
-     * Enable only TLS and SSLv3. Connections created with the given ConnectionConfiguration will
-     * only support TLS and SSLv3.
-     * <p>
-     * According to the <a
-     * href="https://raw.githubusercontent.com/stpeter/manifesto/master/manifesto.txt">Encrypted
-     * XMPP Manifesto</a>, TLSv1.2 shall be deployed, providing fallback support for SSLv3 and
-     * TLSv1.1.
-     * </p>
-     *
-     * @param builder the configuration builder to apply this setting to
-     * @param <B> Type of the ConnectionConfiguration builder.
-     *
-     * @return the given builder
-     * @deprecated use {@link #setEnabledTlsProtocolsToRecommended(org.jivesoftware.smack.ConnectionConfiguration.Builder)} instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    public static <B extends ConnectionConfiguration.Builder<B, ?>> B setSSLv3AndTLSOnly(B builder) {
-        builder.setEnabledSSLProtocols(new String[] { PROTO_TLSV1_2,  PROTO_TLSV1_1, PROTO_TLSV1, PROTO_SSL3 });
-        return builder;
-    }
-
-    /**
      * Accept all TLS certificates.
      * <p>
      * <b>Warning:</b> Use with care. This method make the Connection use {@link AcceptAllTrustManager} and essentially
@@ -126,8 +81,8 @@ public class TLSUtils {
      * @param <B> Type of the ConnectionConfiguration builder.
      * @return the given builder.
      */
-    public static <B extends ConnectionConfiguration.Builder<B, ?>> B acceptAllCertificates(B builder) {
-        builder.setCustomX509TrustManager(new AcceptAllTrustManager());
+    public static <B extends ConnectionConfiguration.Builder<?, ?>> B acceptAllCertificates(B builder) {
+        builder.setCustomX509TrustManager(ACCEPT_ALL_TRUST_MANAGER);
         return builder;
     }
 
@@ -143,7 +98,7 @@ public class TLSUtils {
      * @param <B> Type of the ConnectionConfiguration builder.
      * @return the given builder.
      */
-    public static <B extends ConnectionConfiguration.Builder<B, ?>> B disableHostnameVerificationForTlsCertificates(B builder) {
+    public static <B extends ConnectionConfiguration.Builder<?, ?>> B disableHostnameVerificationForTlsCertificates(B builder) {
         builder.setHostnameVerifier((hostname, session) -> {
             return true;
         });
@@ -228,15 +183,8 @@ public class TLSUtils {
         return messageDigest.digest();
     }
 
-    /**
-     * A {@link X509TrustManager} that <b>doesn't validate</b> X.509 certificates.
-     * <p>
-     * Connections that use this TrustManager will just be encrypted, without any guarantee that the
-     * counter part is actually the intended one. Man-in-the-Middle attacks will be possible, since
-     * any certificate presented by the attacker will be considered valid.
-     * </p>
-     */
-    public static class AcceptAllTrustManager implements X509TrustManager {
+
+    private static final class AcceptAllTrustManager implements X509TrustManager {
 
         @Override
         public void checkClientTrusted(X509Certificate[] arg0, String arg1)
@@ -256,12 +204,22 @@ public class TLSUtils {
         }
     }
 
+    /**
+     * A {@link X509TrustManager} that <b>doesn't validate</b> X.509 certificates.
+     * <p>
+     * Connections that use this TrustManager will just be encrypted, without any guarantee that the
+     * counter part is actually the intended one. Man-in-the-Middle attacks will be possible, since
+     * any certificate presented by the attacker will be considered valid.
+     * </p>
+     */
+    public static final X509TrustManager ACCEPT_ALL_TRUST_MANAGER = new AcceptAllTrustManager();
+
     private static final File DEFAULT_TRUSTSTORE_PATH;
 
     static {
         String javaHome = System.getProperty("java.home");
-        String defaultTruststorePath = javaHome + File.separator + "lib" + File.separator + "security" + File.separator + "cacerts";
-        DEFAULT_TRUSTSTORE_PATH = new File(defaultTruststorePath);
+        var defaultTruststorePath = Paths.get(javaHome, "lib", "security", "cacerts");
+        DEFAULT_TRUSTSTORE_PATH = defaultTruststorePath.toFile();
     }
 
     public static FileInputStream getDefaultTruststoreStreamIfPossible() {

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019-2020 Florian Schmaus
  *
@@ -19,11 +19,6 @@ package org.jivesoftware.smack.packet;
 import org.jivesoftware.smack.XMPPConnection;
 
 public abstract class MessageOrPresence<MPB extends MessageOrPresenceBuilder<?, ?>> extends Stanza {
-
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    protected MessageOrPresence() {
-    }
 
     protected MessageOrPresence(StanzaBuilder<?> stanzaBuilder) {
         super(stanzaBuilder);

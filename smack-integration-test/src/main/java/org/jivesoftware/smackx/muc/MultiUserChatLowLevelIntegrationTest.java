@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015-2020 Florian Schmaus
+ * Copyright 2015-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,17 @@ import org.igniterealtime.smack.inttest.AbstractSmackLowLevelIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 
+@SpecificationReference(document = "XEP-0048", version = "1.2")
 public class MultiUserChatLowLevelIntegrationTest extends AbstractSmackLowLevelIntegrationTest {
 
+    @SuppressWarnings("this-escape")
     public MultiUserChatLowLevelIntegrationTest(SmackIntegrationTestEnvironment environment) throws Exception {
         super(environment);
         AbstractXMPPConnection connection = getConnectedConnection();
@@ -66,7 +70,13 @@ public class MultiUserChatLowLevelIntegrationTest extends AbstractSmackLowLevelI
         final MultiUserChat muc = multiUserChatManager.getMultiUserChat(JidCreate.entityBareFrom(
                         Localpart.from(randomMucName), mucComponent));
 
-        MucCreateConfigFormHandle handle = muc.createOrJoin(mucNickname);
+        MucCreateConfigFormHandle handle;
+        try {
+            handle = muc.createOrJoin(mucNickname);
+        } catch (XMPPException.XMPPErrorException e) {
+            AbstractMultiUserChatIntegrationTest.mucCreationDisallowedOrThrow(e);
+            throw new TestNotPossibleException("MUC service " + mucComponent + " does not allow MUC creation", e);
+        }
         if (handle != null) {
             handle.makeInstant();
         }
@@ -83,7 +93,7 @@ public class MultiUserChatLowLevelIntegrationTest extends AbstractSmackLowLevelI
         // So we trigger it manually here.
         MucBookmarkAutojoinManager.getInstanceFor(connection).autojoinBookmarkedConferences();
 
-       assertTrue(muc.isJoined());
+       assertTrue(muc.isJoined(), "Expected " + connection.getUser() + " to automatically join room " + muc.getRoom() + " after a reconnect, but it did not.");
 
        // If the test went well, leave the MUC
        muc.leave();

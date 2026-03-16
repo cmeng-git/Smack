@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -53,6 +53,7 @@ public class DepartQueuePacket extends IQ {
      * @param workgroup the workgroup to depart.
      * @param user the user to make depart from the queue.
      */
+    @SuppressWarnings("this-escape")
     public DepartQueuePacket(EntityBareJid workgroup, EntityJid user) {
         super("depart-queue", "http://jabber.org/protocol/workgroup");
         this.user = user;

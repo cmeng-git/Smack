@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2019 Florian Schmaus
  *
@@ -18,8 +18,9 @@ package org.jivesoftware.smackx.bob.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.Pair;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
@@ -28,6 +29,8 @@ import org.jivesoftware.smackx.bob.BoBData;
 import org.jivesoftware.smackx.bob.ContentId;
 import org.jivesoftware.smackx.bob.element.BoBIQ;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Bits of Binary IQ provider class.
  *
@@ -35,10 +38,10 @@ import org.jivesoftware.smackx.bob.element.BoBIQ;
  * @see <a href="http://xmpp.org/extensions/xep-0231.html">XEP-0231: Bits of
  *      Binary</a>
  */
-public class BoBIQProvider extends IQProvider<BoBIQ> {
+public class BoBIQProvider extends IqProvider<BoBIQ> {
 
     @Override
-    public BoBIQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+    public BoBIQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
         Pair<ContentId, BoBData> parserResult = BoBProviderUtil.parseContentIdAndBobData(parser, initialDepth,
                         xmlEnvironment);
 

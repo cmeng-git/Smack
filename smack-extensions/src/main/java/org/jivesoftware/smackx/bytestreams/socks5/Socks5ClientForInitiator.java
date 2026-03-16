@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -115,7 +115,7 @@ public class Socks5ClientForInitiator extends Socks5Client {
     private void activate() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         Bytestream activate = createStreamHostActivation();
         // if activation fails #nextResultOrThrow() throws an exception
-        connection.get().createStanzaCollectorAndSend(activate).nextResultOrThrow();
+        connection.get().sendIqRequestAndWaitForResponse(activate);
     }
 
     /**

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2017 Grigory Fedorov
  *
@@ -46,6 +46,7 @@ public class Slot extends IQ {
         this(putUrl, getUrl, headers, NAMESPACE);
     }
 
+    @SuppressWarnings("this-escape")
     protected Slot(URL putUrl, URL getUrl, Map<String, String> headers, String namespace) {
         super(ELEMENT, namespace);
         setType(Type.result);

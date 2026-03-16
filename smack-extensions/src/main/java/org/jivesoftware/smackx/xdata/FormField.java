@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2019-2021 Florian Schmaus.
+ * Copyright 2003-2007 Jive Software, 2019-2024 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.namespace.QName;
 
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.CollectionUtil;
 import org.jivesoftware.smack.util.EqualsUtil;
@@ -52,7 +52,7 @@ import org.jxmpp.util.XmppDateTime;
  *
  * @author Gaston Dombiak
  */
-public abstract class FormField implements FullyQualifiedElement {
+public abstract class FormField implements XmlElement {
 
     public static final String ELEMENT = "field";
 
@@ -351,23 +351,6 @@ public abstract class FormField implements FullyQualifiedElement {
      * </p>
      *
      * @return the field's name.
-     * @deprecated use {@link #getFieldName()} instead.
-     */
-    // TODO: Remove in Smack 4.5
-    @Deprecated
-    public String getVariable() {
-        return getFieldName();
-    }
-
-    /**
-     * Returns the field's name, also known as the variable name in case this is an filled out answer form.
-     * <p>
-     * According to XEP-4 § 3.2 the variable name (the 'var' attribute)
-     * "uniquely identifies the field in the context of the form" (if the field is not of type 'fixed', in which case
-     * the field "MAY possess a 'var' attribute")
-     * </p>
-     *
-     * @return the field's name.
      */
     public String getFieldName() {
         return fieldName;
@@ -400,10 +383,10 @@ public abstract class FormField implements FullyQualifiedElement {
         return QNAME;
     }
 
-    protected transient List<FullyQualifiedElement> extraXmlChildElements;
+    protected transient List<XmlElement> extraXmlChildElements;
 
     /**
-     * Populate @{link {@link #extraXmlChildElements}}. Note that this method may be overridden by subclasses.
+     * Populate {@link #extraXmlChildElements}. Note that this method may be overridden by subclasses.
      */
     protected void populateExtraXmlChildElements() {
         List<Value> values = getRawValues();
@@ -679,14 +662,10 @@ public abstract class FormField implements FullyQualifiedElement {
                 return getThis();
             }
 
-            // TODO: Use Java' stream API once Smack's minimum Android SDK level is 24 or higher.
-            Iterator<FormFieldChildElement> it = formFieldChildElements.iterator();
-            while (it.hasNext()) {
-                FormFieldChildElement formFieldChildElement = it.next();
-                if (formFieldChildElement instanceof Value) {
-                    it.remove();
-                }
-            }
+            formFieldChildElements = formFieldChildElements
+                            .stream()
+                            .filter(f -> !(f instanceof Value))
+                            .collect(Collectors.toList());
 
             disallowType = disallowFurtherFormFieldChildElements = false;
 
@@ -732,7 +711,7 @@ public abstract class FormField implements FullyQualifiedElement {
      *
      * @author Gaston Dombiak
      */
-    public static final class Option implements FullyQualifiedElement {
+    public static final class Option implements XmlElement {
 
         public static final String ELEMENT = "option";
 
@@ -915,7 +894,7 @@ public abstract class FormField implements FullyQualifiedElement {
         }
     }
 
-    public static class Value implements FullyQualifiedElement {
+    public static class Value implements XmlElement {
 
         public static final String ELEMENT = "value";
 

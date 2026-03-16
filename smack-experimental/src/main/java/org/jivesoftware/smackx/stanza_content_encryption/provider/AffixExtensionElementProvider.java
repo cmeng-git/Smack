@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Paul Schaub
  *
@@ -17,6 +17,7 @@
 package org.jivesoftware.smackx.stanza_content_encryption.provider;
 
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
+
 import org.jivesoftware.smackx.stanza_content_encryption.element.AffixExtensionElement;
 
 /**

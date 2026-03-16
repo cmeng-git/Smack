@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -16,21 +16,24 @@
  */
 package org.jivesoftware.smackx.bytestreams.ibb.provider;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.jivesoftware.smackx.bytestreams.ibb.packet.Close;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Parses a close In-Band Bytestream packet.
  *
  * @author Henning Staib
  */
-public class CloseIQProvider extends IQProvider<Close> {
+public class CloseIQProvider extends IqProvider<Close> {
 
     @Override
-    public Close parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) {
+    public Close parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) {
         String sid = parser.getAttributeValue("", "sid");
         return new Close(sid);
     }

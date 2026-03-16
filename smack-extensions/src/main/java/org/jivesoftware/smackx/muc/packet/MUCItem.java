@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software, 2014-2015 Florian Schmaus
  *
@@ -169,8 +169,11 @@ public class MUCItem implements NamedElement {
         xml.optAttribute("role", getRole());
         xml.rightAngleBracket();
         xml.optElement("reason", getReason());
-        if (getActor() != null) {
-            xml.halfOpenElement("actor").attribute("jid", getActor()).closeEmptyElement();
+        if (getActor() != null || getActorNick() != null) {
+            xml.halfOpenElement("actor");
+            xml.optAttribute("jid", getActor());
+            xml.optAttribute("nick", getActorNick());
+            xml.closeEmptyElement();
         }
         xml.closeElement(Stanza.ITEM);
         return xml;

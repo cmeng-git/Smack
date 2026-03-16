@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -19,11 +19,15 @@ package org.jivesoftware.smackx.workgroup.packet;
 
 import java.io.IOException;
 
+import javax.xml.namespace.QName;
+
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 public class SessionID implements ExtensionElement {
 
@@ -36,6 +40,8 @@ public class SessionID implements ExtensionElement {
      * Namespace of the stanza extension.
      */
     public static final String NAMESPACE = "http://jivesoftware.com/protocol/workgroup";
+
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT_NAME);
 
     private final String sessionID;
 
@@ -71,7 +77,7 @@ public class SessionID implements ExtensionElement {
     public static class Provider extends ExtensionElementProvider<SessionID> {
 
         @Override
-        public SessionID parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public SessionID parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws XmlPullParserException, IOException {
             String sessionID = parser.getAttributeValue("", "id");
 

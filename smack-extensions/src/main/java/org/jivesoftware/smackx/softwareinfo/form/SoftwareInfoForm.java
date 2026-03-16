@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Aditya Borikar, 2021 Florian Schmaus
  *
@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jivesoftware.smack.util.EqualsUtil;
 import org.jivesoftware.smack.util.HashCode;
+
 import org.jivesoftware.smackx.formtypes.FormFieldRegistry;
 import org.jivesoftware.smackx.mediaelement.element.MediaElement;
 import org.jivesoftware.smackx.xdata.FormField;
@@ -28,7 +29,6 @@ import org.jivesoftware.smackx.xdata.TextSingleFormField;
 import org.jivesoftware.smackx.xdata.form.FilledForm;
 import org.jivesoftware.smackx.xdata.form.Form;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
-import org.jivesoftware.smackx.xdata.packet.DataForm.Type;
 
 /**
  * {@link Form} that contains the software information.
@@ -151,7 +151,7 @@ public final class SoftwareInfoForm extends FilledForm {
         DataForm.Builder dataFormBuilder;
 
         private Builder() {
-            dataFormBuilder = DataForm.builder(Type.result);
+            dataFormBuilder = DataForm.builder(DataForm.Type.result);
             TextSingleFormField formField = FormField.buildHiddenFormType(FORM_TYPE);
             dataFormBuilder.addField(formField);
         }

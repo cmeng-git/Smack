@@ -2,6 +2,13 @@
 <!-- Providers for workgroup extensions -->
 <smackProviders>
 
+    <!-- XEP-0264: Jingle Content Thumbnails -->
+    <extensionProvider>
+        <elementName>thumbnail</elementName>
+        <namespace>urn:xmpp:thumbs:1</namespace>
+        <className>org.jivesoftware.smackx.thumbnails.provider.ThumbnailElementProvider</className>
+    </extensionProvider>
+
     <!-- XEP-0280: Message Carbons -->
     <extensionProvider>
         <elementName>sent</elementName>
@@ -33,6 +40,26 @@
     <extensionProvider>
         <elementName>result</elementName>
         <namespace>urn:xmpp:mam:2</namespace>
+        <className>org.jivesoftware.smackx.mam.provider.MamResultProvider</className>
+    </extensionProvider>
+    <iqProvider>
+        <elementName>prefs</elementName>
+        <namespace>urn:xmpp:mam:1</namespace>
+        <className>org.jivesoftware.smackx.mam.provider.MamPrefsIQProvider</className>
+    </iqProvider>
+    <iqProvider>
+        <elementName>query</elementName>
+        <namespace>urn:xmpp:mam:1</namespace>
+        <className>org.jivesoftware.smackx.mam.provider.MamQueryIQProvider</className>
+    </iqProvider>
+    <iqProvider>
+        <elementName>fin</elementName>
+        <namespace>urn:xmpp:mam:1</namespace>
+        <className>org.jivesoftware.smackx.mam.provider.MamFinIQProvider</className>
+    </iqProvider>
+    <extensionProvider>
+        <elementName>result</elementName>
+        <namespace>urn:xmpp:mam:1</namespace>
         <className>org.jivesoftware.smackx.mam.provider.MamResultProvider</className>
     </extensionProvider>
 
@@ -323,6 +350,13 @@
       <elementName>fallback</elementName>
       <namespace>urn:xmpp:fallback:0</namespace>
       <className>org.jivesoftware.smackx.fallback_indication.provider.FallbackIndicationElementProvider</className>
+    </extensionProvider>
+
+    <!-- XEP-0446: File Metadata Element -->
+    <extensionProvider>
+      <elementName>file</elementName>
+      <namespace>urn:xmpp:file:metadata:0</namespace>
+      <className>org.jivesoftware.smackx.file_metadata.provider.FileMetadataElementProvider</className>
     </extensionProvider>
 
     <!-- XEP-xxxx: Multi-User Chat Light -->

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -27,10 +27,12 @@ import java.util.logging.Logger;
 import org.jivesoftware.smack.AbstractConnectionClosedListener;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Stanza;
@@ -85,7 +87,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
 
     private StanzaFilter packetFilter;
 
-    protected List<JingleMediaManager> jingleMediaManagers = null;
+    List<JingleMediaManager> jingleMediaManagers = null;
 
     private JingleSessionState sessionState;
 
@@ -228,7 +230,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      * @param sessionId TODO javadoc me please
      *            the sid to set
      */
-    protected void setSid(String sessionId) {
+    void setSid(String sessionId) {
         sid = sessionId;
     }
 
@@ -237,7 +239,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      *
      * @return the generated session ID.
      */
-    protected static String generateSessionId() {
+    static String generateSessionId() {
         return String.valueOf(randomGenerator.nextInt(Integer.MAX_VALUE) + randomGenerator.nextInt(Integer.MAX_VALUE));
     }
 
@@ -429,7 +431,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
 
     /**
      * Complete and send a packet. Complete all the null fields in a Jingle
-     * reponse, using the session information we have.
+     * response, using the session information we have.
      *
      * @param jout
      *            the Jingle stanza we want to complete and send
@@ -443,7 +445,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
 
     /**
      * Complete and send a packet. Complete all the null fields in a Jingle
-     * reponse, using the session information we have or some info from the
+     * response, using the session information we have or some info from the
      * incoming packet.
      *
      * @param iq The Jingle stanza we are responding to
@@ -485,7 +487,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
                 }
             }
 
-            // The the packet.
+            // the packet.
             // CHECKSTYLE:OFF
             if ((getConnection() != null) && getConnection().isConnected())
                 getConnection().sendStanza(jout);
@@ -542,21 +544,12 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
     //    public synchronized void sendContentInfo(ContentInfo ci) {
     //        sendStanza(new Jingle(new JingleContentInfo(ci)));
     //    }
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#hashCode()
-     */
+
     @Override
     public int hashCode() {
         return Jingle.getSessionHash(getSid(), getInitiator());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -675,7 +668,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
     /**
      * Remove the stanza listener used for processing packet.
      */
-    protected void removeAsyncPacketListener() {
+    void removeAsyncPacketListener() {
         if (packetListener != null) {
             getConnection().removeAsyncStanzaListener(packetListener);
 
@@ -687,7 +680,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      * Install the stanza listener. The listener is responsible for responding
      * to any stanza that we receive...
      */
-    protected void updatePacketListener() {
+    void updatePacketListener() {
         removeAsyncPacketListener();
 
         LOGGER.fine("UpdatePacketListener");
@@ -847,7 +840,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
         JingleTransportListener jingleTransportListener = new JingleTransportListener() {
 
             @Override
-            public void transportEstablished(TransportCandidate local, TransportCandidate remote) throws NotConnectedException, InterruptedException {
+            public void transportEstablished(TransportCandidate local, TransportCandidate remote) throws NotConnectedException, InterruptedException, NoResponseException, XMPPErrorException {
                 if (isFullyEstablished()) {
                 // CHECKSTYLE:OFF
                     // Indicate that this session is active.
@@ -895,7 +888,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      *
      * @param reason the reason.
      */
-    protected void triggerSessionClosed(String reason) {
+    void triggerSessionClosed(String reason) {
         //        for (ContentNegotiator contentNegotiator : contentNegotiators) {
         //
         //            contentNegotiator.stopJingleMediaSession();
@@ -919,7 +912,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      *
      * @param exc the exception.
      */
-    protected void triggerSessionClosedOnError(XMPPException exc) {
+    void triggerSessionClosedOnError(XMPPException exc) {
         for (ContentNegotiator contentNegotiator : contentNegotiators) {
 
             contentNegotiator.stopJingleMediaSession();
@@ -954,7 +947,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
      *
      * @param participant the participant.
      */
-    protected void triggerMediaReceived(String participant) {
+    void triggerMediaReceived(String participant) {
         List<JingleListener> listeners = getListenersList();
         for (JingleListener li : listeners) {
             if (li instanceof JingleSessionListener) {
@@ -1095,7 +1088,7 @@ public final class JingleSession extends JingleNegotiator implements MediaReceiv
     }
 
     /**
-     * This is the starting point for intitiating a new session.
+     * This is the starting point for initiating a new session.
      *
      * @throws IllegalStateException if an illegal state was encountered
      * @throws SmackException if Smack detected an exceptional situation.

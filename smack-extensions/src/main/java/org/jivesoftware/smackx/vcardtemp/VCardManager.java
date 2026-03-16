@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2014-2019 Florian Schmaus
  *
@@ -106,8 +106,8 @@ public final class VCardManager extends Manager {
         vcard.setType(IQ.Type.set);
         // Also make sure to generate a new stanza id (the given vcard could be a vcard result), in which case we don't
         // want to use the same stanza id again (although it wouldn't break if we did)
-        vcard.setStanzaId();
-        connection().createStanzaCollectorAndSend(vcard).nextResultOrThrow();
+        // vcard.setStanzaId(); TODO FIXME
+        connection().sendIqRequestAndWaitForResponse(vcard);
     }
 
     /**
@@ -137,7 +137,7 @@ public final class VCardManager extends Manager {
     public VCard loadVCard(EntityBareJid bareJid) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         VCard vcardRequest = new VCard();
         vcardRequest.setTo(bareJid);
-        VCard result = connection().createStanzaCollectorAndSend(vcardRequest).nextResultOrThrow();
+        VCard result = connection().sendIqRequestAndWaitForResponse(vcardRequest);
         return result;
     }
 

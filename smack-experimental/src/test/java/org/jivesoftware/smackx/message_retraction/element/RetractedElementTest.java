@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Paul Schaub
  *
@@ -26,6 +26,7 @@ import java.util.Date;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.test.util.SmackTestUtil;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.message_retraction.provider.RetractedElementProvider;
 import org.jivesoftware.smackx.sid.element.OriginIdElement;
 

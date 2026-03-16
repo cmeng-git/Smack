@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2018 Paul Schaub
  *
@@ -16,9 +16,12 @@
  */
 package org.jivesoftware.smackx.message_markup.element;
 
+import javax.xml.namespace.QName;
+
 public class CodeBlockElement extends MarkupElement.BlockLevelMarkupElement {
 
     public static final String ELEMENT = "bcode";
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     /**
      * Create a new Code Block element.

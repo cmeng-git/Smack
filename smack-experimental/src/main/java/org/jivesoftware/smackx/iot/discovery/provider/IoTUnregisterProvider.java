@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016-2019 Florian Schmaus
  *
@@ -16,18 +16,21 @@
  */
 package org.jivesoftware.smackx.iot.discovery.provider;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.jivesoftware.smackx.iot.discovery.element.IoTUnregister;
 import org.jivesoftware.smackx.iot.element.NodeInfo;
 import org.jivesoftware.smackx.iot.parser.NodeInfoParser;
 
-public class IoTUnregisterProvider extends IQProvider<IoTUnregister> {
+import org.jxmpp.JxmppContext;
+
+public class IoTUnregisterProvider extends IqProvider<IoTUnregister> {
 
     @Override
-    public IoTUnregister parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) {
+    public IoTUnregister parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) {
         NodeInfo nodeInfo = NodeInfoParser.parse(parser);
         return new IoTUnregister(nodeInfo);
     }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -16,11 +16,10 @@
  */
 package org.jivesoftware.smackx.ox;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.jivesoftware.smack.test.util.XmlAssertUtil.assertXmlSimilar;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 import org.jivesoftware.smack.test.util.SmackTestSuite;
 import org.jivesoftware.smack.test.util.TestUtils;
@@ -48,6 +47,6 @@ public class SecretkeyElementTest extends SmackTestSuite {
         XmlPullParser parser = TestUtils.getParser(expected);
         SecretkeyElement parsed = SecretkeyElementProvider.TEST_INSTANCE.parse(parser);
 
-        assertTrue(Arrays.equals(element.getB64Data(), parsed.getB64Data()));
+        assertArrayEquals(element.getB64Data(), parsed.getB64Data());
     }
 }

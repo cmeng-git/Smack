@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2009 Robin Collier.
  *
@@ -28,10 +28,10 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.filter.FlexibleStanzaTypeFilter;
 import org.jivesoftware.smack.filter.OrFilter;
-import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smack.packet.IQ.Type;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.XmlElement;
 
 import org.jivesoftware.smackx.delay.DelayInformationManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
@@ -52,8 +52,6 @@ import org.jivesoftware.smackx.shim.packet.HeadersExtension;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import org.jxmpp.jid.Jid;
-import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.stringprep.XmppStringprepException;
 
 public abstract class Node {
     protected final PubSubManager pubSubManager;
@@ -94,7 +92,7 @@ public abstract class Node {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public ConfigureForm getNodeConfiguration() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub pubSub = createPubsubPacket(Type.get, new NodeExtension(
+        PubSub pubSub = createPubsubPacket(IQ.Type.get, new NodeExtension(
                         PubSubElementType.CONFIGURE_OWNER, getId()));
         Stanza reply = sendPubsubPacket(pubSub);
         return NodeUtils.getFormFromPacket(reply, PubSubElementType.CONFIGURE_OWNER);
@@ -110,9 +108,9 @@ public abstract class Node {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public void sendConfigurationForm(FillableConfigureForm configureForm) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub packet = createPubsubPacket(Type.set, new FormNode(FormNodeType.CONFIGURE_OWNER,
+        PubSub packet = createPubsubPacket(IQ.Type.set, new FormNode(FormNodeType.CONFIGURE_OWNER,
                         getId(), configureForm.getDataFormToSubmit()));
-        pubSubManager.getConnection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+        pubSubManager.getConnection().sendIqRequestAndWaitForResponse(packet);
     }
 
     /**
@@ -130,7 +128,7 @@ public abstract class Node {
                 .to(pubSubManager.getServiceJid())
                 .setNode(getId())
                 .build();
-        return connection.createStanzaCollectorAndSend(discoverInfoRequest).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(discoverInfoRequest);
     }
 
     /**
@@ -163,7 +161,7 @@ public abstract class Node {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public List<Subscription> getSubscriptions(List<ExtensionElement> additionalExtensions, Collection<ExtensionElement> returnedExtensions)
+    public List<Subscription> getSubscriptions(List<XmlElement> additionalExtensions, Collection<XmlElement> returnedExtensions)
                     throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         return getSubscriptions(SubscriptionsNamespace.basic, additionalExtensions, returnedExtensions);
     }
@@ -207,20 +205,20 @@ public abstract class Node {
      *      Retrieve Subscriptions List</a>
      * @since 4.1
      */
-    public List<Subscription> getSubscriptionsAsOwner(List<ExtensionElement> additionalExtensions,
-                    Collection<ExtensionElement> returnedExtensions) throws NoResponseException, XMPPErrorException,
+    public List<Subscription> getSubscriptionsAsOwner(List<XmlElement> additionalExtensions,
+                    Collection<XmlElement> returnedExtensions) throws NoResponseException, XMPPErrorException,
                     NotConnectedException, InterruptedException {
         return getSubscriptions(SubscriptionsNamespace.owner, additionalExtensions, returnedExtensions);
     }
 
-    private List<Subscription> getSubscriptions(SubscriptionsNamespace subscriptionsNamespace, List<ExtensionElement> additionalExtensions,
-                    Collection<ExtensionElement> returnedExtensions)
+    private List<Subscription> getSubscriptions(SubscriptionsNamespace subscriptionsNamespace, List<XmlElement> additionalExtensions,
+                    Collection<XmlElement> returnedExtensions)
                     throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         PubSubElementType pubSubElementType = subscriptionsNamespace.type;
 
-        PubSub pubSub = createPubsubPacket(Type.get, new NodeExtension(pubSubElementType, getId()));
+        PubSub pubSub = createPubsubPacket(IQ.Type.get, new NodeExtension(pubSubElementType, getId()));
         if (additionalExtensions != null) {
-            for (ExtensionElement pe : additionalExtensions) {
+            for (XmlElement pe : additionalExtensions) {
                 pubSub.addExtension(pe);
             }
         }
@@ -251,7 +249,7 @@ public abstract class Node {
     public PubSub modifySubscriptionsAsOwner(List<Subscription> changedSubs)
         throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
 
-        PubSub pubSub = createPubsubPacket(Type.set,
+        PubSub pubSub = createPubsubPacket(IQ.Type.set,
             new SubscriptionsExtension(SubscriptionsNamespace.owner, getId(), changedSubs));
         return sendPubsubPacket(pubSub);
     }
@@ -286,7 +284,7 @@ public abstract class Node {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public List<Affiliation> getAffiliations(List<ExtensionElement> additionalExtensions, Collection<ExtensionElement> returnedExtensions)
+    public List<Affiliation> getAffiliations(List<XmlElement> additionalExtensions, Collection<XmlElement> returnedExtensions)
                     throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
 
         return getAffiliations(AffiliationNamespace.basic, additionalExtensions, returnedExtensions);
@@ -326,20 +324,20 @@ public abstract class Node {
      * @see <a href="http://www.xmpp.org/extensions/xep-0060.html#owner-affiliations-retrieve">XEP-60 § 8.9.1 Retrieve Affiliations List</a>
      * @since 4.2
      */
-    public List<Affiliation> getAffiliationsAsOwner(List<ExtensionElement> additionalExtensions, Collection<ExtensionElement> returnedExtensions)
+    public List<Affiliation> getAffiliationsAsOwner(List<XmlElement> additionalExtensions, Collection<XmlElement> returnedExtensions)
                     throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
 
         return getAffiliations(AffiliationNamespace.owner, additionalExtensions, returnedExtensions);
     }
 
-    private List<Affiliation> getAffiliations(AffiliationNamespace affiliationsNamespace, List<ExtensionElement> additionalExtensions,
-                    Collection<ExtensionElement> returnedExtensions) throws NoResponseException, XMPPErrorException,
+    private List<Affiliation> getAffiliations(AffiliationNamespace affiliationsNamespace, List<XmlElement> additionalExtensions,
+                    Collection<XmlElement> returnedExtensions) throws NoResponseException, XMPPErrorException,
                     NotConnectedException, InterruptedException {
         PubSubElementType pubSubElementType = affiliationsNamespace.type;
 
-        PubSub pubSub = createPubsubPacket(Type.get, new NodeExtension(pubSubElementType, getId()));
+        PubSub pubSub = createPubsubPacket(IQ.Type.get, new NodeExtension(pubSubElementType, getId()));
         if (additionalExtensions != null) {
-            for (ExtensionElement pe : additionalExtensions) {
+            for (XmlElement pe : additionalExtensions) {
                 pubSub.addExtension(pe);
             }
         }
@@ -375,7 +373,7 @@ public abstract class Node {
             }
         }
 
-        PubSub pubSub = createPubsubPacket(Type.set, new AffiliationsExtension(AffiliationNamespace.owner, affiliations, getId()));
+        PubSub pubSub = createPubsubPacket(IQ.Type.set, new AffiliationsExtension(AffiliationNamespace.owner, affiliations, getId()));
         return sendPubsubPacket(pubSub);
     }
 
@@ -398,42 +396,9 @@ public abstract class Node {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public Subscription subscribe(Jid jid) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub pubSub = createPubsubPacket(Type.set, new SubscribeExtension(jid, getId()));
+        PubSub pubSub = createPubsubPacket(IQ.Type.set, new SubscribeExtension(jid, getId()));
         PubSub reply = sendPubsubPacket(pubSub);
         return reply.getExtension(PubSubElementType.SUBSCRIPTION);
-    }
-
-    /**
-     * The user subscribes to the node using the supplied jid.  The
-     * bare jid portion of this one must match the jid for the connection.
-     *
-     * Please note that the {@link Subscription.State} should be checked
-     * on return since more actions may be required by the caller.
-     * {@link Subscription.State#pending} - The owner must approve the subscription
-     * request before messages will be received.
-     * {@link Subscription.State#unconfigured} - If the {@link Subscription#isConfigRequired()} is true,
-     * the caller must configure the subscription before messages will be received.  If it is false
-     * the caller can configure it but is not required to do so.
-     *
-     * @param jidString The jid to subscribe as.
-     * @return The subscription
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @throws IllegalArgumentException if the provided string is not a valid JID.
-     * @deprecated use {@link #subscribe(Jid)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public Subscription subscribe(String jidString) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        Jid jid;
-        try {
-            jid = JidCreate.from(jidString);
-        } catch (XmppStringprepException e) {
-            throw new IllegalArgumentException(e);
-        }
-        return subscribe(jid);
     }
 
     /**
@@ -460,46 +425,10 @@ public abstract class Node {
      */
     public Subscription subscribe(Jid jid, FillableSubscribeForm subForm) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         DataForm submitForm = subForm.getDataFormToSubmit();
-        PubSub request = createPubsubPacket(Type.set, new SubscribeExtension(jid, getId()));
+        PubSub request = createPubsubPacket(IQ.Type.set, new SubscribeExtension(jid, getId()));
         request.addExtension(new FormNode(FormNodeType.OPTIONS, submitForm));
         PubSub reply = sendPubsubPacket(request);
         return reply.getExtension(PubSubElementType.SUBSCRIPTION);
-    }
-
-    /**
-     * The user subscribes to the node using the supplied jid and subscription
-     * options.  The bare jid portion of this one must match the jid for the
-     * connection.
-     *
-     * Please note that the {@link Subscription.State} should be checked
-     * on return since more actions may be required by the caller.
-     * {@link Subscription.State#pending} - The owner must approve the subscription
-     * request before messages will be received.
-     * {@link Subscription.State#unconfigured} - If the {@link Subscription#isConfigRequired()} is true,
-     * the caller must configure the subscription before messages will be received.  If it is false
-     * the caller can configure it but is not required to do so.
-     *
-     * @param jidString The jid to subscribe as.
-     * @param subForm TODO javadoc me please
-     *
-     * @return The subscription
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @throws IllegalArgumentException if the provided string is not a valid JID.
-     * @deprecated use {@link #subscribe(Jid, FillableSubscribeForm)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public Subscription subscribe(String jidString, FillableSubscribeForm subForm) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        Jid jid;
-        try {
-            jid = JidCreate.from(jidString);
-        } catch (XmppStringprepException e) {
-            throw new IllegalArgumentException(e);
-        }
-        return subscribe(jid, subForm);
     }
 
     /**
@@ -529,7 +458,7 @@ public abstract class Node {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public void unsubscribe(String jid, String subscriptionId) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        sendPubsubPacket(createPubsubPacket(Type.set, new UnsubscribeExtension(jid, getId(), subscriptionId)));
+        sendPubsubPacket(createPubsubPacket(IQ.Type.set, new UnsubscribeExtension(jid, getId(), subscriptionId)));
     }
 
     /**
@@ -563,7 +492,7 @@ public abstract class Node {
      *
      */
     public SubscribeForm getSubscriptionOptions(String jid, String subscriptionId) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub packet = sendPubsubPacket(createPubsubPacket(Type.get, new OptionsExtension(jid, getId(), subscriptionId)));
+        PubSub packet = sendPubsubPacket(createPubsubPacket(IQ.Type.get, new OptionsExtension(jid, getId(), subscriptionId)));
         FormNode ext = packet.getExtension(PubSubElementType.OPTIONS);
         return new SubscribeForm(ext.getForm());
     }
@@ -651,7 +580,7 @@ public abstract class Node {
         return super.toString() + " " + getClass().getName() + " id: " + id;
     }
 
-    protected PubSub createPubsubPacket(Type type, NodeExtension ext) {
+    protected PubSub createPubsubPacket(IQ.Type type, NodeExtension ext) {
         return PubSub.createPubsubPacket(pubSubManager.getServiceJid(), type, ext);
     }
 
@@ -717,7 +646,7 @@ public abstract class Node {
 // CHECKSTYLE:OFF
             EventElement event = (EventElement) packet.getExtensionElement("event", PubSubNamespace.event.getXmlns());
 
-            List<ExtensionElement> extList = event.getExtensions();
+            List<XmlElement> extList = event.getExtensions();
 
             if (extList.get(0).getElementName().equals(PubSubElementType.PURGE_EVENT.getElementName())) {
                 listener.handlePurge();
@@ -804,7 +733,7 @@ public abstract class Node {
                     return true;
 
                 if (embedEvent instanceof EmbeddedPacketExtension) {
-                    List<ExtensionElement> secondLevelList = ((EmbeddedPacketExtension) embedEvent).getExtensions();
+                    List<XmlElement> secondLevelList = ((EmbeddedPacketExtension) embedEvent).getExtensions();
 
                     // XEP-0060 allows no elements on second level for notifications. See schema or
                     // for example § 4.3:

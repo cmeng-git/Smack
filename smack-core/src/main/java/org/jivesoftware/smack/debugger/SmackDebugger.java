@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software, 2017 Florian Schmaus.
  *
@@ -57,7 +57,7 @@ public abstract class SmackDebugger {
      *
      * @param user the user@host/resource that has just logged in
      */
-    // TODO: Should be replaced with a connection listener authenticed().
+    // TODO: Should be replaced with a connection listener authenticated().
     public abstract void userHasLogged(EntityFullJid user);
 
     /**

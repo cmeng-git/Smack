@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -52,7 +52,7 @@ public class MultiUserChatCreationTest extends SmackTestCase {
             // Create the room
             muc.create("testbot1");
 
-            // Get the the room's configuration form
+            // Get the room's configuration form
             Form form = muc.getConfigurationForm();
             assertNotNull("No room configuration form", form);
             // Create a new form to submit based on the original form

@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2016-2019 Florian Schmaus
+ * Copyright 2016-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,23 @@
  */
 package org.jivesoftware.smackx.iot.provisioning.provider;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.jivesoftware.smackx.iot.provisioning.element.IoTIsFriend;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-public class IoTIsFriendProvider extends IQProvider<IoTIsFriend> {
+public class IoTIsFriendProvider extends IqProvider<IoTIsFriend> {
 
     @Override
-    public IoTIsFriend parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmppStringprepException {
-        Jid jid = ParserUtils.getJidAttribute(parser);
+    public IoTIsFriend parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmppStringprepException {
+        Jid jid = ParserUtils.getJidAttribute(parser, jxmppContext);
         return new IoTIsFriend(jid);
     }
 

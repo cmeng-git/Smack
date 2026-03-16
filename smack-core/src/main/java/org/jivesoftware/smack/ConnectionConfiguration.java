@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2017-2022 Florian Schmaus.
+ * Copyright 2003-2007 Jive Software, 2017-2024 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -76,6 +77,7 @@ import org.jivesoftware.smack.util.TLSUtils;
 import org.jivesoftware.smack.util.dns.SmackDaneProvider;
 import org.jivesoftware.smack.util.dns.SmackDaneVerifier;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -88,7 +90,7 @@ import org.minidns.util.InetAddressUtil;
 /**
  * The connection configuration used for XMPP client-to-server connections. A well configured XMPP service will
  * typically only require you to provide two parameters: The XMPP address, also known as the JID, of the user and the
- * password. All other configuration parameters could ideally be determined automatically by Smack. Hence it is often
+ * password. All other configuration parameters could ideally be determined automatically by Smack. Hence, it is often
  * enough to call {@link Builder#setXmppAddressAndPassword(CharSequence, String)}.
  * <p>
  * Technically there are typically at least two parameters required: Some kind of credentials for authentication. And
@@ -187,6 +189,8 @@ public abstract class ConnectionConfiguration {
 
     private final StanzaIdSourceFactory stanzaIdSourceFactory;
 
+    private final JxmppContext jxmppContext;
+
     protected ConnectionConfiguration(Builder<?, ?> builder) {
         try {
             smackTlsContext = getSmackTlsContext(builder.dnssecMode, builder.sslContextFactory,
@@ -248,7 +252,9 @@ public abstract class ConnectionConfiguration {
 
         stanzaIdSourceFactory = builder.stanzaIdSourceFactory;
 
-        // If the enabledSaslmechanisms are set, then they must not be empty
+        jxmppContext = builder.jxmppContext;
+
+        // If the enabledSaslMechanisms are set, then they must not be empty
         assert enabledSaslMechanisms == null || !enabledSaslMechanisms.isEmpty();
     }
 
@@ -267,7 +273,7 @@ public abstract class ConnectionConfiguration {
             context = SSLContext.getInstance("TLS");
         }
 
-        // TODO: Remove the block below once we removed setKeystorePath(), setKeystoreType(), setCallbackHanlder() and
+        // TODO: Remove the block below once we removed setKeystorePath(), setKeystoreType(), setCallbackHandler() and
         // setPKCS11Library() in the builder, and all related fields and the parameters of this function.
         if (keyManagers == null) {
             keyManagers = Builder.getKeyManagersFrom(keystoreType, keystorePath, callbackHandler, pkcs11Library);
@@ -299,7 +305,11 @@ public abstract class ConnectionConfiguration {
             context.init(keyManagers, trustManagers, secureRandom);
         }
 
-        return new SmackTlsContext(context, daneVerifier);
+        return new SmackTlsContext(context, daneVerifier, trustManager);
+    }
+
+    protected static JxmppContext getDefaultJxmppContext() {
+        return SmackConfiguration.getDefaultJxmppContext();
     }
 
     public String getHostString() {
@@ -355,6 +365,10 @@ public abstract class ConnectionConfiguration {
         return xmppServiceDomainDnsName;
     }
 
+    public JxmppContext getJxmppContext() {
+        return jxmppContext;
+    }
+
     /**
      * Returns the TLS security mode used when making the connection. By default,
      * the mode is {@link SecurityMode#required}.
@@ -385,6 +399,10 @@ public abstract class ConnectionConfiguration {
      */
     public String[] getEnabledSSLCiphers() {
         return enabledSSLCiphers;
+    }
+
+    public SSLSocketFactory getSSLSocketFactory() {
+        return smackTlsContext.sslContext.getSocketFactory();
     }
 
     /**
@@ -534,7 +552,7 @@ public abstract class ConnectionConfiguration {
     /**
      * Returns the stream language to use when connecting to the server.
      *
-     * @return the stream language to use when connecting to the server.
+     * @return the stream language to use when connecting to the server or <code>null</code>.
      */
     public Locale getLanguage() {
         return language;
@@ -544,19 +562,21 @@ public abstract class ConnectionConfiguration {
      * Returns the xml:lang string of the stream language to use when connecting to the server.
      *
      * <p>If the developer sets the language to null, this will also return null, leading to
-     * the removal of the xml:lang tag from the stream. If a Locale("") is configured, this will
-     * return "", which can be used as an override.</p>
+     * the removal of the xml:lang tag from the stream.</p>
      *
-     * @return the stream language to use when connecting to the server.
+     * @return the stream language to use when connecting to the server or <code>null</code>.
      */
     public String getXmlLang() {
-        // TODO: Change to Locale.toLanguageTag() once Smack's minimum Android API level is 21 or higher.
-        // This will need a workaround for new Locale("").getLanguageTag() returning "und". Expected
-        // behavior of this function:
-        //  - returns null if language is null
-        //  - returns "" if language.getLanguage() returns the empty string
-        //  - returns language.toLanguageTag() otherwise
-        return language != null ? language.toString().replace("_", "-") : null;
+        if (language == null) {
+            return null;
+        }
+
+        String languageTag = language.toLanguageTag();
+        if (languageTag.equals("und")) {
+            return null;
+        }
+
+        return languageTag;
     }
 
     /**
@@ -583,7 +603,7 @@ public abstract class ConnectionConfiguration {
      * Returns true if the connection is going to use stream compression. Stream compression
      * will be requested after TLS was established (if TLS was enabled) and only if the server
      * offered stream compression. With stream compression network traffic can be reduced
-     * up to 90%. By default compression is disabled.
+     * up to 90%. By default,compression is disabled.
      *
      * @return true if the connection is going to use stream compression.
      */
@@ -592,7 +612,7 @@ public abstract class ConnectionConfiguration {
     }
 
     /**
-     * Check if the given SASL mechansism is enabled in this connection configuration.
+     * Check if the given SASL mechanism is enabled in this connection configuration.
      *
      * @param saslMechanism TODO javadoc me please
      * @return true if the given SASL mechanism is enabled, false otherwise.
@@ -607,7 +627,7 @@ public abstract class ConnectionConfiguration {
 
     /**
      * Return the explicitly enabled SASL mechanisms. May return <code>null</code> if no SASL mechanisms where
-     * explicitly enabled, i.e. all SALS mechanisms supported and announced by the service will be considered.
+     * explicitly enabled, i.e. all SASL mechanisms supported and announced by the service will be considered.
      *
      * @return the enabled SASL mechanisms or <code>null</code>.
      */
@@ -638,6 +658,7 @@ public abstract class ConnectionConfiguration {
      * @param <C> the resulting connection configuration type parameter.
      */
     public abstract static class Builder<B extends Builder<B, C>, C extends ConnectionConfiguration> {
+        private final JxmppContext jxmppContext;
         private SecurityMode securityMode = SecurityMode.required;
         private DnssecMode dnssecMode = DnssecMode.disabled;
         private KeyManager[] keyManagers;
@@ -670,7 +691,9 @@ public abstract class ConnectionConfiguration {
         private boolean compressionEnabled = false;
         private StanzaIdSourceFactory stanzaIdSourceFactory = new StandardStanzaIdSource.Factory();
 
-        protected Builder() {
+        @SuppressWarnings("this-escape")
+        protected Builder(JxmppContext jxmppContext) {
+            this.jxmppContext = jxmppContext;
             if (SmackConfiguration.DEBUG) {
                 enableDefaultDebugger();
             }
@@ -687,7 +710,7 @@ public abstract class ConnectionConfiguration {
          * @since 4.4.0
          */
         public B setXmppAddressAndPassword(CharSequence jid, String password) throws XmppStringprepException {
-            return setXmppAddressAndPassword(JidCreate.entityBareFrom(jid), password);
+            return setXmppAddressAndPassword(JidCreate.entityBareFrom(jid.toString(), jxmppContext), password);
         }
 
         /**
@@ -757,7 +780,7 @@ public abstract class ConnectionConfiguration {
          * @throws XmppStringprepException if the given string is not a domain bare JID.
          */
         public B setXmppDomain(String xmppServiceDomain) throws XmppStringprepException {
-            this.xmppServiceDomain = JidCreate.domainBareFrom(xmppServiceDomain);
+            this.xmppServiceDomain = JidCreate.domainBareFrom(xmppServiceDomain, jxmppContext);
             return getThis();
         }
 
@@ -855,22 +878,6 @@ public abstract class ConnectionConfiguration {
         public B setHost(DnsName host) {
             this.host = host;
             return getThis();
-        }
-
-        /**
-         * Set the host to connect to by either its fully qualified domain name (FQDN) or its IP.
-         *
-         * @param fqdnOrIp a CharSequence either representing the FQDN or the IP of the host.
-         * @return a reference to this builder.
-         * @see #setHost(DnsName)
-         * @see #setHostAddress(InetAddress)
-         * @since 4.3.2
-         * @deprecated use {@link #setHost(CharSequence)} instead.
-         */
-        @Deprecated
-        // TODO: Remove in Smack 4.5.
-        public B setHostAddressByNameOrIp(CharSequence fqdnOrIp) {
-            return setHost(fqdnOrIp);
         }
 
         public B setPort(int port) {
@@ -1028,25 +1035,6 @@ public abstract class ConnectionConfiguration {
          * "http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#X509TrustManager"
          * >Java Secure Socket Extension (JSEE) Reference Guide: Creating Your Own X509TrustManager</a>
          *
-         * @param context the custom SSLContext for new sockets.
-         * @return a reference to this builder.
-         * @deprecated use {@link #setSslContextFactory(SslContextFactory)} instead}.
-         */
-        // TODO: Remove in Smack 4.5.
-        @Deprecated
-        public B setCustomSSLContext(SSLContext context) {
-            return setSslContextFactory(() -> {
-                return context;
-            });
-        }
-
-        /**
-         * Sets a custom SSLContext for creating SSL sockets.
-         * <p>
-         * For more information on how to create a SSLContext see <a href=
-         * "http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#X509TrustManager"
-         * >Java Secure Socket Extension (JSEE) Reference Guide: Creating Your Own X509TrustManager</a>
-         *
          * @param sslContextFactory the custom SSLContext for new sockets.
          * @return a reference to this builder.
          */
@@ -1090,8 +1078,7 @@ public abstract class ConnectionConfiguration {
         }
 
         /**
-         * Sets if an initial available presence will be sent to the server. By default
-         * an available presence will be sent to the server indicating that this presence
+         * Sets if an initial available presence will be sent to the server. By default,         * an available presence will be sent to the server indicating that this presence
          * is not online and available to receive messages. If you want to log in without
          * being 'noticed' then pass a <code>false</code> value.
          *
@@ -1187,7 +1174,9 @@ public abstract class ConnectionConfiguration {
             if (!SASLAuthentication.isSaslMechanismRegistered(SASLMechanism.EXTERNAL)) {
                 throw new IllegalArgumentException("SASL " + SASLMechanism.EXTERNAL + " is not registered");
             }
-            setCustomSSLContext(sslContext);
+            setSslContextFactory(() -> {
+                return sslContext;
+            });
             throwIfEnabledSaslMechanismsSet();
 
             allowEmptyOrNullUsernames();
@@ -1266,7 +1255,7 @@ public abstract class ConnectionConfiguration {
          * Sets if the connection is going to use compression (default false).
          *
          * Compression is only activated if the server offers compression. With compression network
-         * traffic can be reduced up to 90%. By default compression is disabled.
+         * traffic can be reduced up to 90%. By default,compression is disabled.
          *
          * @param compressionEnabled if the connection is going to use compression on the HTTP level.
          * @return a reference to this object.
@@ -1324,7 +1313,7 @@ public abstract class ConnectionConfiguration {
                 } else {
                     InputStream stream = TLSUtils.getDefaultTruststoreStreamIfPossible();
                     try {
-                        // Note that PKCS12 keystores need a password one some Java platforms. Hence we try the famous
+                        // Note that PKCS12 keystores need a password one some Java platforms. Hence, we try the famous
                         // 'changeit' here. See https://bugs.openjdk.java.net/browse/JDK-8194702
                         char[] password = "changeit".toCharArray();
                         try {

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -68,28 +68,34 @@ public abstract class IQ extends Stanza implements IqView {
     }
 
     protected IQ(AbstractIqBuilder<?> iqBuilder, String childElementName, String childElementNamespace) {
+        this(iqBuilder, childElementName != null ? new QName(childElementNamespace, childElementName) : null);
+    }
+
+    protected IQ(AbstractIqBuilder<?> iqBuilder, QName childElementQName) {
         super(iqBuilder);
 
         type = iqBuilder.type;
 
-        this.childElementName = childElementName;
-        this.childElementNamespace = childElementNamespace;
-        if (childElementName == null) {
-            childElementQName = null;
+        if (childElementQName != null) {
+            this.childElementQName = childElementQName;
+            this.childElementName = childElementQName.getLocalPart();
+            this.childElementNamespace = childElementQName.getNamespaceURI();
         } else {
-            childElementQName = new QName(childElementNamespace, childElementName);
+            this.childElementQName = null;
+            this.childElementName = null;
+            this.childElementNamespace = null;
         }
     }
 
     @Override
-    public Type getType() {
+    public final Type getType() {
         return type;
     }
 
     /**
      * Sets the type of the IQ packet.
      * <p>
-     * Since the type of an IQ must present, an IllegalArgmentException will be thrown when type is
+     * Since the type of an IQ must present, an IllegalArgumentException will be thrown when type is
      * <code>null</code>.
      * </p>
      *
@@ -98,32 +104,6 @@ public abstract class IQ extends Stanza implements IqView {
     // TODO: Mark this as deprecated once StanzaBuilder is ready and all call sites are gone.
     public void setType(Type type) {
         this.type = Objects.requireNonNull(type, "type must not be null");
-    }
-
-    /**
-     * Return true if this IQ is a request IQ, i.e. an IQ of type {@link Type#get} or {@link Type#set}.
-     *
-     * @return true if IQ type is 'get' or 'set', false otherwise.
-     * @since 4.1
-     */
-    public boolean isRequestIQ() {
-        switch (type) {
-        case get:
-        case set:
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    /**
-     * Return true if this IQ is a request, i.e. an IQ of type {@link Type#result} or {@link Type#error}.
-     *
-     * @return true if IQ type is 'result' or 'error', false otherwise.
-     * @since 4.4
-     */
-    public boolean isResponseIQ() {
-        return !isRequestIQ();
     }
 
     public final QName getChildElementQName() {
@@ -194,7 +174,6 @@ public abstract class IQ extends Stanza implements IqView {
         if (type == Type.error) {
             // Add the error sub-packet, if there is one.
             appendErrorIfExists(xml);
-            return;
         }
         if (childElementName == null) {
             return;
@@ -203,7 +182,7 @@ public abstract class IQ extends Stanza implements IqView {
         // Add the query section if there is one.
         IQChildElementXmlStringBuilder iqChildElement = getIQChildElementBuilder(
                         new IQChildElementXmlStringBuilder(getChildElementName(), getChildElementNamespace(), null, xml.getXmlEnvironment()));
-        // TOOD: Document the cases where iqChildElement is null but childElementName not. And if there are none, change
+        // TODO: Document the cases where iqChildElement is null but childElementName not. And if there are none, change
         // the logic.
         if (iqChildElement == null) {
             return;
@@ -211,7 +190,7 @@ public abstract class IQ extends Stanza implements IqView {
 
         xml.append(iqChildElement);
 
-        List<ExtensionElement> extensionsXml = getExtensions();
+        List<XmlElement> extensionsXml = getExtensions();
         if (iqChildElement.isEmptyElement) {
             if (extensionsXml.isEmpty()) {
                 xml.closeEmptyElement();
@@ -305,30 +284,7 @@ public abstract class IQ extends Stanza implements IqView {
      * @return a new {@link Type#error IQ.Type.error} IQ based on the originating IQ.
      */
     public static ErrorIQ createErrorResponse(final IQ request, final StanzaError error) {
-        if (!request.isRequestIQ()) {
-            throw new IllegalArgumentException(
-                    "IQ must be of type 'set' or 'get'. Original IQ: " + request.toXML());
-        }
-        final ErrorIQ result = new ErrorIQ(error);
-        result.setStanzaId(request.getStanzaId());
-        result.setFrom(request.getTo());
-        result.setTo(request.getFrom());
-
-        return result;
-    }
-
-    /**
-     * Deprecated.
-     *
-     * @param request the request.
-     * @param error the error.
-     * @return an error IQ.
-     * @deprecated use {@link #createErrorResponse(IQ, StanzaError)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public static ErrorIQ createErrorResponse(final IQ request, final StanzaError.Builder error) {
-        return createErrorResponse(request, error.build());
+        return ErrorIQ.createErrorResponse(request, error);
     }
 
     public static ErrorIQ createErrorResponse(final IQ request, final StanzaError.Condition condition) {

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -71,17 +71,17 @@ public class AudioMediaSession extends JingleMediaSession implements MediaSessio
      * @throws NoProcessorException if there is no media processor.
      * @throws UnsupportedFormatException if the format is not supported.
      * @throws IOException if an I/O error occurred.
-     * @throws GeneralSecurityException if there was a geneeral security exception.
+     * @throws GeneralSecurityException if there was a general security exception.
      */
     public static MediaSession createSession(String localhost, int localPort, String remoteHost, int remotePort, MediaSessionListener eventHandler, int quality, boolean secure, boolean micOn) throws NoProcessorException, UnsupportedFormatException, IOException, GeneralSecurityException {
 
         SpeexFormat.setFramesPerPacket(1);
-        /**
+        /*
          * The master key. Hardcoded for now.
          */
         byte[] masterKey = new byte[] {(byte) 0xE1, (byte) 0xF9, 0x7A, 0x0D, 0x3E, 0x01, (byte) 0x8B, (byte) 0xE0, (byte) 0xD6, 0x4F, (byte) 0xA3, 0x2C, 0x06, (byte) 0xDE, 0x41, 0x39};
 
-        /**
+        /*
          * The master salt. Hardcoded for now.
          */
         byte[] masterSalt = new byte[] {0x0E, (byte) 0xC6, 0x75, (byte) 0xAD, 0x49, (byte) 0x8A, (byte) 0xFE, (byte) 0xEB, (byte) 0xB6, (byte) 0x96, 0x0B, 0x3A, (byte) 0xAB, (byte) 0xE6};
@@ -104,6 +104,7 @@ public class AudioMediaSession extends JingleMediaSession implements MediaSessio
      * @param locator     media locator
      * @param jingleSession the jingle session.
      */
+    @SuppressWarnings("this-escape")
     public AudioMediaSession(final PayloadType payloadType, final TransportCandidate remote,
             final TransportCandidate local, String locator, JingleSession jingleSession) {
         super(payloadType, remote, local, locator == null ? "dsound://" : locator, jingleSession);

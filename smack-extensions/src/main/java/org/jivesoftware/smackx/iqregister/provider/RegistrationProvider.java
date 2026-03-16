@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -17,29 +17,32 @@
 package org.jivesoftware.smackx.iqregister.provider;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.iqregister.packet.Registration;
 
-public class RegistrationProvider extends IQProvider<Registration> {
+import org.jxmpp.JxmppContext;
+
+public class RegistrationProvider extends IqProvider<Registration> {
 
     @Override
-    public Registration parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public Registration parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         String instruction = null;
         Map<String, String> fields = new HashMap<>();
-        List<ExtensionElement> packetExtensions = new LinkedList<>();
+        List<XmlElement> packetExtensions = new ArrayList<>();
         outerloop:
         while (true) {
             XmlPullParser.Event eventType = parser.next();
@@ -63,7 +66,7 @@ public class RegistrationProvider extends IQProvider<Registration> {
                 }
                 // Otherwise, it must be a packet extension.
                 else {
-                    PacketParserUtils.addExtensionElement(packetExtensions, parser, xmlEnvironment);
+                    PacketParserUtils.addExtensionElement(packetExtensions, parser, xmlEnvironment, jxmppContext);
                 }
             }
             else if (eventType == XmlPullParser.Event.END_ELEMENT) {

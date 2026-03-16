@@ -1,9 +1,13 @@
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+}
+
 description = """\
 Smack slf4j debugger.
 Inspect the exchanged XMPP stanzas.
 Connect your favourite slf4j backend of choice to get output inside of it"""
 
 dependencies {
-    compile project(':smack-core')
-    compile 'org.slf4j:slf4j-api:[1.7,1.8)'
+    api project(':smack-core')
+    implementation 'org.slf4j:slf4j-api:[1.7,2.0)'
 }

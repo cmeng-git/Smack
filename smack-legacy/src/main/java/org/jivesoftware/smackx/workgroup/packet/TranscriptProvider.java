@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -21,23 +21,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * An IQProvider for transcripts.
  *
  * @author Gaston Dombiak
  */
-public class TranscriptProvider extends IQProvider<Transcript> {
+public class TranscriptProvider extends IqProvider<Transcript> {
 
     @Override
-    public Transcript parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public Transcript parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         String sessionID = parser.getAttributeValue("", "sessionID");
         List<Stanza> packets = new ArrayList<>();
 
@@ -46,10 +49,12 @@ public class TranscriptProvider extends IQProvider<Transcript> {
             XmlPullParser.Event eventType = parser.next();
             if (eventType == XmlPullParser.Event.START_ELEMENT) {
                 if (parser.getName().equals("message")) {
-                    packets.add(PacketParserUtils.parseMessage(parser));
+                    var message = PacketParserUtils.parseMessage(parser, xmlEnvironment, jxmppContext);
+                    packets.add(message);
                 }
                 else if (parser.getName().equals("presence")) {
-                    packets.add(PacketParserUtils.parsePresence(parser));
+                    var presence = PacketParserUtils.parsePresence(parser, xmlEnvironment, jxmppContext);
+                    packets.add(presence);
                 }
             }
             else if (eventType == XmlPullParser.Event.END_ELEMENT) {

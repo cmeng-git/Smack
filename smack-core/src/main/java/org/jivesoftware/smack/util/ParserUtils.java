@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2014-2019 Florian Schmaus
+ * Copyright © 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,16 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.xml.namespace.QName;
-
 import org.jivesoftware.smack.datatypes.UInt16;
 import org.jivesoftware.smack.datatypes.UInt32;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.parsing.SmackParsingException.RequiredAttributeMissingException;
-import org.jivesoftware.smack.parsing.SmackParsingException.SmackTextParseException;
 import org.jivesoftware.smack.parsing.SmackParsingException.SmackUriSyntaxParsingException;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.EntityJid;
@@ -51,17 +49,25 @@ public class ParserUtils {
      */
     public static final String JID = "jid";
 
-    public static void assertAtStartTag(XmlPullParser parser) throws XmlPullParserException {
-        assert parser.getEventType() == XmlPullParser.Event.START_ELEMENT;
+    public static void assertAtStartTag(XmlPullParser parser) {
+        try {
+            assert parser.getEventType() == XmlPullParser.Event.START_ELEMENT;
+        } catch (XmlPullParserException e) {
+            throw new AssertionError(e);
+        }
     }
 
-    public static void assertAtStartTag(XmlPullParser parser, String name) throws XmlPullParserException {
+    public static void assertAtStartTag(XmlPullParser parser, String name) {
         assertAtStartTag(parser);
         assert name.equals(parser.getName());
     }
 
-    public static void assertAtEndTag(XmlPullParser parser) throws XmlPullParserException {
-        assert parser.getEventType() == XmlPullParser.Event.END_ELEMENT;
+    public static void assertAtEndTag(XmlPullParser parser) {
+        try {
+            assert parser.getEventType() == XmlPullParser.Event.END_ELEMENT;
+        } catch (XmlPullParserException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public static void forwardToStartElement(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -84,48 +90,48 @@ public class ParserUtils {
         }
     }
 
-    public static Jid getJidAttribute(XmlPullParser parser) throws XmppStringprepException {
-        return getJidAttribute(parser, JID);
+    public static Jid getJidAttribute(XmlPullParser parser, JxmppContext jxmppContext) throws XmppStringprepException {
+        return getJidAttribute(parser, JID, jxmppContext);
     }
 
-    public static Jid getJidAttribute(XmlPullParser parser, String name) throws XmppStringprepException {
+    public static Jid getJidAttribute(XmlPullParser parser, String name, JxmppContext jxmppContext) throws XmppStringprepException {
         final String jidString = parser.getAttributeValue("", name);
         if (jidString == null) {
             return null;
         }
-        return JidCreate.from(jidString);
+        return JidCreate.from(jidString, jxmppContext);
     }
 
-    public static EntityBareJid getBareJidAttribute(XmlPullParser parser) throws XmppStringprepException {
-        return getBareJidAttribute(parser, JID);
+    public static EntityBareJid getBareJidAttribute(XmlPullParser parser, JxmppContext jxmppContext) throws XmppStringprepException {
+        return getBareJidAttribute(parser, JID, jxmppContext);
     }
 
-    public static EntityBareJid getBareJidAttribute(XmlPullParser parser, String name) throws XmppStringprepException {
+    public static EntityBareJid getBareJidAttribute(XmlPullParser parser, String name, JxmppContext jxmppContext) throws XmppStringprepException {
         final String jidString = parser.getAttributeValue("", name);
         if (jidString == null) {
             return null;
         }
-        return JidCreate.entityBareFrom(jidString);
+        return JidCreate.entityBareFrom(jidString, jxmppContext);
     }
 
-    public static EntityFullJid getFullJidAttribute(XmlPullParser parser) throws XmppStringprepException {
-        return getFullJidAttribute(parser, JID);
+    public static EntityFullJid getFullJidAttribute(XmlPullParser parser, JxmppContext jxmppContext) throws XmppStringprepException {
+        return getFullJidAttribute(parser, JID, jxmppContext);
     }
 
-    public static EntityFullJid getFullJidAttribute(XmlPullParser parser, String name) throws XmppStringprepException {
+    public static EntityFullJid getFullJidAttribute(XmlPullParser parser, String name, JxmppContext jxmppContext) throws XmppStringprepException {
         final String jidString = parser.getAttributeValue("", name);
         if (jidString == null) {
             return null;
         }
-        return JidCreate.entityFullFrom(jidString);
+        return JidCreate.entityFullFrom(jidString, jxmppContext);
     }
 
-    public static EntityJid getEntityJidAttribute(XmlPullParser parser, String name) throws XmppStringprepException {
+    public static EntityJid getEntityJidAttribute(XmlPullParser parser, String name, JxmppContext jxmppContext) throws XmppStringprepException {
         final String jidString = parser.getAttributeValue("", name);
         if (jidString == null) {
             return null;
         }
-        Jid jid = JidCreate.from(jidString);
+        Jid jid = JidCreate.from(jidString, jxmppContext);
 
         if (!jid.hasLocalpart()) return null;
 
@@ -138,16 +144,16 @@ public class ParserUtils {
         return bareJid;
     }
 
-    public static Resourcepart getResourcepartAttribute(XmlPullParser parser, String name) throws XmppStringprepException {
+    public static Resourcepart getResourcepartAttribute(XmlPullParser parser, String name, JxmppContext jxmppContext) throws XmppStringprepException {
         final String resourcepartString = parser.getAttributeValue("", name);
         if (resourcepartString == null) {
             return null;
         }
-        return Resourcepart.from(resourcepartString);
+        return Resourcepart.from(resourcepartString, jxmppContext);
     }
 
     /**
-     * Prase a string to a boolean value as per "xs:boolean". Valid input strings are "true", "1" for true, and "false", "0" for false.
+     * Phrase a string to a boolean value as per "xs:boolean". Valid input strings are "true", "1" for true, and "false", "0" for false.
      *
      * @param booleanString the input string.
      * @return the boolean representation of the input string
@@ -309,30 +315,23 @@ public class ParserUtils {
         return s;
     }
 
-    public static Date getDateFromOptionalXep82String(String dateString) throws SmackTextParseException {
+    public static Date getDateFromOptionalXep82String(String dateString) throws ParseException {
         if (dateString == null) {
             return null;
         }
         return getDateFromXep82String(dateString);
     }
 
-    public static Date getDateFromXep82String(String dateString) throws SmackTextParseException {
-        try {
-            return XmppDateTime.parseXEP0082Date(dateString);
-        } catch (ParseException e) {
-            throw new SmackParsingException.SmackTextParseException(e);
-        }
+    public static Date getDateFromXep82String(String dateString) throws ParseException {
+        return XmppDateTime.parseXEP0082Date(dateString);
     }
 
-    public static Date getDateFromString(String dateString) throws SmackTextParseException {
-        try {
-            return XmppDateTime.parseDate(dateString);
-        } catch (ParseException e) {
-            throw new SmackParsingException.SmackTextParseException(e);
-        }
+    public static Date getDateFromString(String dateString) throws ParseException {
+        return XmppDateTime.parseDate(dateString);
     }
 
-    public static Date getDateFromNextText(XmlPullParser parser) throws XmlPullParserException, IOException, SmackTextParseException {
+    public static Date getDateFromNextText(XmlPullParser parser)
+                    throws XmlPullParserException, IOException, ParseException {
         String dateString = parser.nextText();
         return getDateFromString(dateString);
     }
@@ -375,16 +374,11 @@ public class ParserUtils {
         return parser.getAttributeValue("http://www.w3.org/XML/1998/namespace", "lang");
     }
 
-    /**
-     * Get the QName of the current element.
-     *
-     * @param parser the parser.
-     * @return the Qname.
-     * @deprecated use {@link XmlPullParser#getQName()} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5
-    public static QName getQName(XmlPullParser parser) {
-        return parser.getQName();
+    public static InternetAddress getInternetAddressIngoringZoneIdAttribute(XmlPullParser parser, String attribute) {
+        String inetAddressString = parser.getAttributeValue(attribute);
+        if (inetAddressString == null) {
+            return null;
+        }
+        return InternetAddress.fromIgnoringZoneId(inetAddressString);
     }
 }

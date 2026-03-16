@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020 Paul Schaub
  *
@@ -23,12 +23,15 @@ import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.fallback_indication.element.FallbackIndicationElement;
+
+import org.jxmpp.JxmppContext;
 
 public class FallbackIndicationElementProvider extends ExtensionElementProvider<FallbackIndicationElement> {
 
     @Override
-    public FallbackIndicationElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+    public FallbackIndicationElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
             throws XmlPullParserException, IOException, SmackParsingException {
         return FallbackIndicationElement.INSTANCE;
     }

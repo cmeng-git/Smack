@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017 Paul Schaub, 2019-2021 Florian Schmaus
+ * Copyright 2017 Paul Schaub, 2019-2023 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.jivesoftware.smack.util.RandomUtil;
+
 import org.jivesoftware.smackx.omemo.util.OmemoConstants;
 import org.jivesoftware.smackx.omemo.util.OmemoMessageBuilder;
 
@@ -47,7 +48,7 @@ public class OmemoAesCipher {
             String message = "Unable to perform " + OmemoConstants.Crypto.CIPHERMODE
                             + " operation requires by OMEMO. Ensure that a suitable crypto provider for is available."
                             + " For example Bouncycastle on Android (BouncyCastleProvider)";
-            throw new AssertionError(message);
+            throw new AssertionError(message, e);
         }
     }
 
@@ -56,7 +57,7 @@ public class OmemoAesCipher {
         decrypt(Cipher.DECRYPT_MODE),
         ;
 
-        public final int opmodeInt;
+        final int opmodeInt;
 
         CipherOpmode(int opmodeInt) {
             this.opmodeInt = opmodeInt;

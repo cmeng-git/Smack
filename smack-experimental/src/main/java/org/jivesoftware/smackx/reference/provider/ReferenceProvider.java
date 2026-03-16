@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub
  *
@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
@@ -31,12 +31,14 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.reference.element.ReferenceElement;
 
+import org.jxmpp.JxmppContext;
+
 public class ReferenceProvider extends ExtensionElementProvider<ReferenceElement> {
 
     public static final ReferenceProvider TEST_PROVIDER = new ReferenceProvider();
 
     @Override
-    public ReferenceElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public ReferenceElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         Integer begin = ParserUtils.getIntegerAttribute(parser, ReferenceElement.ATTR_BEGIN);
         Integer end =   ParserUtils.getIntegerAttribute(parser, ReferenceElement.ATTR_END);
         String typeString = parser.getAttributeValue(null, ReferenceElement.ATTR_TYPE);
@@ -51,7 +53,7 @@ public class ReferenceProvider extends ExtensionElementProvider<ReferenceElement
             // TODO: Should be SmackParseException and probably be factored into ParserUtils.
             throw new IOException(e);
         }
-        ExtensionElement child = null;
+        XmlElement child = null;
         outerloop: while (true) {
             XmlPullParser.Event eventType = parser.next();
             if (eventType == XmlPullParser.Event.START_ELEMENT) {

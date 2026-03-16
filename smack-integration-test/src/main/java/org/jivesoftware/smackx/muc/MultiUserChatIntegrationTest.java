@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015-2020 Florian Schmaus
+ * Copyright 2015-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,147 +16,271 @@
  */
 package org.jivesoftware.smackx.muc;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import org.jivesoftware.smack.MessageListener;
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.util.StringUtils;
+import org.jivesoftware.smack.packet.StanzaError;
 
-import org.jivesoftware.smackx.muc.MultiUserChat.MucCreateConfigFormHandle;
+import org.jivesoftware.smackx.muc.MultiUserChatException.MissingMucCreationAcknowledgeException;
+import org.jivesoftware.smackx.muc.MultiUserChatException.MucAlreadyJoinedException;
+import org.jivesoftware.smackx.muc.MultiUserChatException.MucConfigurationNotSupportedException;
 import org.jivesoftware.smackx.muc.MultiUserChatException.MucNotJoinedException;
 import org.jivesoftware.smackx.muc.MultiUserChatException.NotAMucServiceException;
-import org.jivesoftware.smackx.muc.packet.MUCUser;
 
-import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
-import org.igniterealtime.smack.inttest.util.ResultSyncPoint;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
-import org.jxmpp.jid.DomainBareJid;
+
 import org.jxmpp.jid.EntityBareJid;
-import org.jxmpp.jid.impl.JidCreate;
-import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
-public class MultiUserChatIntegrationTest extends AbstractSmackIntegrationTest {
-
-    private final String randomString = StringUtils.insecureRandomString(6);
-
-    private final MultiUserChatManager mucManagerOne;
-    private final MultiUserChatManager mucManagerTwo;
-    private final DomainBareJid mucService;
+@SpecificationReference(document = "XEP-0045", version = "1.34.6")
+public class MultiUserChatIntegrationTest extends AbstractMultiUserChatIntegrationTest {
 
     public MultiUserChatIntegrationTest(SmackIntegrationTestEnvironment environment)
-                    throws NoResponseException, XMPPErrorException, NotConnectedException,
-                    InterruptedException, TestNotPossibleException {
+            throws SmackException.NoResponseException, XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+            InterruptedException, TestNotPossibleException, MucAlreadyJoinedException, MissingMucCreationAcknowledgeException, NotAMucServiceException, XmppStringprepException {
         super(environment);
-        mucManagerOne = MultiUserChatManager.getInstanceFor(conOne);
-        mucManagerTwo = MultiUserChatManager.getInstanceFor(conTwo);
-
-        List<DomainBareJid> services = mucManagerOne.getMucServiceDomains();
-        if (services.isEmpty()) {
-            throw new TestNotPossibleException("No MUC (XEP-45) service found");
-        }
-        else {
-            mucService = services.get(0);
-        }
-    }
-
-    @SmackIntegrationTest
-    public void mucJoinLeaveTest() throws XmppStringprepException, NotAMucServiceException, NoResponseException,
-            XMPPErrorException, NotConnectedException, InterruptedException, MucNotJoinedException {
-        EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from("smack-inttest-join-leave-" + randomString),
-                mucService.getDomain());
-
-        MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
-
-        muc.join(Resourcepart.from("nick-one"));
-
-        Presence reflectedLeavePresence = muc.leave();
-
-        MUCUser mucUser = MUCUser.from(reflectedLeavePresence);
-        assertNotNull(mucUser);
-
-        assertTrue(mucUser.getStatus().contains(MUCUser.Status.PRESENCE_TO_SELF_110));
     }
 
     @SmackIntegrationTest
     public void mucTest() throws Exception {
-        EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from("smack-inttest-" + randomString), mucService.getDomain());
+        EntityBareJid mucAddress = getRandomRoom("message");
 
         MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
         MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
 
         final String mucMessage = "Smack Integration Test MUC Test Message " + randomString;
-        final ResultSyncPoint<String, Exception> resultSyncPoint = new ResultSyncPoint<>();
+        final SimpleResultSyncPoint resultSyncPoint = new SimpleResultSyncPoint();
 
         mucAsSeenByTwo.addMessageListener(new MessageListener() {
             @Override
             public void processMessage(Message message) {
                 String body = message.getBody();
                 if (mucMessage.equals(body)) {
-                    resultSyncPoint.signal(body);
+                    resultSyncPoint.signal();
                 }
             }
         });
 
-        MucCreateConfigFormHandle handle = mucAsSeenByOne.createOrJoin(Resourcepart.from("one-" + randomString));
-        if (handle != null) {
-            handle.makeInstant();
-        }
-        mucAsSeenByTwo.join(Resourcepart.from("two-" + randomString));
-
+        createMuc(mucAsSeenByOne, nicknameOne);
+        mucAsSeenByTwo.join(nicknameTwo);
         mucAsSeenByOne.sendMessage(mucMessage);
-        resultSyncPoint.waitForResult(timeout);
 
-        mucAsSeenByOne.leave();
-        mucAsSeenByTwo.leave();
+        try {
+            assertResult(resultSyncPoint, "Expected " + conTwo.getUser() + " to receive message that was sent by " + conOne.getUser() + " in room " + mucAddress + " (but it did not).");
+        } finally {
+            tryDestroy(mucAsSeenByOne);
+        }
     }
 
-    @SmackIntegrationTest
-    public void mucDestroyTest() throws TimeoutException, Exception {
 
-        EntityBareJid mucAddress = JidCreate.entityBareFrom(Localpart.from("smack-inttest-join-leave-" + randomString),
-                                                            mucService.getDomain());
+    /**
+     * Asserts that an owner is notified of room destruction when they destroy a room.
+     *
+     * @throws TimeoutException when roomDestroyed event doesn't get fired
+     * @throws Exception when other errors occur
+     */
+    @SmackIntegrationTest(section = "10.9", quote =
+        "A room owner MUST be able to destroy a room, especially if the room is persistent... The room removes all " +
+        "users from the room... and destroys the room")
+    public void mucDestroyOwnerTest() throws TimeoutException, Exception {
+
+        EntityBareJid mucAddress = getRandomRoom("destroy-owner");
 
         MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
-        muc.join(Resourcepart.from("nick-one"));
+        createMuc(muc, nicknameOne);
+
+        // These would be a test implementation bug, not assertion failure.
+        if (!mucManagerOne.getJoinedRooms().contains(mucAddress)) {
+            tryDestroy(muc);
+            throw new IllegalStateException("Expected user to have joined a room '" + mucAddress + "' (but does not appear to have done so).");
+        }
 
         final SimpleResultSyncPoint mucDestroyed = new SimpleResultSyncPoint();
 
-        @SuppressWarnings("deprecation")
-        DefaultUserStatusListener userStatusListener = new DefaultUserStatusListener() {
+        UserStatusListener userStatusListener = new UserStatusListener() {
             @Override
-            public void roomDestroyed(MultiUserChat alternateMUC, String reason) {
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
                 mucDestroyed.signal();
             }
         };
 
         muc.addUserStatusListener(userStatusListener);
 
-        assertTrue(mucManagerOne.getJoinedRooms().size() == 1);
-        assertTrue(muc.getOccupantsCount() == 1);
-        assertTrue(muc.getNickname() != null);
-
         try {
             muc.destroy("Dummy reason", null);
-            mucDestroyed.waitForResult(timeout);
+            assertResult(mucDestroyed, "Expected " + conOne.getUser() + " to be notified of destruction of room " + mucAddress + " (but was not).");
         } finally {
             muc.removeUserStatusListener(userStatusListener);
         }
 
-        assertTrue(mucManagerOne.getJoinedRooms().size() == 0);
-        assertTrue(muc.getOccupantsCount() == 0);
-        assertTrue(muc.getNickname() == null);
+        Set<EntityBareJid> joinedRooms = mucManagerOne.getJoinedRooms();
+        assertFalse(muc.isJoined(), "Expected " + conOne.getUser() + " to no longer be in room " + mucAddress + " after it was destroyed, but it is still in.");
+        assertEquals(0, joinedRooms.size(), "Expected " + conOne.getUser() + " to no longer be in any rooms after " + mucAddress + " was destroyed. But it is still in " + joinedRooms);
+        assertEquals(0, muc.getOccupantsCount(), "Expected room " + mucAddress + " to no longer have any occupants after it was destroyed (but it has).");
+        assertNull(muc.getNickname());
+    }
+
+    /**
+     * Asserts that an occupant of a room is notified when a room is destroyed.
+     *
+     * @throws TimeoutException when roomDestroyed event doesn't get fired
+     * @throws Exception when other errors occur
+     */
+    @SmackIntegrationTest(section = "10.9", quote =
+        "A room owner MUST be able to destroy a room, especially if the room is persistent... The room removes all " +
+            "users from the room... and destroys the room")
+    public void mucDestroyTestOccupant() throws TimeoutException, Exception {
+
+        EntityBareJid mucAddress = getRandomRoom("destroy-occupant");
+
+        MultiUserChat mucAsSeenByOwner = mucManagerOne.getMultiUserChat(mucAddress);
+        MultiUserChat mucAsSeenByParticipant = mucManagerTwo.getMultiUserChat(mucAddress);
+        createMuc(mucAsSeenByOwner, nicknameOne);
+
+        // These would be a test implementation bug, not assertion failure.
+        mucAsSeenByParticipant.join(nicknameTwo);
+        if (!mucManagerTwo.getJoinedRooms().contains(mucAddress)) {
+            tryDestroy(mucAsSeenByOwner);
+            throw new IllegalStateException("Expected user to have joined a room '" + mucAddress + "' (but does not appear to have done so).");
+        }
+
+
+        final SimpleResultSyncPoint mucDestroyed = new SimpleResultSyncPoint();
+
+        UserStatusListener userStatusListener = new UserStatusListener() {
+            @Override
+            public void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
+                mucDestroyed.signal();
+            }
+        };
+
+        mucAsSeenByParticipant.addUserStatusListener(userStatusListener);
+
+        try {
+            mucAsSeenByOwner.destroy("Dummy reason", null);
+            assertResult(mucDestroyed, "Expected " + conTwo.getUser() + " to be notified of destruction of room " + mucAddress + " (but was not).");
+        } finally {
+            mucAsSeenByParticipant.removeUserStatusListener(userStatusListener);
+        }
+
+        Set<EntityBareJid> joinedRooms = mucManagerTwo.getJoinedRooms();
+        assertFalse(mucAsSeenByParticipant.isJoined(), "Expected " + conTwo.getUser() + " to no longer be in room " + mucAddress + " after it was destroyed, but it is still in.");
+        assertEquals(0, joinedRooms.size(), "Expected " + conTwo.getUser() + " to no longer be in any rooms after " + mucAddress + " was destroyed. But it is still in " + joinedRooms);
+        assertEquals(0, mucAsSeenByParticipant.getOccupantsCount(), "Expected room " + mucAddress + " to no longer have any occupants after it was destroyed (but it has).");
+        assertNull(mucAsSeenByParticipant.getNickname());
+    }
+
+    @SmackIntegrationTest
+    public void mucNameChangeTest()
+                    throws XmppStringprepException, MucAlreadyJoinedException, MissingMucCreationAcknowledgeException,
+                    NotAMucServiceException, NoResponseException, XMPPErrorException, NotConnectedException,
+                    InterruptedException, MucConfigurationNotSupportedException {
+        EntityBareJid mucAddress = getRandomRoom("muc-name-change");
+
+        MultiUserChat muc = mucManagerOne.getMultiUserChat(mucAddress);
+        createMuc(muc, nicknameOne);
+
+        final String newRoomName = "New Room Name (" + randomString + ")";
+
+        try {
+            muc.getConfigFormManager()
+                .setRoomName(newRoomName)
+                .submitConfigurationForm();
+
+            MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(conTwo);
+            RoomInfo roomInfo = mucManager.getRoomInfo(muc.getRoom());
+            assertEquals(newRoomName, roomInfo.getName());
+        } finally {
+            tryDestroy(muc);
+        }
+    }
+
+    @SmackIntegrationTest(section = "8.1", quote = "modify the subject [...] MUST be denied if the <user@host> of the 'from' address of the request does not match "
+                    + "the bare JID portion of one of the moderators; in this case, the service MUST return a <forbidden/> error.")
+    public void mucTestVisitorNotAllowedToChangeSubject() throws XmppStringprepException, MucAlreadyJoinedException,
+                    MissingMucCreationAcknowledgeException, NotAMucServiceException, NoResponseException,
+                    XMPPErrorException, NotConnectedException, InterruptedException, TestNotPossibleException {
+        final EntityBareJid mucAddress = getRandomRoom("visitor-change-subject");
+        final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
+        final MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddress);
+
+        createMuc(mucAsSeenByOne, nicknameOne);
+        try {
+            MucConfigFormManager configFormManager = mucAsSeenByOne.getConfigFormManager();
+            if (configFormManager.occupantsAreAllowedToChangeSubject()) {
+                configFormManager.disallowOccupantsToChangeSubject().submitConfigurationForm();
+            }
+
+            mucAsSeenByTwo.join(nicknameTwo);
+
+            final XMPPException.XMPPErrorException e = assertThrows(XMPPException.XMPPErrorException.class, () -> {
+                mucAsSeenByTwo.changeSubject("Test Subject Change");
+            }, "Expected an error after '" + conTwo.getUser()
+                            + "' (that is not a moderator) tried to change the subject of room '" + mucAddress
+                            + "' (but none occurred).");
+            assertEquals(StanzaError.Condition.forbidden, e.getStanzaError().getCondition(),
+                            "Unexpected error condition in the (expected) error that was returned to '"
+                                            + conTwo.getUser() + "' after it tried to change to subject of room '"
+                                            + mucAddress + "' while not being a moderator.");
+        } catch (MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
+        } finally {
+            tryDestroy(mucAsSeenByOne);
+        }
+    }
+
+    @SmackIntegrationTest
+    public void mucTestChangeRoomName() throws XmppStringprepException, MucAlreadyJoinedException,
+                    MissingMucCreationAcknowledgeException, NotAMucServiceException, NoResponseException,
+                    XMPPErrorException, NotConnectedException, InterruptedException, TestNotPossibleException {
+        final EntityBareJid mucAddress = getRandomRoom("change-room-name");
+        final MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
+
+        createMuc(mucAsSeenByOne, nicknameOne);
+        try {
+            String initialRoomName = "Initial Room Name";
+            mucAsSeenByOne.getConfigFormManager().setRoomName(initialRoomName).submitConfigurationForm();
+            RoomInfo roomInfo = mucManagerOne.getRoomInfo(mucAddress);
+            assertEquals(initialRoomName, roomInfo.getName());
+
+            String newRoomName = "New Room Name";
+            mucAsSeenByOne.getConfigFormManager().setRoomName(newRoomName).submitConfigurationForm();
+            roomInfo = mucManagerOne.getRoomInfo(mucAddress);
+            assertEquals(newRoomName, roomInfo.getName());
+        } catch (MucConfigurationNotSupportedException e) {
+            throw new TestNotPossibleException(e);
+        } finally {
+            tryDestroy(mucAsSeenByOne);
+        }
+    }
+
+    @SmackIntegrationTest
+    public void mucJoinLeaveCycleTest() throws XmppStringprepException, NotAMucServiceException, NoResponseException,
+                    XMPPErrorException, NotConnectedException, InterruptedException, MucNotJoinedException {
+        var mucAddress = getRandomRoom("muc-join-leave");
+        var muc = mucManagerOne.getMultiUserChat(mucAddress);
+        var nick = Resourcepart.from("one");
+
+        for (var i = 0; i < 100; i++) {
+            muc.join(nick);
+            muc.leave();
+        }
     }
 }

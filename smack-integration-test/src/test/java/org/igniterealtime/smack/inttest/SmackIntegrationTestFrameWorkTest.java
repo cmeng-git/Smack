@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2019-2020 Florian Schmaus
+ * Copyright 2019-2023 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,40 +16,42 @@
  */
 package org.igniterealtime.smack.inttest;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
 
+import org.igniterealtime.smack.inttest.SmackIntegrationTestFramework.TestMethodParameterType;
+
 import org.junit.jupiter.api.Test;
 
 public class SmackIntegrationTestFrameWorkTest {
 
-    private static class ValidLowLevelList {
-        @SuppressWarnings("unused")
-        public void test(List<AbstractXMPPConnection> connections) {
+    private static final class ValidLowLevelList {
+        @SuppressWarnings({"unused", "MethodCanBeStatic"})
+        void test(List<AbstractXMPPConnection> connections) {
         }
     }
 
-    private static class InvalidLowLevelList {
-        @SuppressWarnings("unused")
-        public void test(List<AbstractXMPPConnection> connections, boolean invalid) {
+    private static final class InvalidLowLevelList {
+        @SuppressWarnings({"unused", "MethodCanBeStatic"})
+        void test(List<AbstractXMPPConnection> connections, boolean invalid) {
         }
     }
 
-    private static class ValidLowLevelVarargs {
-        @SuppressWarnings("unused")
-        public void test(AbstractXMPPConnection connectionOne, AbstractXMPPConnection connectionTwo,
+    private static final class ValidLowLevelVarargs {
+        @SuppressWarnings({"unused", "MethodCanBeStatic"})
+        void test(AbstractXMPPConnection connectionOne, AbstractXMPPConnection connectionTwo,
                         AbstractXMPPConnection connectionThree) {
         }
     }
 
-    private static class InvalidLowLevelVarargs {
-        @SuppressWarnings("unused")
-        public void test(AbstractXMPPConnection connectionOne, Integer invalid, AbstractXMPPConnection connectionTwo,
+    private static final class InvalidLowLevelVarargs {
+        @SuppressWarnings({"unused", "MethodCanBeStatic"})
+        void test(AbstractXMPPConnection connectionOne, Integer invalid, AbstractXMPPConnection connectionTwo,
                         AbstractXMPPConnection connectionThree) {
         }
     }
@@ -69,28 +71,42 @@ public class SmackIntegrationTestFrameWorkTest {
     @Test
     public void testValidLowLevelList() {
         Method testMethod = getTestMethod(ValidLowLevelList.class);
-        assertTrue(SmackIntegrationTestFramework.testMethodParametersIsListOfConnections(testMethod,
-                        AbstractXMPPConnection.class));
+        TestMethodParameterType determinedParameterType = SmackIntegrationTestFramework.determineTestMethodParameterType(testMethod, AbstractXMPPConnection.class);
+        assertEquals(TestMethodParameterType.collectionOfConnections, determinedParameterType);
     }
 
     @Test
     public void testInvalidLowLevelList() {
         Method testMethod = getTestMethod(InvalidLowLevelList.class);
-        assertFalse(SmackIntegrationTestFramework.testMethodParametersIsListOfConnections(testMethod,
-                        AbstractXMPPConnection.class));
+        TestMethodParameterType determinedParameterType = SmackIntegrationTestFramework.determineTestMethodParameterType(testMethod, AbstractXMPPConnection.class);
+        assertNull(determinedParameterType);
     }
 
     @Test
     public void testValidLowLevelVarargs() {
         Method testMethod = getTestMethod(ValidLowLevelVarargs.class);
-        assertTrue(SmackIntegrationTestFramework.testMethodParametersVarargsConnections(testMethod,
-                        AbstractXMPPConnection.class));
+        TestMethodParameterType determinedParameterType = SmackIntegrationTestFramework.determineTestMethodParameterType(testMethod, AbstractXMPPConnection.class);
+        assertEquals(TestMethodParameterType.parameterListOfConnections, determinedParameterType);
     }
 
     @Test
     public void testInvalidLowLevelVargs() {
         Method testMethod = getTestMethod(InvalidLowLevelVarargs.class);
-        assertFalse(SmackIntegrationTestFramework.testMethodParametersVarargsConnections(testMethod,
-                        AbstractXMPPConnection.class));
+        TestMethodParameterType determinedParameterType = SmackIntegrationTestFramework.determineTestMethodParameterType(testMethod, AbstractXMPPConnection.class);
+        assertNull(determinedParameterType);
     }
+
+    private static final class ValidUnconnectedConnectionSource {
+        @SuppressWarnings({"unused", "MethodCanBeStatic"})
+        void test(AbstractSmackLowLevelIntegrationTest.UnconnectedConnectionSource source) {
+        }
+    }
+
+    @Test
+    public void testValidUnconnectedConnectionSource() {
+        Method testMethod = getTestMethod(ValidUnconnectedConnectionSource.class);
+        TestMethodParameterType determinedParameterType = SmackIntegrationTestFramework.determineTestMethodParameterType(testMethod, AbstractXMPPConnection.class);
+        assertEquals(TestMethodParameterType.unconnectedConnectionSource, determinedParameterType);
+    }
+
 }

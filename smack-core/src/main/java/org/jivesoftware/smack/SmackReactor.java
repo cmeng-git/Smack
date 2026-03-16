@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2018-2020 Florian Schmaus
+ * Copyright 2018-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,7 @@ public class SmackReactor {
         }
     }
 
+    @SuppressWarnings("JavaUtilDate")
     ScheduledAction schedule(Runnable runnable, long delay, TimeUnit unit, ScheduledAction.Kind scheduledActionKind) {
         long releaseTimeEpoch = System.currentTimeMillis() + unit.toMillis(delay);
         Date releaseTimeDate = new Date(releaseTimeEpoch);
@@ -163,7 +164,7 @@ public class SmackReactor {
         return scheduledActions.remove(scheduledAction);
     }
 
-    private class Reactor extends Thread {
+    private final class Reactor extends Thread {
 
         private volatile long shutdownRequestTimestamp = -1;
 
@@ -276,8 +277,7 @@ public class SmackReactor {
                     setInterestOpsCancelledKeySafe(selectionKey, 0);
                 }
 
-                selectedKeys = new ArrayList<>(selectedKeySet.size());
-                selectedKeys.addAll(selectedKeySet);
+                selectedKeys = new ArrayList<>(selectedKeySet);
                 selectedKeySet.clear();
             }
 
@@ -327,6 +327,12 @@ public class SmackReactor {
 
             int currentReactorThreadCount = reactorThreads.size();
             int myKeyCount = pendingSelectionKeysSize / currentReactorThreadCount;
+            // The division could result in myKeyCount being zero, even though there are pending selection keys.
+            // Therefore, ensure that this thread tries to get at least one pending selection key by invoking poll().
+            // Otherwise, it could happen that we end up in a busy loop, where myKeyCount is zero and this thread invokes
+            // selector.wakeup() below because pendingSelectionsKeys is not empty, but the woken up reactor thread wil
+            // end up with myKeyCount being zero again, restarting the busy-loop cycle.
+            if (myKeyCount == 0) myKeyCount = 1;
             Collection<SelectionKey> selectedKeys = new ArrayList<>(myKeyCount);
             for (int i = 0; i < myKeyCount; i++) {
                 SelectionKey selectionKey = pendingSelectionKeys.poll();

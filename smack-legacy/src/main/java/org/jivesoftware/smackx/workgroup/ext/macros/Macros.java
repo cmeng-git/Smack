@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -20,12 +20,15 @@ package org.jivesoftware.smackx.workgroup.ext.macros;
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Macros iq is responsible for handling global and personal macros in the a Live Assistant
@@ -96,10 +99,10 @@ public class Macros extends IQ {
      *
      * @author Derek DeMoro
      */
-    public static class InternalProvider extends IQProvider<Macros> {
+    public static class InternalProvider extends IqProvider<Macros> {
 
         @Override
-        public Macros parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public Macros parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             Macros macroGroup = new Macros();
 
             boolean done = false;

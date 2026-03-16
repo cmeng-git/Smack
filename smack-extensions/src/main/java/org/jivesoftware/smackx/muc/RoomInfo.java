@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -18,10 +18,11 @@
 package org.jivesoftware.smackx.muc;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
@@ -77,7 +78,7 @@ public class RoomInfo {
      */
     private final boolean moderated;
     /**
-     * Every presence stanza can include the JID of every occupant unless the owner deactives this
+     * Every presence stanza can include the JID of every occupant unless the owner deactivates this
      * configuration.
      */
     private final boolean nonanonymous;
@@ -215,9 +216,9 @@ public class RoomInfo {
             if (urlField != null && !urlField.getValues().isEmpty()) {
                 String urlString = urlField.getFirstValue();
                 try {
-                    logs = new URL(urlString);
-                } catch (MalformedURLException e) {
-                    LOGGER.log(Level.SEVERE, "Could not parse URL", e);
+                    logs = new URI(urlString).toURL();
+                } catch (MalformedURLException | URISyntaxException e) {
+                    throw new IllegalArgumentException("Could not parse '" + urlString + "' to URL", e);
                 }
             }
 
@@ -250,7 +251,7 @@ public class RoomInfo {
     /**
      * Returns the room name.
      * <p>
-     * The name returnd here was provided as value of the name attribute
+     * The name returned here was provided as value of the name attribute
      * of the returned identity within the disco#info result.
      * </p>
      *
@@ -324,9 +325,9 @@ public class RoomInfo {
     }
 
     /**
-     * Returns true if users musy provide a valid password in order to join the room.
+     * Returns true if users must provide a valid password in order to join the room.
      *
-     * @return true if users musy provide a valid password in order to join the room.
+     * @return true if users must provide a valid password in order to join the room.
      */
     public boolean isPasswordProtected() {
         return passwordProtected;

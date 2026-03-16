@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Stanza;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.util.PacketParserUtils;
 
 /**
@@ -27,7 +28,7 @@ import org.jivesoftware.smack.util.PacketParserUtils;
  * extensions.  This effectively extends the idea of an extension within one of the
  * top level {@link Stanza} types to consider any embedded element to be an extension
  * of its parent.  This more easily enables the usage of some of Smacks parsing
- * utilities such as {@link PacketParserUtils#parseExtensionElement(String, String, org.jivesoftware.smack.xml.XmlPullParser, org.jivesoftware.smack.packet.XmlEnvironment)} to be used
+ * utilities such as {@link PacketParserUtils#parseExtensionElement(String, String, org.jivesoftware.smack.xml.XmlPullParser, org.jivesoftware.smack.packet.XmlEnvironment, org.jxmpp.JxmppContext)} to be used
  * to parse any element of the XML being parsed.
  *
  * <p>Top level extensions have only one element, but they can have multiple children, or
@@ -37,11 +38,11 @@ import org.jivesoftware.smack.util.PacketParserUtils;
  *
  * @author Robin Collier
  */
-public interface EmbeddedPacketExtension extends ExtensionElement {
+public interface EmbeddedPacketExtension extends XmlElement {
     /**
      * Get the list of embedded {@link ExtensionElement} objects.
      *
      * @return List of embedded {@link ExtensionElement}
      */
-    List<ExtensionElement> getExtensions();
+    List<XmlElement> getExtensions();
 }

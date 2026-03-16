@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -20,10 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.charset.StandardCharsets;
 
-import org.jivesoftware.smack.packet.IQ.Type;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.StreamOpen;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.test.util.SmackTestSuite;
-import org.jivesoftware.smack.util.PacketParserUtils;
 
 import org.jivesoftware.smackx.bob.element.BoBIQ;
 
@@ -46,14 +46,14 @@ public class BoBIQTest extends SmackTestSuite {
         BoBIQ createdBoBIQ = new BoBIQ(bobHash);
         createdBoBIQ.setStanzaId("sarasa");
         createdBoBIQ.setTo(JidCreate.from("ladymacbeth@shakespeare.lit/castle"));
-        createdBoBIQ.setType(Type.get);
+        createdBoBIQ.setType(IQ.Type.get);
 
         assertEquals(sampleBoBIQRequest, createdBoBIQ.toXML(StreamOpen.CLIENT_NAMESPACE).toString());
     }
 
     @Test
     public void checkBoBIQResponse() throws Exception {
-        BoBIQ bobIQ = PacketParserUtils.parseStanza(sampleBoBIQResponse);
+        BoBIQ bobIQ = ElementParserUtils.parseStanza(sampleBoBIQResponse);
 
         ContentId bobHash = new ContentId("8f35fef110ffc5df08d579a50083ff9308fb6242", "sha1");
         BoBData bobData = new BoBData("image/png", "sarasade2354j2".getBytes(StandardCharsets.UTF_8), 86400);
@@ -61,7 +61,7 @@ public class BoBIQTest extends SmackTestSuite {
         BoBIQ createdBoBIQ = new BoBIQ(bobHash, bobData);
         createdBoBIQ.setStanzaId("sarasa");
         createdBoBIQ.setTo(JidCreate.from("doctor@shakespeare.lit/pda"));
-        createdBoBIQ.setType(Type.result);
+        createdBoBIQ.setType(IQ.Type.result);
 
         assertEquals(bobIQ.getContentId().getHash(), createdBoBIQ.getContentId().getHash());
         assertEquals(bobIQ.getContentId().getHashType(), createdBoBIQ.getContentId().getHashType());

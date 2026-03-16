@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2019-2022 Florian Schmaus
+ * Copyright 2019-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,17 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.packet.Element;
 import org.jivesoftware.smack.packet.IqData;
+import org.jivesoftware.smack.packet.StreamOpen;
+import org.jivesoftware.smack.packet.TopLevelStreamElement;
+import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.AbstractProvider;
 import org.jivesoftware.smack.provider.IqProvider;
@@ -40,6 +45,8 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smack.xml.XmlPullParserFactory;
 import org.jivesoftware.smack.xml.stax.StaxXmlPullParserFactory;
 import org.jivesoftware.smack.xml.xpp3.Xpp3XmlPullParserFactory;
+
+import org.jxmpp.JxmppContext;
 
 public class SmackTestUtil {
 
@@ -103,7 +110,7 @@ public class SmackTestUtil {
             Provider<E> provider = (Provider<E>) abstractProvider;
             element = provider.parse(parser);
         } else if (abstractProvider instanceof IqProvider) {
-            IqData iqData = PacketParserUtils.parseIqData(parser);
+            IqData iqData = PacketParserUtils.parseIqData(parser, JxmppContext.getDefaultContext());
             parser.next();
             ParserUtils.forwardToStartElement(parser);
             IqProvider<?> iqProvider = (IqProvider<?>) abstractProvider;
@@ -113,6 +120,34 @@ public class SmackTestUtil {
         }
 
         return element;
+    }
+
+    public static List<TopLevelStreamElement> parseStanzas(CharSequence cs, XmlPullParserKind parserKind)
+                    throws XmlPullParserException, IOException, SmackParsingException {
+        var stringReader = new StringReader(cs.toString());
+        return parseStanzas(stringReader, parserKind);
+    }
+
+    public static List<TopLevelStreamElement> parseStanzas(Reader reader, XmlPullParserKind parserKind)
+                    throws XmlPullParserException, IOException, SmackParsingException {
+        var parser = PacketParserUtils.getParserFor(reader);
+        ParserUtils.forwardToStartElement(parser);
+
+        // Check if we have a <stream> open tag and create the outer XmlEnvironment from it
+        XmlEnvironment streamXmlEnvironment = XmlEnvironment.EMPTY;
+        if (parser.getQName().equals(StreamOpen.QNAME)) {
+            streamXmlEnvironment = XmlEnvironment.from(parser);
+            parser.next();
+        }
+
+        var res = new ArrayList<TopLevelStreamElement>();
+        // Parse all top level stream elements and add them to the result.
+        do {
+            var stanza = PacketParserUtils.parseStanza(parser, streamXmlEnvironment, JxmppContext.getDefaultContext());
+            res.add(stanza);
+        } while (!(parser.next() == XmlPullParser.Event.END_ELEMENT && parser.getQName().equals(StreamOpen.QNAME)));
+
+        return res;
     }
 
     public static XmlPullParser getParserFor(String xml, XmlPullParserKind parserKind) throws XmlPullParserException, IOException {
@@ -143,6 +178,11 @@ public class SmackTestUtil {
         XmlPullParser parser = getParserFor(xml, parserKind);
         forwardParserToStartElement(parser, p -> p.getName().equals(startTagLocalpart));
         return parser;
+    }
+
+    public static XmlPullParser createDummyParser() throws XmlPullParserException, IOException {
+        String dummyElement = "<empty-element/>";
+        return PacketParserUtils.getParserFor(dummyElement);
     }
 
     @SuppressWarnings("unchecked")

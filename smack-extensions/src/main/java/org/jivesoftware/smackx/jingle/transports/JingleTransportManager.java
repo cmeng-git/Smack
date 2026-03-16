@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -30,6 +30,7 @@ public abstract class JingleTransportManager<D extends JingleContentTransport> i
 
     private final XMPPConnection connection;
 
+    @SuppressWarnings("this-escape")
     public JingleTransportManager(XMPPConnection connection) {
         this.connection = connection;
         connection.addConnectionListener(this);

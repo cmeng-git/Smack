@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub
  *
@@ -27,8 +27,10 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.AfterClass;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 
+@SpecificationReference(document = "XEP-0085", version = "2.1")
 public class ChatStateIntegrationTest extends AbstractSmackIntegrationTest {
 
     // Listener for composing chat state
@@ -73,7 +75,7 @@ public class ChatStateIntegrationTest extends AbstractSmackIntegrationTest {
         Chat chat = ChatManager.getInstanceFor(conOne)
                 .chatWith(conTwo.getUser().asEntityBareJid());
         chat.send("Hi!");
-        activeSyncPoint.waitForResult(timeout);
+        assertResult(activeSyncPoint, "Expected " + conTwo.getUser() + " to receive an 'active' chat state from " + conOne + " (but they did not).");
     }
 
     @AfterClass

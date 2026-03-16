@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016-2017 Fernando Ramirez, Florian Schmaus
  *
@@ -52,6 +52,7 @@ public class UnblockContactsIQ extends IQ {
      *
      * @param jids TODO javadoc me please
      */
+    @SuppressWarnings("this-escape")
     public UnblockContactsIQ(List<Jid> jids) {
         super(ELEMENT, NAMESPACE);
         this.setType(Type.set);

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -35,7 +35,7 @@ public class Nick implements ExtensionElement {
     public static final QName QNAME = new QName(NAMESPACE, "nick");
 
     /**
-     * Deprected, do not use.
+     * Deprecated, do not use.
      *
      * @deprecated use {@link #QNAME} instead.
      */

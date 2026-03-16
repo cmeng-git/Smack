@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -51,6 +51,7 @@ public class BlockContactsIQ extends IQ {
      *
      * @param jids TODO javadoc me please
      */
+    @SuppressWarnings("this-escape")
     public BlockContactsIQ(List<Jid> jids) {
         super(ELEMENT, NAMESPACE);
         this.setType(Type.set);

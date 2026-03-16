@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2018-2022 Florian Schmaus.
+ * Copyright 2003-2007 Jive Software, 2018-2025 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package org.jivesoftware.smack;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,10 +34,11 @@ import org.jivesoftware.smack.c2s.ModularXmppClientToServerConnectionModuleDescr
 import org.jivesoftware.smack.compression.XMPPInputOutputStream;
 import org.jivesoftware.smack.debugger.ReflectionDebuggerFactory;
 import org.jivesoftware.smack.debugger.SmackDebuggerFactory;
-import org.jivesoftware.smack.parsing.ExceptionThrowingCallback;
-import org.jivesoftware.smack.parsing.ExceptionThrowingCallbackWithHint;
+import org.jivesoftware.smack.parsing.ExceptionLoggingCallback;
 import org.jivesoftware.smack.parsing.ParsingExceptionCallback;
 import org.jivesoftware.smack.util.Objects;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Represents the configuration of Smack. The configuration is used for:
@@ -60,7 +62,7 @@ public final class SmackConfiguration {
 
     static {
         try {
-            SMACK_URL = new URL(SMACK_URL_STRING);
+            SMACK_URL = URI.create(SMACK_URL_STRING).toURL();
         } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
@@ -70,6 +72,8 @@ public final class SmackConfiguration {
     private static int packetCollectorSize = 5000;
 
     private static List<String> defaultMechs = new ArrayList<>();
+
+    private static JxmppContext defaultJxmppContext = JxmppContext.getDefaultContext();
 
     static Set<String> disabledSmackClasses = new HashSet<>();
 
@@ -94,15 +98,15 @@ public final class SmackConfiguration {
     private static SmackDebuggerFactory DEFAULT_DEBUGGER_FACTORY = ReflectionDebuggerFactory.INSTANCE;
 
     /**
-     * The default parsing exception callback is {@link ExceptionThrowingCallback} which will
-     * throw an exception and therefore disconnect the active connection.
+     * The default parsing exception callback is {@link ExceptionLoggingCallback} which will
+     * log the parsing exception.
      */
-    private static ParsingExceptionCallback defaultCallback = new ExceptionThrowingCallbackWithHint();
+    private static ParsingExceptionCallback defaultCallback = new ExceptionLoggingCallback();
 
     private static HostnameVerifier defaultHostnameVerififer;
 
     /**
-     * Returns the Smack version information, eg "1.3.0".
+     * Returns the Smack version information, e.g."1.3.0".
      *
      * @return the Smack version information.
      * @deprecated use {@link Smack#getVersion()} instead.
@@ -138,6 +142,14 @@ public final class SmackConfiguration {
             throw new IllegalArgumentException();
         }
         defaultPacketReplyTimeout = timeout;
+    }
+
+    public static JxmppContext getDefaultJxmppContext() {
+        return defaultJxmppContext;
+    }
+
+    public static void setDefaultJxmppContext(JxmppContext jxmppContext) {
+        defaultJxmppContext = Objects.requireNonNull(jxmppContext);
     }
 
     public static void setDefaultSmackDebuggerFactory(SmackDebuggerFactory debuggerFactory) {
@@ -343,11 +355,10 @@ public final class SmackConfiguration {
 
     public enum UnknownIqRequestReplyMode {
         doNotReply,
-        replyFeatureNotImplemented,
-        replyServiceUnavailable,
+        reply,
     }
 
-    private static UnknownIqRequestReplyMode unknownIqRequestReplyMode = UnknownIqRequestReplyMode.replyFeatureNotImplemented;
+    private static UnknownIqRequestReplyMode unknownIqRequestReplyMode = UnknownIqRequestReplyMode.reply;
 
     public static UnknownIqRequestReplyMode getUnknownIqRequestReplyMode() {
         return unknownIqRequestReplyMode;
@@ -388,13 +399,4 @@ public final class SmackConfiguration {
         }
     }
 
-    /**
-     * If enabled, causes {@link AbstractXMPPConnection} to create a thread for every asynchronous send operation. This
-     * is meant to work-around a shortcoming of Smack 4.4, where certain send operations are not asynchronous even if
-     * they should be. This is an expert setting, do not toggle if you do not understand the consequences or have been
-     * told to do so. Note that it is expected that this will not be needed in future Smack versions.
-     *
-     * @since 4.4.6
-     */
-    public static boolean TRUELY_ASYNC_SENDS = false;
 }

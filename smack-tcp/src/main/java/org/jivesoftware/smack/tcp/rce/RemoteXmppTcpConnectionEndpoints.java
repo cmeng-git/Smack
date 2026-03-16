@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015-2020 Florian Schmaus.
  *
@@ -21,8 +21,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionConfiguration.DnssecMode;
@@ -165,12 +168,27 @@ public class RemoteXmppTcpConnectionEndpoints {
         return resolveDomain(domain, DomainType.server, lookupFailures, dnssecMode, dnsResolver);
     }
 
+    private static final DnsName LOCALHOST = DnsName.from("localhost");
+    // https://datatracker.ietf.org/doc/html/rfc6761#section-6.5
+    private static final Set<DnsName> EXAMPLE_DOMAINS = Stream.of("example", "example.com", "example.net", "example.org").map(n -> DnsName.from(n)).collect(Collectors.toSet());
+
+    private static boolean shouldEmitDnsSrvHint(DnsName domain) {
+        if (domain.equals(LOCALHOST)) return false;
+        for (var d : EXAMPLE_DOMAINS) {
+            if (domain.isChildOf(d)) return false;
+        }
+
+        return true;
+    }
+
     /**
      *
      * @param domain the domain.
      * @param domainType the XMPP domain type, server or client.
-     * @param failedAddresses a list that will be populated with host addresses that failed to resolve.
-     * @return a list of resolver host addresses for this domain.
+     * @param lookupFailures a list that will be populated with all failures that occurred during lookup.
+     * @param dnssecMode the DNSSEC mode.
+     * @param dnsResolver the DNS resolver to use.
+     * @return a list of resolved host addresses for this domain.
      */
     private static List<Rfc6120TcpRemoteConnectionEndpoint> resolveDomain(DnsName domain, DomainType domainType,
                     List<RemoteConnectionEndpointLookupFailure> lookupFailures, DnssecMode dnssecMode, DNSResolver dnsResolver) {
@@ -197,8 +215,8 @@ public class RemoteXmppTcpConnectionEndpoints {
                     endpoints.add(endpoint);
                 }
             }
-        } else {
-            LOGGER.info("Could not resolve DNS SRV resource records for " + srvDomain + ". Consider adding those.");
+        } else if (shouldEmitDnsSrvHint(domain)) {
+            LOGGER.info("Could not resolve DNS SRV resource records " + srvDomain + " for " + domain + ". Consider adding those.");
         }
 
         UInt16 defaultPort;

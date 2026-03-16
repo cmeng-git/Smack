@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -19,6 +19,7 @@ package org.jivesoftware.smackx.bytestreams.ibb.provider;
 import java.io.IOException;
 
 import org.jivesoftware.smack.datatypes.UInt16;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.parsing.SmackParsingException.RequiredAttributeMissingException;
@@ -29,6 +30,8 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smackx.bytestreams.ibb.packet.Data;
 import org.jivesoftware.smackx.bytestreams.ibb.packet.DataPacketExtension;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Parses an In-Band Bytestream data stanza which can be a stanza extension of
  * either an IQ stanza or a message stanza.
@@ -37,12 +40,12 @@ import org.jivesoftware.smackx.bytestreams.ibb.packet.DataPacketExtension;
  */
 public class DataPacketProvider {
 
-    public static class IQProvider extends org.jivesoftware.smack.provider.IQProvider<Data> {
+    public static class IQProvider extends org.jivesoftware.smack.provider.IqProvider<Data> {
 
         private static final PacketExtensionProvider packetExtensionProvider = new PacketExtensionProvider();
 
         @Override
-        public Data parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public Data parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws IOException, XmlPullParserException, SmackParsingException {
             DataPacketExtension data = packetExtensionProvider.parse(parser);
             return new Data(data);
@@ -53,7 +56,7 @@ public class DataPacketProvider {
 
         @Override
         public DataPacketExtension parse(XmlPullParser parser,
-                        int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
+                        int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException,
                         IOException, RequiredAttributeMissingException {
             String sessionID = parser.getAttributeValue("", "sid");
             UInt16 seq = ParserUtils.getRequiredUInt16Attribute(parser, "seq");

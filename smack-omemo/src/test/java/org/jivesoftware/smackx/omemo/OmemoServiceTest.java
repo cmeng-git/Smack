@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -50,6 +50,7 @@ public class OmemoServiceTest extends SmackTestSuite {
      * @throws XmppStringprepException if the provided string is invalid.
      */
     @Test
+    @SuppressWarnings("JavaUtilDate")
     public void isStaleDeviceTest() throws XmppStringprepException {
         OmemoDevice user = new OmemoDevice(JidCreate.bareFrom("alice@wonderland.lit"), 123);
         OmemoDevice other = new OmemoDevice(JidCreate.bareFrom("bob@builder.tv"), 444);

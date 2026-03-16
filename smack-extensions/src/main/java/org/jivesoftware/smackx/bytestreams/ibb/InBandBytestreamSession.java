@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -228,14 +228,10 @@ public class InBandBytestreamSession implements BytestreamSession {
             Close close = new Close(this.byteStreamRequest.getSessionID());
             close.setTo(this.remoteJID);
             try {
-                connection.createStanzaCollectorAndSend(close).nextResultOrThrow();
+                connection.sendIqRequestAndWaitForResponse(close);
             }
             catch (Exception e) {
-                // Sadly we are unable to use the IOException(Throwable) constructor because this
-                // constructor is only supported from Android API 9 on.
-                IOException ioException = new IOException();
-                ioException.initCause(e);
-                throw ioException;
+                throw new IOException(e);
             }
 
             this.inputStream.cleanup();
@@ -259,7 +255,7 @@ public class InBandBytestreamSession implements BytestreamSession {
         private final StanzaListener dataPacketListener;
 
         /* queue containing received In-Band Bytestream data packets */
-        protected final BlockingQueue<DataPacketExtension> dataQueue = new LinkedBlockingQueue<DataPacketExtension>();
+        final BlockingQueue<DataPacketExtension> dataQueue = new LinkedBlockingQueue<DataPacketExtension>();
 
         /* buffer containing the data from one data packet */
         private byte[] buffer;
@@ -282,7 +278,7 @@ public class InBandBytestreamSession implements BytestreamSession {
         /**
          * Constructor.
          */
-        protected IBBInputStream() {
+        IBBInputStream() {
             // add data packet listener to connection
             this.dataPacketListener = getDataPacketListener();
             connection.addSyncStanzaListener(this.dataPacketListener, getDataPacketFilter());
@@ -293,14 +289,14 @@ public class InBandBytestreamSession implements BytestreamSession {
          *
          * @return the data stanza listener
          */
-        protected abstract StanzaListener getDataPacketListener();
+        abstract StanzaListener getDataPacketListener();
 
         /**
          * Returns the stanza filter that accepts In-Band Bytestream data packets.
          *
          * @return the data stanza filter
          */
-        protected abstract StanzaFilter getDataPacketFilter();
+        abstract StanzaFilter getDataPacketFilter();
 
         @Override
         public synchronized int read() throws IOException {
@@ -461,7 +457,7 @@ public class InBandBytestreamSession implements BytestreamSession {
      * IQIBBInputStream class implements IBBInputStream to be used with IQ stanzas encapsulating the
      * data packets.
      */
-    private class IQIBBInputStream extends IBBInputStream {
+    private final class IQIBBInputStream extends IBBInputStream {
 
         @Override
         protected StanzaListener getDataPacketListener() {
@@ -541,7 +537,7 @@ public class InBandBytestreamSession implements BytestreamSession {
      * MessageIBBInputStream class implements IBBInputStream to be used with message stanzas
      * encapsulating the data packets.
      */
-    private class MessageIBBInputStream extends IBBInputStream {
+    private final class MessageIBBInputStream extends IBBInputStream {
 
         @Override
         protected StanzaListener getDataPacketListener() {
@@ -590,7 +586,7 @@ public class InBandBytestreamSession implements BytestreamSession {
      * containing an In-Band Bytestream data stanza extension whose session ID matches this sessions
      * ID.
      */
-    private class IBBDataPacketFilter implements StanzaFilter {
+    private final class IBBDataPacketFilter implements StanzaFilter {
 
         @Override
         public boolean accept(Stanza packet) {
@@ -628,16 +624,16 @@ public class InBandBytestreamSession implements BytestreamSession {
     private abstract class IBBOutputStream extends OutputStream {
 
         /* buffer with the size of this sessions block size */
-        protected final byte[] buffer;
+        private final byte[] buffer;
 
         /* pointer to next byte to write to buffer */
-        protected int bufferPointer = 0;
+        private int bufferPointer = 0;
 
         /* data packet sequence (range from 0 to 65535) */
-        protected UInt16 seq = UInt16.from(0);
+        private UInt16 seq = UInt16.from(0);
 
         /* flag to indicate if output stream is closed */
-        protected boolean isClosed = false;
+        boolean isClosed = false;
 
         /**
          * Constructor.
@@ -654,7 +650,7 @@ public class InBandBytestreamSession implements BytestreamSession {
          * @throws NotConnectedException if the XMPP connection is not connected.
          * @throws InterruptedException if the calling thread was interrupted.
          */
-        protected abstract void writeToXML(DataPacketExtension data) throws IOException, NotConnectedException, InterruptedException;
+        abstract void writeToXML(DataPacketExtension data) throws IOException, NotConnectedException, InterruptedException;
 
         @Override
         public synchronized void write(int b) throws IOException {
@@ -789,7 +785,7 @@ public class InBandBytestreamSession implements BytestreamSession {
          *
          * @param flush if <code>true</code> flushes the stream
          */
-        protected void closeInternal(boolean flush) {
+        void closeInternal(boolean flush) {
             if (this.isClosed) {
                 return;
             }
@@ -814,7 +810,7 @@ public class InBandBytestreamSession implements BytestreamSession {
      * IQIBBOutputStream class implements IBBOutputStream to be used with IQ stanzas encapsulating
      * the data packets.
      */
-    private class IQIBBOutputStream extends IBBOutputStream {
+    private final class IQIBBOutputStream extends IBBOutputStream {
 
         @Override
         protected synchronized void writeToXML(DataPacketExtension data) throws IOException {
@@ -823,17 +819,13 @@ public class InBandBytestreamSession implements BytestreamSession {
             iq.setTo(remoteJID);
 
             try {
-                connection.createStanzaCollectorAndSend(iq).nextResultOrThrow();
+                connection.sendIqRequestAndWaitForResponse(iq);
             }
             catch (Exception e) {
                 // close session unless it is already closed
                 if (!this.isClosed) {
                     InBandBytestreamSession.this.close();
-                    // Sadly we are unable to use the IOException(Throwable) constructor because this
-                    // constructor is only supported from Android API 9 on.
-                    IOException ioException = new IOException();
-                    ioException.initCause(e);
-                    throw ioException;
+                    throw new IOException(e);
                 }
             }
 
@@ -845,7 +837,7 @@ public class InBandBytestreamSession implements BytestreamSession {
      * MessageIBBOutputStream class implements IBBOutputStream to be used with message stanzas
      * encapsulating the data packets.
      */
-    private class MessageIBBOutputStream extends IBBOutputStream {
+    private final class MessageIBBOutputStream extends IBBOutputStream {
 
         @Override
         protected synchronized void writeToXML(DataPacketExtension data) throws NotConnectedException, InterruptedException {

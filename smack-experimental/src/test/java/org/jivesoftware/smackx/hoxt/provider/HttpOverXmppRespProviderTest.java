@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2014 Andriy Tsykholyas
  *
@@ -39,7 +39,7 @@ public class HttpOverXmppRespProviderTest {
         HttpOverXmppRespProvider provider = new HttpOverXmppRespProvider();
         XmlPullParser parser = PacketParserUtils.getParserFor(string);
 
-        IQ iq = provider.parse(parser);
+        IQ iq = provider.parse(parser, null);
         assertTrue(iq instanceof HttpOverXmppResp);
         HttpOverXmppResp resp = (HttpOverXmppResp) iq;
 
@@ -54,7 +54,7 @@ public class HttpOverXmppRespProviderTest {
         HttpOverXmppRespProvider provider = new HttpOverXmppRespProvider();
         XmlPullParser parser = PacketParserUtils.getParserFor(string);
 
-        IQ iq = provider.parse(parser);
+        IQ iq = provider.parse(parser, null);
         assertTrue(iq instanceof HttpOverXmppResp);
         HttpOverXmppResp resp = (HttpOverXmppResp) iq;
 
