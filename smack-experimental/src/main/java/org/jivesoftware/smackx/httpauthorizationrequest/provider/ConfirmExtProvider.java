@@ -24,7 +24,9 @@ import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension;
+
 import org.jxmpp.JxmppContext;
 
 /**

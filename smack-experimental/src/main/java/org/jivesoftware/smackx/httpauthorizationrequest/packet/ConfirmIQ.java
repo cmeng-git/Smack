@@ -19,6 +19,7 @@ package org.jivesoftware.smackx.httpauthorizationrequest.packet;
 import org.jivesoftware.smack.packet.AbstractIqBuilder;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.IqData;
+
 import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension;
 
 /**

@@ -40,6 +40,7 @@ import org.jivesoftware.smack.packet.Message.Body;
 import org.jivesoftware.smack.packet.MessageBuilder;
 import org.jivesoftware.smack.packet.StanzaBuilder;
 import org.jivesoftware.smack.packet.StanzaError;
+
 import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension;
 import org.jivesoftware.smackx.httpauthorizationrequest.packet.ConfirmIQ;
 

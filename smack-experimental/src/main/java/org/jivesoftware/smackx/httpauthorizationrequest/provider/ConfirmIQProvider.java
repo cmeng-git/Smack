@@ -26,8 +26,10 @@ import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension;
 import org.jivesoftware.smackx.httpauthorizationrequest.packet.ConfirmIQ;
+
 import org.jxmpp.JxmppContext;
 
 /**
