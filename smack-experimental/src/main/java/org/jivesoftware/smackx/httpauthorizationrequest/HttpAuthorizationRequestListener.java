@@ -16,7 +16,7 @@
  */
 package org.jivesoftware.smackx.httpauthorizationrequest;
 
-import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmExtension;
+import org.jivesoftware.smackx.httpauthorizationrequest.element.ConfirmElement;
 
 import org.jxmpp.jid.DomainBareJid;
 
@@ -25,5 +25,5 @@ import org.jxmpp.jid.DomainBareJid;
  * XEP-0070: Verifying HTTP Requests via XMPP (1.0.2 (2025-09-30))
  */
 public interface HttpAuthorizationRequestListener {
-    void onHttpAuthorizationRequest(DomainBareJid from, ConfirmExtension confirmExtension, String instruction);
+    void onHttpAuthorizationRequest(DomainBareJid from, ConfirmElement confirmElement, String instruction);
 }
