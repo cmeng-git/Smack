@@ -76,3 +76,4 @@ public class OmemoDeviceListElementTest extends SmackTestSuite {
                 xml2);
     }
 }
+
