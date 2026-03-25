@@ -418,6 +418,7 @@ public final class PubSubManager extends Manager {
      * @param id The unique id of the node.
      * @param item The item to publish.
      * @param <I> type of the item.
+     * @param nodeExtension NodeExtension to be included.
      *
      * @return the LeafNode on which the item was published.
      * @throws NoResponseException if there was no response from the remote entity.
@@ -427,13 +428,13 @@ public final class PubSubManager extends Manager {
      * @throws NotALeafNodeException if a PubSub leaf node operation was attempted on a non-leaf node.
      * @since 4.2.1
      */
-    public <I extends Item> LeafNode tryToPublishAndPossibleAutoCreate(String id, I item)
-                    throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException,
-                    NotALeafNodeException {
+    public <I extends Item> LeafNode tryToPublishAndPossibleAutoCreate(String id, I item, NodeExtension nodeExtension)
+            throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException,
+            NotALeafNodeException {
         LeafNode leafNode = new LeafNode(this, id);
 
         try {
-            leafNode.publish(item);
+            leafNode.publish(item, nodeExtension);
         } catch (XMPPErrorException e) {
             checkIfXmppErrorBecauseOfNotLeafNode(id, e);
         }
@@ -443,6 +444,12 @@ public final class PubSubManager extends Manager {
         nodeMap.put(id, leafNode);
 
         return leafNode;
+    }
+
+    public <I extends Item> LeafNode tryToPublishAndPossibleAutoCreate(String id, I item)
+                    throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException,
+                    NotALeafNodeException {
+        return tryToPublishAndPossibleAutoCreate(id, item, null);
     }
 
     /**
