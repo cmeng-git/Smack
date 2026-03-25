@@ -24,7 +24,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -233,7 +233,7 @@ public class OmemoMessageBuilder<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, T_
             CiphertextTuple encryptedKey = ratchet.doubleRatchetEncrypt(contactsDevice, messageKey);
             if (vOmemo2) {
                 OmemoKeyElement_VOmemo keyElement = new OmemoKeyElement_VOmemo(encryptedKey.getCiphertext(), contactsDevice.getDeviceId(), encryptedKey.isPreKeyMessage());
-                OmemoKeysElement_VOmemo keys = new OmemoKeysElement_VOmemo(contactsDevice.getJid().toString(), List.of(keyElement));
+                OmemoKeysElement_VOmemo keys = new OmemoKeysElement_VOmemo(contactsDevice.getJid().toString(), Arrays.asList(keyElement));
                 keysElement.add(keys);
             }
             else {
