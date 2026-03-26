@@ -624,7 +624,8 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
         }
 
         String bundleNodeName = userDevice.getBundleNodeName(vOmemo2);
-        String itemId = String.valueOf(userDevice.getDeviceId());
+        // https://xmpp.org/extensions/xep-0060.html#impl-singleton
+        String itemId = "current";
         pm.publish(bundleNodeName, new PayloadItem<>(itemId, bundle), publishOptions);
         // pepManager.publish(userDevice.getBundleNodeName(), new PayloadItem<>(bundle));
     }
@@ -688,7 +689,8 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
         }
 
         String nodeName = OmemoConstants.getOmemoNS(vOmemo2);
-        String id = String.valueOf(omemoManager.getDeviceId());
+        // https://xmpp.org/extensions/xep-0060.html#impl-singleton
+        String id = "current";
         pm.publish(nodeName, new PayloadItem<>(id, devicesElement), publishOptions);
     }
 

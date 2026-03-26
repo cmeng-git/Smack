@@ -1034,9 +1034,10 @@ public final class OmemoManager extends Manager {
         connection().removeAsyncStanzaListener(this::internalOmemoMessageStanzaListener);
         carbonManager.removeCarbonCopyReceivedListener(this::internalOmemoCarbonCopyListener);
 
-        String nodeName = isOmemo2Enable ? OmemoConstants.PEP_NODE_DEVICES_V_OMEMO : OmemoConstants.PEP_NODE_DEVICES_V_AXOLOTL;
-        // Add listeners
-        pepManager.addPepEventListener(nodeName, OmemoDeviceListElement.class, pepOmemoDeviceListEventListener);
+        // Add both omemo PEP_NODE_DEVICES_x namespaces to PepEventListener.
+        pepManager.addPepEventListener(OmemoConstants.PEP_NODE_DEVICES_V_OMEMO , OmemoDeviceListElement.class, pepOmemoDeviceListEventListener);
+        pepManager.addPepEventListener(OmemoConstants.PEP_NODE_DEVICES_V_AXOLOTL, OmemoDeviceListElement.class, pepOmemoDeviceListEventListener);
+
         connection().addAsyncStanzaListener(this::internalOmemoMessageStanzaListener, OmemoManager::isOmemoMessage);
         carbonManager.addCarbonCopyReceivedListener(this::internalOmemoCarbonCopyListener);
     }
