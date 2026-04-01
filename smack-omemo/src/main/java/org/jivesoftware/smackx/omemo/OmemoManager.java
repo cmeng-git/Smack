@@ -872,7 +872,7 @@ public final class OmemoManager extends Manager {
     public List<Exception> purgeEverything() throws NotConnectedException, InterruptedException, IOException {
         List<Exception> exceptions = new ArrayList<>(5);
         PubSubManager pm = PubSubManager.getInstanceFor(getConnection(), getOwnJid());
-        String nodeName = isOmemo2Enable ? OmemoConstants.PEP_NODE_DEVICES_V_OMEMO : OmemoConstants.PEP_NODE_DEVICES_V_AXOLOTL;
+        String nodeName = OmemoConstants.getOmemoNS(isOmemo2Enable);
 
         try {
             requestDeviceListUpdateFor(getOwnJid());
@@ -886,8 +886,9 @@ public final class OmemoManager extends Manager {
                 .loadCachedDeviceList(getOwnDevice(), getOwnJid());
 
         for (OmemoDeviceElement device : devices.getAllDevices()) {
+            nodeName = OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(device.getId(), isOmemo2Enable);
             try {
-                pm.getLeafNode(OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(device.getId(), isOmemo2Enable)).deleteAllItems();
+                pm.getLeafNode(nodeName).deleteAllItems();
             }
             catch (SmackException.NoResponseException | PubSubException.NotALeafNodeException
                    | XMPPException.XMPPErrorException | PubSubException.NotAPubSubNodeException e) {
@@ -895,7 +896,7 @@ public final class OmemoManager extends Manager {
             }
 
             try {
-                pm.deleteNode(OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(device.getId(), isOmemo2Enable));
+                pm.deleteNode(nodeName);
             }
             catch (SmackException.NoResponseException | XMPPException.XMPPErrorException e) {
                 exceptions.add(e);
