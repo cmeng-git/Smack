@@ -115,6 +115,8 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
     private OmemoStore<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, T_Sess, T_Addr, T_ECPub, T_Bundle, T_Ciph> omemoStore;
     private final HashMap<OmemoManager, OmemoRatchet<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, T_Sess, T_Addr, T_ECPub, T_Bundle, T_Ciph>> omemoRatchets = new HashMap<>();
 
+    public static String ITEM_ID_CURRENT = "current";
+
     protected OmemoService() {
 
     }
@@ -615,18 +617,16 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
 
         OmemoManager manager = OmemoManager.getInstanceFor(connection);
         boolean vOmemo2 = manager.isOmemo2Enable();
+        boolean isSubscribed = manager.isBundleSubscribed();
         PublishOptionsExtension publishOptions = null;
-        if (vOmemo2 && (manager.getOmemo2AccessModel() != null)) {
+        if (vOmemo2 && (manager.getOmemo2AccessModel() != null) && isSubscribed) {
             publishOptions = new PublishOptionsExtension();
-            // below fields have error return by ejabberd server
-            // publishOptions.setMaxItems("max");
             publishOptions.setAccessModel(manager.getOmemo2AccessModel());
         }
 
         String bundleNodeName = userDevice.getBundleNodeName(vOmemo2);
         // https://xmpp.org/extensions/xep-0060.html#impl-singleton
-        String itemId = "current";
-        pm.publish(bundleNodeName, new PayloadItem<>(itemId, bundle), publishOptions);
+        pm.publish(bundleNodeName, new PayloadItem<>(ITEM_ID_CURRENT, bundle), publishOptions);
         // pepManager.publish(userDevice.getBundleNodeName(), new PayloadItem<>(bundle));
     }
 
@@ -681,17 +681,16 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
 
         OmemoManager omemoManager = OmemoManager.getInstanceFor(connection);
         boolean vOmemo2 = omemoManager.isOmemo2Enable();
+        boolean isSubscribed = omemoManager.isDevicesSubscribed();
         PublishOptionsExtension publishOptions = null;
-        if (vOmemo2 && (omemoManager.getOmemo2AccessModel() != null)) {
+        if (vOmemo2 && (omemoManager.getOmemo2AccessModel() != null) && isSubscribed) {
             publishOptions = new PublishOptionsExtension();
-            // below fields have error return by ejabberd server
             publishOptions.setAccessModel(omemoManager.getOmemo2AccessModel());
         }
 
         String nodeName = OmemoConstants.getOmemoNS(vOmemo2);
         // https://xmpp.org/extensions/xep-0060.html#impl-singleton
-        String id = "current";
-        pm.publish(nodeName, new PayloadItem<>(id, devicesElement), publishOptions);
+        pm.publish(nodeName, new PayloadItem<>(ITEM_ID_CURRENT, devicesElement), publishOptions);
     }
 
     /**

@@ -83,8 +83,10 @@ import org.jivesoftware.smackx.omemo.util.OmemoOptOutUtil;
 import org.jivesoftware.smackx.pep.PepEventListener;
 import org.jivesoftware.smackx.pep.PepManager;
 import org.jivesoftware.smackx.pubsub.AccessModel;
+import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PubSubException;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.Subscription;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jivesoftware.smackx.stanza_content_encryption.element.EnvelopeElement;
 
@@ -121,6 +123,8 @@ public final class OmemoManager extends Manager {
     private BareJid ownJid;
     private Integer deviceId;
     private boolean isOmemo2Enable = false;
+    private boolean isDevicesSubscribed = false;
+    private boolean isBundleSubscribed = false;
 
     // Default to null not to send publish-options; ejabberd server 25.10 returns conflict
     // and precondition-not-met errors for both publishBundle and publishDeviceList.
@@ -260,12 +264,57 @@ public final class OmemoManager extends Manager {
         return isOmemo2Enable;
     }
 
+    public boolean isBundleSubscribed() {
+        return isBundleSubscribed;
+    }
+
+    public boolean isDevicesSubscribed() {
+        return isDevicesSubscribed;
+    }
+
     public void setOmemo2AccessModel(AccessModel accessModel) {
         omemoAccessModel = accessModel;
     }
 
     public AccessModel getOmemo2AccessModel() {
         return omemoAccessModel;
+    }
+
+    /**
+     * Perform active subscriptions for both omemo2 bundles and devices to the server.
+     * A pre-requisite to successfully send pubsub#publish-options to server.
+     *
+     * @param vOmemo2 specify the respective Omemo NameSpace for retrieval of OmemoDeviceListElement.
+     *
+     * @return true if both the bundles and devices nodes subscription are completed successfully.
+     */
+    public boolean subscribe(boolean vOmemo2) {
+        BareJid userJid = getOwnJid();
+        PubSubManager pm = PubSubManager.getInstanceFor(getConnection(), userJid);
+
+        String nodeName = OmemoConstants.getOmemoNS(vOmemo2);
+        try {
+            LeafNode leafNode =  pm.getOrCreateLeafNode(nodeName);
+            Subscription subscription = leafNode.subscribe(userJid);
+            isDevicesSubscribed = (subscription.getId() != null);
+        }
+        catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | NotConnectedException |
+               InterruptedException | PubSubException.NotALeafNodeException e) {
+            LOGGER.log(Level.WARNING, "Subscription unsuccessful for: " + nodeName + "\n" + e.getMessage());
+        }
+
+        nodeName = OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(getDeviceId(), vOmemo2);
+        try {
+            LeafNode leafNode =  pm.getOrCreateLeafNode(nodeName);
+            Subscription subscription = leafNode.subscribe(userJid);
+            isBundleSubscribed = (subscription.getId() != null);
+        }
+        catch (SmackException.NoResponseException | XMPPException.XMPPErrorException | NotConnectedException |
+               InterruptedException | PubSubException.NotALeafNodeException e) {
+            LOGGER.log(Level.WARNING, "Subscription unsuccessful for: " + nodeName + "\n" + e.getMessage());
+        }
+
+        return isDevicesSubscribed && isBundleSubscribed;
     }
 
     /**
@@ -1175,14 +1224,27 @@ public final class OmemoManager extends Manager {
             }
 
             if (!newDeviceList.copyDevices().equals(receivedDeviceList.copyDevices())) {
-                // See RN v3.4.0 for explanation; seem not necessary anymore
-                // && !newDeviceList.copyDevices().equals(<previous published DeviceList>)) {
                 LOGGER.log(Level.FINE, "Republish deviceList due to changes:\n" +
                         " Received: " + receivedDeviceList.copyDevices() + "\n" +
                         " Published: " + newDeviceList.copyDevices());
                 Async.go(new Runnable() {
                     @Override
                     public void run() {
+                        // If the received itemId != ITEM_ID_CURRENT, it must be purged from the server. Otherwise this
+                        // will leads to endless loop in receiving the pepEvent from this item (as it not being updated)
+                        if (!id.equals(OmemoService.ITEM_ID_CURRENT)) {
+                            PubSubManager pm = PubSubManager.getInstanceFor(getConnection(), getOwnJid());
+                            try {
+                                pm.deleteNode(id);
+                                LOGGER.log(Level.WARNING, "Purge Could not publish our deviceList upon an received update.");
+                            }
+                            catch (SmackException.NoResponseException | XMPPException.XMPPErrorException |
+                                   NotConnectedException |
+                                   InterruptedException e) {
+                                LOGGER.log(Level.WARNING, "Could not remove item with id: " + id, e.getMessage());
+                            }
+                        }
+
                         try {
                             // LOGGER.log(Level.INFO, "received (new) DeviceList: " + receivedDeviceList.getDevices()
                             //        + " (" + newDeviceList.getDevices() + ")");
