@@ -83,6 +83,8 @@ import org.jivesoftware.smackx.omemo.util.OmemoOptOutUtil;
 import org.jivesoftware.smackx.pep.PepEventListener;
 import org.jivesoftware.smackx.pep.PepManager;
 import org.jivesoftware.smackx.pubsub.AccessModel;
+import org.jivesoftware.smackx.pubsub.EventElement;
+import org.jivesoftware.smackx.pubsub.ItemsExtension;
 import org.jivesoftware.smackx.pubsub.LeafNode;
 import org.jivesoftware.smackx.pubsub.PubSubException;
 import org.jivesoftware.smackx.pubsub.PubSubManager;
@@ -294,7 +296,7 @@ public final class OmemoManager extends Manager {
 
         String nodeName = OmemoConstants.getOmemoNS(vOmemo2);
         try {
-            LeafNode leafNode =  pm.getOrCreateLeafNode(nodeName);
+            LeafNode leafNode = pm.getOrCreateLeafNode(nodeName);
             Subscription subscription = leafNode.subscribe(userJid);
             isDevicesSubscribed = (subscription.getId() != null);
         }
@@ -305,7 +307,7 @@ public final class OmemoManager extends Manager {
 
         nodeName = OmemoConstants.PEP_NODE_BUNDLE_FROM_DEVICE_ID(getDeviceId(), vOmemo2);
         try {
-            LeafNode leafNode =  pm.getOrCreateLeafNode(nodeName);
+            LeafNode leafNode = pm.getOrCreateLeafNode(nodeName);
             Subscription subscription = leafNode.subscribe(userJid);
             isBundleSubscribed = (subscription.getId() != null);
         }
@@ -1234,18 +1236,11 @@ public final class OmemoManager extends Manager {
                         // If the received itemId != ITEM_ID_CURRENT, it must be purged from the server. Otherwise this
                         // will leads to endless loop in receiving the pepEvent from this item (as it not being updated)
                         if (!id.equals(OmemoService.ITEM_ID_CURRENT)) {
-                            PubSubManager pm = PubSubManager.getInstanceFor(getConnection(), getOwnJid());
-                            try {
-                                pm.deleteNode(id);
-                                LOGGER.log(Level.WARNING, "Purge Could not publish our deviceList upon an received update.");
-                            }
-                            catch (SmackException.NoResponseException | XMPPException.XMPPErrorException |
-                                   NotConnectedException |
-                                   InterruptedException e) {
-                                LOGGER.log(Level.WARNING, "Could not remove item with id: " + id, e.getMessage());
-                            }
+                            EventElement event = ((EventElement) message.getExtension(EventElement.QNAME));
+                            ItemsExtension itemExt = (ItemsExtension) event.getExtensions().get(0);
+                            deleteNodeItem(itemExt.getNode(), id);
+                            return;
                         }
-
                         try {
                             // LOGGER.log(Level.INFO, "received (new) DeviceList: " + receivedDeviceList.getDevices()
                             //        + " (" + newDeviceList.getDevices() + ")");
@@ -1261,6 +1256,29 @@ public final class OmemoManager extends Manager {
                     }
                 });
             }
+        }
+    }
+
+    /**
+     * Delete the specified Node/Item.
+     *
+     * @param nodeId The retract element node attribute
+     * @param id The item element id attribute
+     */
+    public void deleteNodeItem(String nodeId, String id) {
+        PubSubManager pm = PubSubManager.getInstanceFor(getConnection());
+        if (nodeId == null) {
+            nodeId = OmemoConstants.getOmemoNS(isOmemo2Enable);
+        }
+        try {
+            // pm.deleteNode(nodeName); do not use this.
+            boolean success = pm.retractNodeItem(nodeId, id);
+            LOGGER.log(Level.WARNING, "Purge stray deviceList: " + id + "; Success: " + success);
+        }
+        catch (SmackException.NoResponseException | XMPPException.XMPPErrorException |
+               NotConnectedException |
+               InterruptedException e) {
+            LOGGER.log(Level.WARNING, "Could not remove node itemId: " + id + "\n" + e.getMessage());
         }
     }
 
