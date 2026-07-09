@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -53,7 +53,7 @@ import org.jxmpp.jid.EntityBareJid;
  *
  * <p>Once TLS has been negotiated (i.e. the connection has been secured) it is possible to
  * register with the server or authenticate using SASL. If the
- * server supports SASL then Smack will try to authenticate using SASL..</p>
+ * server supports SASL then Smack will try to authenticate using SASL.</p>
  *
  * <p>The server may support many SASL mechanisms to use for authenticating. Out of the box
  * Smack provides several SASL mechanisms, but it is possible to register new SASL Mechanisms. Use
@@ -250,7 +250,6 @@ public final class SASLAuthentication {
      * Notification message saying that SASL authentication was successful. The next step
      * would be to bind the resource.
      * @param success result of the authentication.
-     * @throws SmackException if Smack detected an exceptional situation.
      * @throws InterruptedException if the calling thread was interrupted.
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws SmackSaslException if a SASL specific error occurred.

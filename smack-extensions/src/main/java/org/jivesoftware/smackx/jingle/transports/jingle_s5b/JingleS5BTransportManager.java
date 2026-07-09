@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -226,7 +226,7 @@ public final class JingleS5BTransportManager extends JingleTransportManager<Jing
             request.setTo(proxy);
 
             try {
-                Bytestream response = connection().createStanzaCollectorAndSend(request).nextResultOrThrow();
+                Bytestream response = connection.sendIqRequestAndWaitForResponse(request);
                 streamHosts.addAll(response.getStreamHosts());
             } catch (Exception e) {
                 iterator.remove();

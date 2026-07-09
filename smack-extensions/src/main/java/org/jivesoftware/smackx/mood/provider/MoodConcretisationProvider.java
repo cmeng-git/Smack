@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -25,8 +25,10 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.mood.element.MoodConcretisation;
 
+import org.jxmpp.JxmppContext;
+
 public abstract class MoodConcretisationProvider<C extends MoodConcretisation> extends ExtensionElementProvider<C> {
 
     @Override
-    public abstract C parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws IOException, XmlPullParserException;
+    public abstract C parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws IOException, XmlPullParserException;
 }

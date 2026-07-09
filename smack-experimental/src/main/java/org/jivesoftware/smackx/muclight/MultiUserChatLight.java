@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -18,6 +18,7 @@ package org.jivesoftware.smackx.muclight;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -184,21 +185,6 @@ public class MultiUserChatLight {
     /**
      * Sends a Message to the chat room.
      *
-     * @param message TODO javadoc me please
-     *            the message.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @deprecated use {@link #sendMessage(MessageBuilder)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public void sendMessage(Message message) throws NotConnectedException, InterruptedException {
-        sendMessage(message.asBuilder());
-    }
-
-    /**
-     * Sends a Message to the chat room.
-     *
      * @param messageBuilder the message.
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
@@ -225,7 +211,7 @@ public class MultiUserChatLight {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public Message nextMessage() throws InterruptedException {
-        return messageCollector.nextResult();
+        return messageCollector.nextResultBlockForever();
     }
 
     /**
@@ -294,14 +280,14 @@ public class MultiUserChatLight {
      * @param occupants TODO javadoc me please
      * @throws Exception TODO javadoc me please
      */
-    public void create(String roomName, String subject, HashMap<String, String> customConfigs, List<Jid> occupants)
+    public void create(String roomName, String subject, Map<String, String> customConfigs, List<Jid> occupants)
             throws Exception {
         MUCLightCreateIQ createMUCLightIQ = new MUCLightCreateIQ(room, roomName, occupants);
 
         messageCollector = connection.createStanzaCollector(fromRoomGroupChatFilter);
 
         try {
-            connection.createStanzaCollectorAndSend(createMUCLightIQ).nextResultOrThrow();
+            connection.sendIqRequestAndWaitForResponse(createMUCLightIQ);
         } catch (NotConnectedException | InterruptedException | NoResponseException | XMPPErrorException e) {
             removeConnectionCallbacks();
             throw e;
@@ -328,11 +314,11 @@ public class MultiUserChatLight {
      * @throws XMPPErrorException if there was an XMPP error returned.
      */
     public void leave() throws NotConnectedException, InterruptedException, NoResponseException, XMPPErrorException {
-        HashMap<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
+        Map<Jid, MUCLightAffiliation> affiliations = new HashMap<>();
         affiliations.put(connection.getUser(), MUCLightAffiliation.none);
 
         MUCLightChangeAffiliationsIQ changeAffiliationsIQ = new MUCLightChangeAffiliationsIQ(room, affiliations);
-        IQ responseIq = connection.createStanzaCollectorAndSend(changeAffiliationsIQ).nextResultOrThrow();
+        IQ responseIq = connection.sendIqRequestAndWaitForResponse(changeAffiliationsIQ);
         boolean roomLeft = responseIq.getType().equals(IQ.Type.result);
 
         if (roomLeft) {
@@ -354,7 +340,7 @@ public class MultiUserChatLight {
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightGetInfoIQ mucLightGetInfoIQ = new MUCLightGetInfoIQ(room, version);
 
-        IQ responseIq = connection.createStanzaCollectorAndSend(mucLightGetInfoIQ).nextResultOrThrow();
+        IQ responseIq = connection.sendIqRequestAndWaitForResponse(mucLightGetInfoIQ);
         MUCLightInfoIQ mucLightInfoResponseIQ = (MUCLightInfoIQ) responseIq;
 
         return new MUCLightRoomInfo(mucLightInfoResponseIQ.getVersion(), room,
@@ -388,7 +374,7 @@ public class MultiUserChatLight {
     public MUCLightRoomConfiguration getConfiguration(String version)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightGetConfigsIQ mucLightGetConfigsIQ = new MUCLightGetConfigsIQ(room, version);
-        IQ responseIq = connection.createStanzaCollectorAndSend(mucLightGetConfigsIQ).nextResultOrThrow();
+        IQ responseIq = connection.sendIqRequestAndWaitForResponse(mucLightGetConfigsIQ);
         MUCLightConfigurationIQ mucLightConfigurationIQ = (MUCLightConfigurationIQ) responseIq;
         return mucLightConfigurationIQ.getConfiguration();
     }
@@ -417,11 +403,11 @@ public class MultiUserChatLight {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public HashMap<Jid, MUCLightAffiliation> getAffiliations(String version)
+    public Map<Jid, MUCLightAffiliation> getAffiliations(String version)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightGetAffiliationsIQ mucLightGetAffiliationsIQ = new MUCLightGetAffiliationsIQ(room, version);
 
-        IQ responseIq = connection.createStanzaCollectorAndSend(mucLightGetAffiliationsIQ).nextResultOrThrow();
+        IQ responseIq = connection.sendIqRequestAndWaitForResponse(mucLightGetAffiliationsIQ);
         MUCLightAffiliationsIQ mucLightAffiliationsIQ = (MUCLightAffiliationsIQ) responseIq;
 
         return mucLightAffiliationsIQ.getAffiliations();
@@ -436,7 +422,7 @@ public class MultiUserChatLight {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public HashMap<Jid, MUCLightAffiliation> getAffiliations()
+    public Map<Jid, MUCLightAffiliation> getAffiliations()
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         return getAffiliations(null);
     }
@@ -450,10 +436,10 @@ public class MultiUserChatLight {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public void changeAffiliations(HashMap<Jid, MUCLightAffiliation> affiliations)
+    public void changeAffiliations(Map<Jid, MUCLightAffiliation> affiliations)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightChangeAffiliationsIQ changeAffiliationsIQ = new MUCLightChangeAffiliationsIQ(room, affiliations);
-        connection.createStanzaCollectorAndSend(changeAffiliationsIQ).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(changeAffiliationsIQ);
     }
 
     /**
@@ -466,7 +452,7 @@ public class MultiUserChatLight {
      */
     public void destroy() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightDestroyIQ mucLightDestroyIQ = new MUCLightDestroyIQ(room);
-        IQ responseIq = connection.createStanzaCollectorAndSend(mucLightDestroyIQ).nextResultOrThrow();
+        IQ responseIq = connection.sendIqRequestAndWaitForResponse(mucLightDestroyIQ);
         boolean roomDestroyed = responseIq.getType().equals(IQ.Type.result);
 
         if (roomDestroyed) {
@@ -486,7 +472,7 @@ public class MultiUserChatLight {
     public void changeSubject(String subject)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightSetConfigsIQ mucLightSetConfigIQ = new MUCLightSetConfigsIQ(room, null, subject, null);
-        connection.createStanzaCollectorAndSend(mucLightSetConfigIQ).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(mucLightSetConfigIQ);
     }
 
     /**
@@ -501,7 +487,7 @@ public class MultiUserChatLight {
     public void changeRoomName(String roomName)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightSetConfigsIQ mucLightSetConfigIQ = new MUCLightSetConfigsIQ(room, roomName, null);
-        connection.createStanzaCollectorAndSend(mucLightSetConfigIQ).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(mucLightSetConfigIQ);
     }
 
     /**
@@ -513,7 +499,7 @@ public class MultiUserChatLight {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public void setRoomConfigs(HashMap<String, String> customConfigs)
+    public void setRoomConfigs(Map<String, String> customConfigs)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         setRoomConfigs(null, customConfigs);
     }
@@ -528,10 +514,10 @@ public class MultiUserChatLight {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public void setRoomConfigs(String roomName, HashMap<String, String> customConfigs)
+    public void setRoomConfigs(String roomName, Map<String, String> customConfigs)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         MUCLightSetConfigsIQ mucLightSetConfigIQ = new MUCLightSetConfigsIQ(room, roomName, customConfigs);
-        connection.createStanzaCollectorAndSend(mucLightSetConfigIQ).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(mucLightSetConfigIQ);
     }
 
 }

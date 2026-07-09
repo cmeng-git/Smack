@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -40,7 +40,7 @@ public final class PublicKeysListElement implements ExtensionElement {
 
     private final Map<OpenPgpV4Fingerprint, PubkeyMetadataElement> metadata;
 
-    private PublicKeysListElement(TreeMap<OpenPgpV4Fingerprint, PubkeyMetadataElement> metadata) {
+    private PublicKeysListElement(Map<OpenPgpV4Fingerprint, PubkeyMetadataElement> metadata) {
         this.metadata = Collections.unmodifiableMap(Objects.requireNonNull(metadata));
     }
 
@@ -48,7 +48,8 @@ public final class PublicKeysListElement implements ExtensionElement {
         return new Builder();
     }
 
-    public TreeMap<OpenPgpV4Fingerprint, PubkeyMetadataElement> getMetadata() {
+    @SuppressWarnings("NonApiType")
+    public Map<OpenPgpV4Fingerprint, PubkeyMetadataElement> getMetadata() {
         return new TreeMap<>(metadata);
     }
 
@@ -72,7 +73,7 @@ public final class PublicKeysListElement implements ExtensionElement {
 
     public static final class Builder {
 
-        private final TreeMap<OpenPgpV4Fingerprint, PubkeyMetadataElement> metadata = new TreeMap<>();
+        private final Map<OpenPgpV4Fingerprint, PubkeyMetadataElement> metadata = new TreeMap<>();
 
         private Builder() {
             // Empty
@@ -133,11 +134,14 @@ public final class PublicKeysListElement implements ExtensionElement {
             return xml;
         }
 
+        @SuppressWarnings("JavaUtilDate")
         @Override
         public int hashCode() {
             return getV4Fingerprint().hashCode() + 3 * getDate().hashCode();
         }
 
+        @SuppressWarnings({"UndefinedEquals", "JavaUtilDate"})
+        // TODO: Fix the UndefinedEquals due using Date.equals(Date)
         @Override
         public boolean equals(Object o) {
             if (o == null) {

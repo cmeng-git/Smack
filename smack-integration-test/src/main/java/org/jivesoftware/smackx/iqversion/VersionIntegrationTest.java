@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015-2020 Florian Schmaus
  *
@@ -28,7 +28,9 @@ import org.jivesoftware.smackx.iqversion.packet.Version;
 import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 
+@SpecificationReference(document = "XEP-0092", version = "1.1")
 public class VersionIntegrationTest extends AbstractSmackIntegrationTest {
 
     public VersionIntegrationTest(SmackIntegrationTestEnvironment environment) {
@@ -45,8 +47,8 @@ public class VersionIntegrationTest extends AbstractSmackIntegrationTest {
         final String versionName = "Smack Integration Test " + testRunId;
         versionManagerTwo.setVersion(versionName, "1.0");
 
-        assertTrue (versionManagerOne.isSupported(conTwo.getUser()));
+        assertTrue(versionManagerOne.isSupported(conTwo.getUser()), "Expected " + conTwo.getUser() + " to support " + Version.NAMESPACE + " (but it does not).");
         Version version = versionManagerOne.getVersion(conTwo.getUser());
-        assertEquals(versionName, version.getName());
+        assertEquals(versionName, version.getName(), "Unexpected version name reported by " + conTwo.getUser());
     }
 }

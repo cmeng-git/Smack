@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -18,22 +18,17 @@ package org.jivesoftware.smackx.search;
 
 import java.io.IOException;
 
-import org.jivesoftware.smack.SmackException.NoResponseException;
-import org.jivesoftware.smack.SmackException.NotConnectedException;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.SimpleIQ;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
-import org.jivesoftware.smackx.xdata.packet.DataForm;
-
-import org.jxmpp.jid.DomainBareJid;
+import org.jxmpp.JxmppContext;
 
 /**
  * Implements the protocol currently used to search information repositories on the Jabber network. To date, the jabber:iq:search protocol
@@ -58,77 +53,13 @@ public class UserSearch extends SimpleIQ {
     }
 
     /**
-     * Returns the form for all search fields supported by the search service.
-     *
-     * @param con           the current XMPPConnection.
-     * @param searchService the search service to use. (ex. search.jivesoftware.com)
-     * @return the search form received by the server.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     */
-    public DataForm getSearchForm(XMPPConnection con, DomainBareJid searchService) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        UserSearch search = new UserSearch();
-        search.setType(IQ.Type.get);
-        search.setTo(searchService);
-
-        IQ response = con.createStanzaCollectorAndSend(search).nextResultOrThrow();
-        return DataForm.from(response, NAMESPACE);
-    }
-
-    /**
-     * Sends the filled out answer form to be sent and queried by the search service.
-     *
-     * @param con           the current XMPPConnection.
-     * @param searchForm    the <code>Form</code> to send for querying.
-     * @param searchService the search service to use. (ex. search.jivesoftware.com)
-     * @return ReportedData the data found from the query.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     */
-    public ReportedData sendSearchForm(XMPPConnection con, DataForm searchForm, DomainBareJid searchService) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        UserSearch search = new UserSearch();
-        search.setType(IQ.Type.set);
-        search.setTo(searchService);
-        search.addExtension(searchForm);
-
-        IQ response = con.createStanzaCollectorAndSend(search).nextResultOrThrow();
-        return ReportedData.getReportedDataFrom(response);
-    }
-
-    /**
-     * Sends the filled out answer form to be sent and queried by the search service.
-     *
-     * @param con           the current XMPPConnection.
-     * @param searchForm    the <code>Form</code> to send for querying.
-     * @param searchService the search service to use. (ex. search.jivesoftware.com)
-     * @return ReportedData the data found from the query.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     */
-    public ReportedData sendSimpleSearchForm(XMPPConnection con, DataForm searchForm, DomainBareJid searchService) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        SimpleUserSearch search = new SimpleUserSearch();
-        search.setForm(searchForm);
-        search.setType(IQ.Type.set);
-        search.setTo(searchService);
-
-        SimpleUserSearch response = con.createStanzaCollectorAndSend(search).nextResultOrThrow();
-        return response.getReportedData();
-    }
-
-    /**
      * Internal Search service Provider.
      */
-    public static class Provider extends IQProvider<IQ> {
+    public static class Provider extends IqProvider<IQ> {
 
         // FIXME this provider does return two different types of IQs
         @Override
-        public IQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+        public IQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
             UserSearch search = null;
             SimpleUserSearch simpleUserSearch = new SimpleUserSearch();
 
@@ -142,7 +73,7 @@ public class UserSearch extends SimpleIQ {
                 else if (eventType == XmlPullParser.Event.START_ELEMENT && parser.getNamespace().equals("jabber:x:data")) {
                     // Otherwise, it must be a packet extension.
                     search = new UserSearch();
-                    PacketParserUtils.addExtensionElement(search, parser, xmlEnvironment);
+                    PacketParserUtils.addExtensionElement(search, parser, xmlEnvironment, jxmppContext);
                 }
                 else if (eventType == XmlPullParser.Event.END_ELEMENT) {
                     if (parser.getName().equals("query")) {

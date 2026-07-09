@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019 Florian Schmaus
  *
@@ -18,18 +18,21 @@ package org.jivesoftware.smackx.jid_prep.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.jid_prep.element.JidPrepIq;
 
-public class JidPrepIqProvider extends IQProvider<JidPrepIq> {
+import org.jxmpp.JxmppContext;
+
+public class JidPrepIqProvider extends IqProvider<JidPrepIq> {
 
     @Override
-    public JidPrepIq parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+    public JidPrepIq parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                     throws XmlPullParserException, IOException, SmackParsingException {
         String jid = parser.nextText();
 

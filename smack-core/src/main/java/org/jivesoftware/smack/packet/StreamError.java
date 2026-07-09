@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2005 Jive Software.
  *
@@ -58,9 +58,9 @@ import org.jivesoftware.smack.util.XmlStringBuilder;
  *          stream has been authenticated </td></tr>
  *      <tr><td> policy-violation </td><td> the entity has violated some local service
  *          policy. </td></tr>
- *      <tr><td> remote-connection-failed </td><td> Rthe server is unable to properly connect
+ *      <tr><td> remote-connection-failed </td><td> the server is unable to properly connect
  *          to a remote entity. </td></tr>
- *      <tr><td> resource-constraint </td><td> Rthe server lacks the system resources necessary
+ *      <tr><td> resource-constraint </td><td> the server lacks the system resources necessary
  *          to service the stream. </td></tr>
  *      <tr><td> restricted-xml </td><td> the entity has attempted to send restricted XML
  *          features. </td></tr>
@@ -105,7 +105,7 @@ public class StreamError extends AbstractError implements Nonza {
     private final Condition condition;
     private final String conditionText;
 
-    public StreamError(Condition condition, String conditionText, Map<String, String> descriptiveTexts, List<ExtensionElement> extensions) {
+    public StreamError(Condition condition, String conditionText, Map<String, String> descriptiveTexts, List<XmlElement> extensions) {
         super(descriptiveTexts, extensions);
         // Some implementations may send the condition as non-empty element containing the empty string, that is
         // <condition xmlns='foo'></condition>, in this case the parser may calls this constructor with the empty string

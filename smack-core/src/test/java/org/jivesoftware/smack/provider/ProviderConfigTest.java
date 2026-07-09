@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -20,12 +20,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.FileUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.jxmpp.JxmppContext;
 
 public class ProviderConfigTest {
 
@@ -60,10 +62,10 @@ public class ProviderConfigTest {
         Assert.assertNotNull(ProviderManager.getIQProvider("provider", "test:file_provider"));
     }
 
-    public static class TestIQProvider extends IQProvider<IQ> {
+    public static class TestIQProvider extends IqProvider<IQ> {
 
         @Override
-        public IQ parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) {
+        public IQ parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) {
             return null;
         }
 

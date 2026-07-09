@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2010 Jive Software.
  *
@@ -16,11 +16,15 @@
  */
 package org.jivesoftware.smackx.attention.packet;
 
+import javax.xml.namespace.QName;
+
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smack.xml.XmlPullParser;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * A PacketExtension that implements XEP-0224: Attention
@@ -44,31 +48,18 @@ public class AttentionExtension implements ExtensionElement {
      */
     public static final String NAMESPACE = "urn:xmpp:attention:0";
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.jivesoftware.smack.packet.PacketExtension#getElementName()
-     */
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT_NAME);
+
     @Override
     public String getElementName() {
-        return ELEMENT_NAME;
+        return QNAME.getLocalPart();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.jivesoftware.smack.packet.PacketExtension#getNamespace()
-     */
     @Override
     public String getNamespace() {
-        return NAMESPACE;
+        return QNAME.getNamespaceURI();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.jivesoftware.smack.packet.PacketExtension#toXML()
-     */
     @Override
     public XmlStringBuilder toXML(org.jivesoftware.smack.packet.XmlEnvironment enclosingNamespace) {
         return new XmlStringBuilder(this).closeEmptyElement();
@@ -85,7 +76,7 @@ s     */
     public static class Provider extends ExtensionElementProvider<AttentionExtension> {
 
         @Override
-        public AttentionExtension parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) {
+        public AttentionExtension parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) {
             return new AttentionExtension();
         }
     }

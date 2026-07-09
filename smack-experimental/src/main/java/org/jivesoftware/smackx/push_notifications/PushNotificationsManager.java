@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2016 Fernando Ramirez
  *
@@ -16,7 +16,6 @@
  */
 package org.jivesoftware.smackx.push_notifications;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -28,7 +27,6 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPConnectionRegistry;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.IQ.Type;
 
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.push_notifications.element.DisablePushNotificationsIQ;
@@ -123,7 +121,7 @@ public final class PushNotificationsManager extends Manager {
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    public boolean enable(Jid pushJid, String node, HashMap<String, String> publishOptions)
+    public boolean enable(Jid pushJid, String node, Map<String, String> publishOptions)
             throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         EnablePushNotificationsIQ enablePushNotificationsIQ = new EnablePushNotificationsIQ(pushJid, node,
                 publishOptions);
@@ -165,8 +163,8 @@ public final class PushNotificationsManager extends Manager {
     private boolean changePushNotificationsStatus(IQ iq)
             throws NotConnectedException, InterruptedException, NoResponseException, XMPPErrorException {
         final XMPPConnection connection = connection();
-        IQ responseIQ = connection.createStanzaCollectorAndSend(iq).nextResultOrThrow();
-        return responseIQ.getType() != Type.error;
+        IQ responseIQ = connection.sendIqRequestAndWaitForResponse(iq);
+        return responseIQ.getType() != IQ.Type.error;
     }
 
 }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2020 Florian Schmaus
  *
@@ -36,7 +36,9 @@ import org.igniterealtime.smack.inttest.AbstractSmackIntegrationTest;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 
+@SpecificationReference(document = "XEP-0363", version = "0.4.0")
 public class HttpFileUploadIntegrationTest extends AbstractSmackIntegrationTest {
 
     private static final int FILE_SIZE = 1024 * 128;
@@ -80,7 +82,7 @@ public class HttpFileUploadIntegrationTest extends AbstractSmackIntegrationTest 
         URL getUrl = hfumOne.uploadFile(file, new UploadProgressListener() {
             @Override
             public void onUploadProgress(long uploadedBytes, long totalBytes) {
-                double progress = uploadedBytes / totalBytes;
+                double progress = uploadedBytes / ((double) totalBytes);
                 LOGGER.fine("HTTP File Upload progress " + progress + "% (" + uploadedBytes + '/' + totalBytes + ')');
             }
         });
@@ -102,6 +104,6 @@ public class HttpFileUploadIntegrationTest extends AbstractSmackIntegrationTest 
 
         byte[] downBytes = baos.toByteArray();
 
-        assertArrayEquals(upBytes, downBytes);
+        assertArrayEquals(upBytes, downBytes, "Expected the downloaded bytes to be equal to the uploaded bytes (but they were not).");
     }
 }

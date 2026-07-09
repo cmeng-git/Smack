@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.IQ.Type;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 
@@ -41,7 +41,7 @@ public class MamFinProviderTest extends MamTest {
     @Test
     public void checkMamFinProvider() throws Exception {
         XmlPullParser parser = PacketParserUtils.getParserFor(exmapleMamFinXml);
-        MamFinIQ mamFinIQ = new MamFinIQProvider().parse(parser);
+        MamFinIQ mamFinIQ = new MamFinIQProvider().parse(parser, null);
 
         assertFalse(mamFinIQ.isComplete());
         assertTrue(mamFinIQ.isStable());
@@ -65,10 +65,10 @@ public class MamFinProviderTest extends MamTest {
                         + "</iq>";
         // @formatter:on
 
-        IQ iq = PacketParserUtils.parseStanza(IQ_LIMITED_RESULTS_EXAMPLE);
+        IQ iq = ElementParserUtils.parseStanza(IQ_LIMITED_RESULTS_EXAMPLE);
 
         MamFinIQ mamFinIQ = (MamFinIQ) iq;
-        assertEquals(mamFinIQ.getType(), Type.result);
+        assertEquals(mamFinIQ.getType(), IQ.Type.result);
 
         assertTrue(mamFinIQ.isComplete());
         assertEquals(mamFinIQ.getRSMSet().getCount(), 16);

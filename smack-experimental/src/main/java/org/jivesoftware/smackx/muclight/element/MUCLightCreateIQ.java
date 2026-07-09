@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -18,6 +18,7 @@ package org.jivesoftware.smackx.muclight.element;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jivesoftware.smack.packet.IQ;
 
@@ -42,7 +43,7 @@ public class MUCLightCreateIQ extends IQ {
     public static final String NAMESPACE = MultiUserChatLight.NAMESPACE + MultiUserChatLight.CREATE;
 
     private MUCLightRoomConfiguration configuration;
-    private final HashMap<Jid, MUCLightAffiliation> occupants;
+    private final Map<Jid, MUCLightAffiliation> occupants;
 
     /**
      * MUCLight create IQ constructor.
@@ -53,7 +54,8 @@ public class MUCLightCreateIQ extends IQ {
      * @param customConfigs TODO javadoc me please
      * @param occupants TODO javadoc me please
      */
-    public MUCLightCreateIQ(EntityJid room, String roomName, String subject, HashMap<String, String> customConfigs,
+    @SuppressWarnings("this-escape")
+    public MUCLightCreateIQ(EntityJid room, String roomName, String subject, Map<String, String> customConfigs,
             List<Jid> occupants) {
         super(ELEMENT, NAMESPACE);
         this.configuration = new MUCLightRoomConfiguration(roomName, subject, customConfigs);
@@ -92,7 +94,7 @@ public class MUCLightCreateIQ extends IQ {
      *
      * @return the room occupants
      */
-    public HashMap<Jid, MUCLightAffiliation> getOccupants() {
+    public Map<Jid, MUCLightAffiliation> getOccupants() {
         return occupants;
     }
 

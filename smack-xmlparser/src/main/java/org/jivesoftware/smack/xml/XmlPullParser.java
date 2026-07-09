@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019-2021 Florian Schmaus.
  *
@@ -110,7 +110,7 @@ public interface XmlPullParser {
     String getAttributeNamespace(int index);
 
     /**
-     * Returns the loacalpart of the attribute's name or <code>null</code> in case the index does not refer to an
+     * Returns the localpart of the attribute's name or <code>null</code> in case the index does not refer to an
      * attribute.
      *
      * @param index the attribute index.

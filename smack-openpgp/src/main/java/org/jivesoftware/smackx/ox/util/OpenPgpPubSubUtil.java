@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -124,6 +124,7 @@ public class OpenPgpPubSubUtil {
      * @throws SmackException.NotConnectedException if we are not connected.
      * @throws SmackException.NoResponseException if the server doesn't respond.
      */
+    @SuppressWarnings("JavaUtilDate")
     public static void publishPublicKey(PepManager pepManager, PubkeyElement pubkeyElement, OpenPgpV4Fingerprint fingerprint)
             throws InterruptedException, PubSubException.NotALeafNodeException,
             XMPPException.XMPPErrorException, SmackException.NotConnectedException, SmackException.NoResponseException {
@@ -408,7 +409,7 @@ public class OpenPgpPubSubUtil {
      * which are not subscribed to the node owner. Therefore this method fetches the node directly and puts it
      * into the {@link PubSubManager}s node map.
      *
-     * Note: Due to the alck of a disco#info query, it might happen, that the node doesn't exist on the server,
+     * Note: Due to the lack of a disco#info query, it might happen, that the node doesn't exist on the server,
      * even though we add it to the node map.
      *
      * @see <a href="https://github.com/processone/ejabberd/issues/2483">Ejabberd bug tracker about the issue</a>
@@ -464,8 +465,7 @@ public class OpenPgpPubSubUtil {
 
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException |
                 NoSuchFieldException e) {
-            LOGGER.log(Level.SEVERE, "Using reflections to create a LeafNode and put it into PubSubManagers nodeMap failed.", e);
-            throw new AssertionError(e);
+            throw new LinkageError("Using reflections to create a LeafNode and put it into PubSubManagers nodeMap failed.", e);
         }
     }
 }

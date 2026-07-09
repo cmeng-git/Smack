@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -28,7 +28,7 @@ import org.jxmpp.jid.Jid;
  * banned, or granted admin permissions or the room is destroyed.
  * <p>
  * Note that the methods {@link #kicked(Jid, String)}, {@link #banned(Jid, String)} and
- * {@link #roomDestroyed(MultiUserChat, String)} will be called before the generic {@link #removed(MUCUser, Presence)}
+ * {@link #roomDestroyed(MultiUserChat, String, String)} will be called before the generic {@link #removed(MUCUser, Presence)}
  * callback will be invoked. The generic {@link #removed(MUCUser, Presence)} callback will be invoked every time the user
  * was removed from the MUC involuntarily. It is hence the recommended callback to listen for and act upon.
  * </p>
@@ -39,7 +39,7 @@ public interface UserStatusListener {
 
     /**
      * Called when a moderator kicked your user from the room. This means that you are no longer
-     * participanting in the room.
+     * participating in the room.
      *
      * @param actor the moderator that kicked your user from the room (e.g. user@host.org).
      * @param reason the reason provided by the actor to kick you from the room.
@@ -106,7 +106,7 @@ public interface UserStatusListener {
     /**
      * Called when an administrator grants moderator privileges to your user. This means that you
      * will be able to kick users, grant and revoke voice, invite other users, modify room's
-     * subject plus all the partcipants privileges.
+     * subject plus all the participant privileges.
      *
      */
     default void moderatorGranted() {
@@ -115,7 +115,7 @@ public interface UserStatusListener {
     /**
      * Called when an administrator revokes moderator privileges from your user. This means that
      * you will no longer be able to kick users, grant and revoke voice, invite other users,
-     * modify room's subject plus all the partcipants privileges.
+     * modify room's subject plus all the participant privileges.
      *
      */
     default void moderatorRevoked() {
@@ -161,10 +161,11 @@ public interface UserStatusListener {
      * Called when the room is destroyed.
      *
      * @param alternateMUC an alternate MultiUserChat, may be null.
+     * @param password a password for the alternative MultiUserChat, may be null.
      * @param reason the reason why the room was closed, may be null.
      * @see #removed(MUCUser, Presence)
      */
-    default void roomDestroyed(MultiUserChat alternateMUC, String reason) {
+    default void roomDestroyed(MultiUserChat alternateMUC, String password, String reason) {
     }
 
 }

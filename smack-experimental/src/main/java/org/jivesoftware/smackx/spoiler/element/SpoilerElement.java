@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub
  *
@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.namespace.QName;
+
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.util.StringUtils;
@@ -32,6 +34,7 @@ public class SpoilerElement implements ExtensionElement {
 
     public static final String ELEMENT = "spoiler";
     public static final String NAMESPACE = SpoilerManager.NAMESPACE_0;
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     public static final SpoilerElement EMPTY = new SpoilerElement(null, null);
 
@@ -111,16 +114,16 @@ public class SpoilerElement implements ExtensionElement {
      * @param message message
      * @return map of spoilers
      */
+    @SuppressWarnings("MixedMutabilityReturnType")
     public static Map<String, String> getSpoilers(Message message) {
         if (!containsSpoiler(message)) {
             return Collections.emptyMap();
         }
 
-        List<ExtensionElement> spoilers = message.getExtensions(SpoilerElement.ELEMENT, NAMESPACE);
+        List<SpoilerElement> spoilers = message.getExtensions(SpoilerElement.class);
         Map<String, String> map = new HashMap<>();
 
-        for (ExtensionElement e : spoilers) {
-            SpoilerElement s = (SpoilerElement) e;
+        for (SpoilerElement s : spoilers) {
             if (s.getLanguage() == null || s.getLanguage().equals("")) {
                 map.put("", s.getHint());
             } else {

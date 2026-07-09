@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2018 Paul Schaub
  *
@@ -27,6 +27,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Security;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -40,7 +41,13 @@ import org.jivesoftware.smackx.omemo.signal.SignalOmemoService;
 
 import org.igniterealtime.smack.inttest.SmackIntegrationTestFramework;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 public class SmackOmemoSignalIntegrationTestFramework {
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     public static void main(String[] args) throws InvalidKeyException, NoSuchPaddingException,
                     InvalidAlgorithmParameterException, IllegalBlockSizeException,

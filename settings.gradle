@@ -1,11 +1,32 @@
+pluginManagement {
+    includeBuild('build-logic')
+}
+
 // The name of the root project.
 // If we would not set the name, then gradle would use the directory
 // name of the root directory
 rootProject.name = 'Smack'
 
+def readVersionFile() {
+	def versionFile = new File(rootDir, 'version')
+	if (!versionFile.isFile()) {
+		throw new Exception("Could not find version file")
+	}
+	if (versionFile.text.isEmpty()) {
+		throw new Exception("Version file does not contain a version")
+	}
+	versionFile.text.trim()
+}
+def version = readVersionFile()
+gradle.ext.set('version', version)
+gradle.beforeProject { project ->
+    project.version = gradle.ext.version
+}
+
 include 'smack-core',
 		'smack-im',
 		'smack-tcp',
+		'smack-examples',
 		'smack-extensions',
 		'smack-experimental',
 		'smack-debug',
@@ -22,14 +43,17 @@ include 'smack-core',
 		'smack-bosh',
 		'smack-android',
 		'smack-android-extensions',
-		'smack-java8',
-		'smack-java8-full',
+		'smack-java11',
+		'smack-java11-full',
 		'smack-integration-test',
 		'smack-omemo',
 		'smack-omemo-signal',
 		'smack-omemo-signal-integration-test',
 		'smack-repl',
 		'smack-openpgp',
+		'smack-websocket',
+		'smack-websocket-okhttp',
+		'smack-websocket-java11',
 		'smack-xmlparser',
 		'smack-xmlparser-stax',
 		'smack-xmlparser-xpp3'

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -60,7 +60,7 @@ public class MessageTest extends SmackTestCase {
         }
 
         Message message = (Message) collector.nextResult(2500);
-        assertNotNull("Message not recieved from remote user", message);
+        assertNotNull("Message not received from remote user", message);
     }
 
     /**

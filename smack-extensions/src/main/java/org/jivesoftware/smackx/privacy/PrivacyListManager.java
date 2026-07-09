@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2006-2007 Jive Software.
  *
@@ -143,7 +143,6 @@ public final class PrivacyListManager extends Manager {
                             else {
                                 cachedActiveListName = activeListName;
                             }
-                            return;
                     }
                 }, iqResultReplyFilter);
             }
@@ -165,7 +164,6 @@ public final class PrivacyListManager extends Manager {
                             else {
                                 cachedDefaultListName = defaultListName;
                             }
-                            return;
                     }
                 }, iqResultReplyFilter);
             }
@@ -233,7 +231,7 @@ public final class PrivacyListManager extends Manager {
         // The request is a get iq type
         requestPrivacy.setType(Privacy.Type.get);
 
-        return connection().createStanzaCollectorAndSend(requestPrivacy).nextResultOrThrow();
+        return connection().sendIqRequestAndWaitForResponse(requestPrivacy);
     }
 
     /**
@@ -252,7 +250,7 @@ public final class PrivacyListManager extends Manager {
         // The request is a get iq type
         requestPrivacy.setType(Privacy.Type.set);
 
-        return connection().createStanzaCollectorAndSend(requestPrivacy).nextResultOrThrow();
+        return connection().sendIqRequestAndWaitForResponse(requestPrivacy);
     }
 
     /**

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -16,8 +16,8 @@
  */
 package org.jivesoftware.smackx.bytestreams.ibb;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -135,7 +135,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      * list of listeners that respond to all In-Band Bytestream requests if there are no user
      * specific listeners for that request
      */
-    private final List<BytestreamListener> allRequestListeners = Collections.synchronizedList(new LinkedList<BytestreamListener>());
+    private final List<BytestreamListener> allRequestListeners = Collections.synchronizedList(new ArrayList<BytestreamListener>());
 
     /* listener that handles all incoming In-Band Bytestream requests */
     private final InitiationListener initiationListener;
@@ -162,7 +162,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      * list containing session IDs of In-Band Bytestream open packets that should be ignored by the
      * InitiationListener
      */
-    private final List<String> ignoredBytestreamRequests = Collections.synchronizedList(new LinkedList<String>());
+    private final List<String> ignoredBytestreamRequests = Collections.synchronizedList(new ArrayList<String>());
 
     /**
      * Returns the InBandBytestreamManager to handle In-Band Bytestreams for a given
@@ -424,7 +424,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
         final XMPPConnection connection = connection();
 
         // sending packet will throw exception on timeout or error reply
-        connection.createStanzaCollectorAndSend(byteStreamRequest).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(byteStreamRequest);
 
         InBandBytestreamSession inBandBytestreamSession = new InBandBytestreamSession(
                         connection, byteStreamRequest, targetJID);
@@ -441,7 +441,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    protected void replyRejectPacket(IQ request) throws NotConnectedException, InterruptedException {
+    void replyRejectPacket(IQ request) throws NotConnectedException, InterruptedException {
         IQ error = IQ.createErrorResponse(request, StanzaError.Condition.not_acceptable);
         connection().sendStanza(error);
     }
@@ -454,7 +454,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    protected void replyItemNotFoundPacket(IQ request) throws NotConnectedException, InterruptedException {
+    void replyItemNotFoundPacket(IQ request) throws NotConnectedException, InterruptedException {
         IQ error = IQ.createErrorResponse(request, StanzaError.Condition.item_not_found);
         connection().sendStanza(error);
     }
@@ -476,7 +476,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      *
      * @return the XMPP connection
      */
-    protected XMPPConnection getConnection() {
+    XMPPConnection getConnection() {
         return connection();
     }
 
@@ -487,7 +487,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      * @param initiator the initiator's JID
      * @return the listener
      */
-    protected BytestreamListener getUserListener(Jid initiator) {
+    BytestreamListener getUserListener(Jid initiator) {
         return this.userListeners.get(initiator);
     }
 
@@ -497,7 +497,7 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      *
      * @return list of listeners
      */
-    protected List<BytestreamListener> getAllRequestListeners() {
+    List<BytestreamListener> getAllRequestListeners() {
         return this.allRequestListeners;
     }
 
@@ -506,16 +506,16 @@ public final class InBandBytestreamManager extends Manager implements Bytestream
      *
      * @return the sessions map
      */
-    protected Map<String, InBandBytestreamSession> getSessions() {
+    Map<String, InBandBytestreamSession> getSessions() {
         return sessions;
     }
 
     /**
-     * Returns the list of session IDs that should be ignored by the InitialtionListener
+     * Returns the list of session IDs that should be ignored by the InitiationListener
      *
      * @return list of session IDs
      */
-    protected List<String> getIgnoredBytestreamRequests() {
+    List<String> getIgnoredBytestreamRequests() {
         return ignoredBytestreamRequests;
     }
 

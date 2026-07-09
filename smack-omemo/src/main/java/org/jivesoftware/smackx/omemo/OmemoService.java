@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub, 2019 Florian Schmaus
  *
@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
@@ -794,7 +795,7 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
         }
 
         // Select random Bundle
-        HashMap<Integer, T_Bundle> bundlesList = getOmemoStoreBackend().keyUtil().BUNDLE.bundles(bundleElement, contactsDevice);
+        Map<Integer, T_Bundle> bundlesList = getOmemoStoreBackend().keyUtil().BUNDLE.bundles(bundleElement, contactsDevice);
         int randomIndex = new Random().nextInt(bundlesList.size());
         T_Bundle randomPreKeyBundle = new ArrayList<>(bundlesList.values()).get(randomIndex);
 
@@ -893,7 +894,7 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
     }
 
     /**
-     * Process a received bundle. Typically that includes saving keys and building a session.
+     * Process a received bundle. Typically, that includes saving keys and building a session.
      *
      * @param omemoManager our OmemoManager
      * @param contactsBundle bundle of the contact
@@ -914,6 +915,7 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
      *
      * @throws IOException if an I/O error occurred.
      */
+    @SuppressWarnings("JavaUtilDate")
     private boolean shouldRotateSignedPreKey(OmemoDevice userDevice) throws IOException {
         if (!OmemoConfiguration.getRenewOldSignedPreKeys()) {
             return false;
@@ -965,6 +967,7 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
      *
      * @throws IOException if an I/O error occurred.
      */
+    @SuppressWarnings("JavaUtilDate")
     private OmemoCachedDeviceList removeStaleDevicesFromDeviceList(OmemoDevice userDevice,
                                                                    BareJid contact,
                                                                    OmemoCachedDeviceList contactsDeviceList,
@@ -1020,6 +1023,7 @@ public abstract class OmemoService<T_IdKeyPair, T_IdKey, T_PreKey, T_SigPreKey, 
      *
      * @return true if the subject device is considered stale
      */
+    @SuppressWarnings("JavaUtilDate")
     static boolean isStale(OmemoDevice userDevice, OmemoDevice subject, Date lastReceipt, int maxAgeHours) {
         if (userDevice.equals(subject)) {
             return false;

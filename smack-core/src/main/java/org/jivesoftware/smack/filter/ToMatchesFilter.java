@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Florian Schmaus.
  *
@@ -24,7 +24,7 @@ public final class ToMatchesFilter extends AbstractFromToMatchesFilter {
 
     public static final ToMatchesFilter MATCH_NO_TO_SET = create(null);
 
-    public ToMatchesFilter(Jid address, boolean ignoreResourcepart) {
+    private ToMatchesFilter(Jid address, boolean ignoreResourcepart) {
         super(address, ignoreResourcepart);
     }
 

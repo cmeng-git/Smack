@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Florian Schmaus
  *
@@ -19,8 +19,7 @@ package org.jivesoftware.smackx.jingle.element;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.XmlStringBuilder;
@@ -31,7 +30,7 @@ import org.jivesoftware.smack.util.XmlStringBuilder;
  * @see <a href="https://xmpp.org/extensions/xep-0166.html#def-reason">XEP-0166 § 7.4</a>
  *
  */
-public class JingleReason implements FullyQualifiedElement {
+public class JingleReason implements XmlElement {
 
     public static final String ELEMENT = "reason";
     public static final String NAMESPACE = Jingle.NAMESPACE;
@@ -78,7 +77,7 @@ public class JingleReason implements FullyQualifiedElement {
         unsupported_transports,
         ;
 
-        protected static final Map<String, Reason> LUT = new HashMap<>(Reason.values().length);
+        static final Map<String, Reason> LUT = new HashMap<>(Reason.values().length);
 
         static {
             for (Reason reason : Reason.values()) {
@@ -86,7 +85,7 @@ public class JingleReason implements FullyQualifiedElement {
             }
         }
 
-        protected final String asString;
+        final String asString;
 
         Reason() {
             asString = name().replace('_', '-');
@@ -112,28 +111,13 @@ public class JingleReason implements FullyQualifiedElement {
      * The content of the text element (if any) providing human-readable information about the reason for the action.
      */
     private final String text;
-
-    /**
-     * XEP-0166 mentions that the "reason" element MAY contain an element qualified by some other
-     * namespace that provides more detailed machine- readable information about the reason for the action.
-     */
-    private final ExtensionElement element;
+    private final XmlElement element;
 
     public JingleReason(Reason reason) {
         this(reason, null, null);
     }
 
-    /**
-     * Creates a new JingleReason instance with the specified reason String.
-     *
-     * @param reason the reason string that we'd like to transport in this packet extension, which may or
-     * may not be one of the static strings defined here.
-     * @param text an element providing human-readable information about the reason for the action or
-     * <code>null</code> if no such information is currently available.
-     * @param element any other element that MAY be providing further information or <code>null</code> if no
-     * such element has been specified.
-     */
-    public JingleReason(Reason reason, String text, ExtensionElement element) {
+    public JingleReason(Reason reason, String text, XmlElement element) {
         this.reason = reason;
         this.text = text;
         this.element = element;
@@ -165,7 +149,7 @@ public class JingleReason implements FullyQualifiedElement {
      * @return an element with machine-readable information about this reason or <code>null</code>.
      * @since 4.4.5
      */
-    public ExtensionElement getElement() {
+    public XmlElement getElement() {
         return element;
     }
 
@@ -194,7 +178,7 @@ public class JingleReason implements FullyQualifiedElement {
             this(sessionId, null, null);
         }
 
-        public AlternativeSession(String sessionId, String text, ExtensionElement element) {
+        public AlternativeSession(String sessionId, String text, XmlElement element) {
             super(Reason.alternative_session, text, element);
             if (StringUtils.isNullOrEmpty(sessionId)) {
                 throw new NullPointerException("SessionID must not be null or empty.");
@@ -203,8 +187,8 @@ public class JingleReason implements FullyQualifiedElement {
         }
 
         @Override
-        public XmlStringBuilder toXML(XmlEnvironment enclosingNamespace) {
-            XmlStringBuilder xml = new XmlStringBuilder(this);
+        public XmlStringBuilder toXML(org.jivesoftware.smack.packet.XmlEnvironment enclosingNamespace) {
+            XmlStringBuilder xml = new XmlStringBuilder(this, enclosingNamespace);
             xml.rightAngleBracket();
 
             xml.openElement(reason.asString);

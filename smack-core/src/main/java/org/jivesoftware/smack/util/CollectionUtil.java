@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015-2021 Florian Schmaus
+ * Copyright 2015-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class CollectionUtil {
         boolean test(T t);
     }
 
+    @SuppressWarnings("NonApiType")
     public static <T> ArrayList<T> newListWith(Collection<? extends T> collection) {
         if (collection == null) {
             return null;
@@ -88,5 +89,27 @@ public class CollectionUtil {
             return Collections.emptyList();
         }
         return Collections.singletonList(element);
+    }
+
+    public static <T> Set<T> nullSafeUnmodifiableSet(Set<T> set) {
+        if (set == null) {
+            return Collections.emptySet();
+        }
+        return Collections.unmodifiableSet(set);
+    }
+
+    // TODO: Migrate call sites to Set.of() once Smack's minimum Android API level is 30 or higher.
+    public static <T> Set<T> setOf(T item) {
+        Set<T> set = new HashSet<>();
+        set.add(item);
+        return Collections.unmodifiableSet(set);
+    }
+
+    // TODO: Migrate call sites to Set.of() once Smack's minimum Android API level is 30 or higher.
+    public static <T> Set<T> setOf(T itemOne, T itemTwo) {
+        Set<T> set = new HashSet<>();
+        set.add(itemOne);
+        set.add(itemTwo);
+        return Collections.unmodifiableSet(set);
     }
 }

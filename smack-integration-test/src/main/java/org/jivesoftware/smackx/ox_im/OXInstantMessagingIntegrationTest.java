@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
@@ -34,17 +33,21 @@ import org.jivesoftware.smackx.ox.OpenPgpManager;
 import org.jivesoftware.smackx.ox.crypto.PainlessOpenPgpProvider;
 import org.jivesoftware.smackx.ox.element.SigncryptElement;
 import org.jivesoftware.smackx.ox.store.filebased.FileBasedOpenPgpStore;
+import org.jivesoftware.smackx.ox.util.OpenPgpPubSubUtil;
 
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.AfterClass;
 import org.igniterealtime.smack.inttest.annotations.BeforeClass;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+
 import org.pgpainless.decryption_verification.OpenPgpMetadata;
 import org.pgpainless.key.OpenPgpV4Fingerprint;
 import org.pgpainless.key.protection.UnprotectedKeysProtector;
 
+@SpecificationReference(document = "XEP-0374", version = "0.2.0")
 public class OXInstantMessagingIntegrationTest extends AbstractOpenPgpIntegrationTest {
 
     private static final String sessionId = StringUtils.randomString(10);
@@ -104,8 +107,6 @@ public class OXInstantMessagingIntegrationTest extends AbstractOpenPgpIntegratio
     public void basicInstantMessagingTest()
             throws Exception {
 
-        LOGGER.log(Level.INFO, aliceStorePath.getAbsolutePath() + " " + bobStorePath.getAbsolutePath());
-
         final SimpleResultSyncPoint bobReceivedMessage = new SimpleResultSyncPoint();
         final String body = "Writing integration tests is an annoying task, but it has to be done, so lets do it!!!";
 
@@ -140,26 +141,33 @@ public class OXInstantMessagingIntegrationTest extends AbstractOpenPgpIntegratio
         aliceFingerprint = aliceOpenPgp.generateAndImportKeyPair(alice);
         bobFingerprint = bobOpenPgp.generateAndImportKeyPair(bob);
 
-        aliceOpenPgp.announceSupportAndPublish();
-        bobOpenPgp.announceSupportAndPublish();
+        try {
+            aliceOpenPgp.announceSupportAndPublish();
+            bobOpenPgp.announceSupportAndPublish();
 
-        OpenPgpContact bobForAlice = aliceOpenPgp.getOpenPgpContact(bob.asEntityBareJidIfPossible());
-        OpenPgpContact aliceForBob = bobOpenPgp.getOpenPgpContact(alice.asEntityBareJidIfPossible());
+            OpenPgpContact bobForAlice = aliceOpenPgp.getOpenPgpContact(bob.asEntityBareJidIfPossible());
+            OpenPgpContact aliceForBob = bobOpenPgp.getOpenPgpContact(alice.asEntityBareJidIfPossible());
 
-        bobForAlice.updateKeys(aliceConnection);
+            bobForAlice.updateKeys(aliceConnection);
 
-        assertFalse(bobForAlice.isTrusted(bobFingerprint));
-        assertFalse(aliceForBob.isTrusted(aliceFingerprint));
+            assertFalse(bobForAlice.isTrusted(bobFingerprint));
+            assertFalse(aliceForBob.isTrusted(aliceFingerprint));
 
-        bobForAlice.trust(bobFingerprint);
-        aliceForBob.trust(aliceFingerprint);
+            bobForAlice.trust(bobFingerprint);
+            aliceForBob.trust(aliceFingerprint);
 
-        assertTrue(bobForAlice.isTrusted(bobFingerprint));
-        assertTrue(aliceForBob.isTrusted(aliceFingerprint));
+            assertTrue(bobForAlice.isTrusted(bobFingerprint));
+            assertTrue(aliceForBob.isTrusted(aliceFingerprint));
 
-        aliceInstantMessaging.sendOxMessage(bobForAlice, body);
+            aliceInstantMessaging.sendOxMessage(bobForAlice, body);
 
-        bobReceivedMessage.waitForResult(timeout);
+            bobReceivedMessage.waitForResult(timeout);
+        } finally {
+            OpenPgpPubSubUtil.deletePublicKeyNode(alicePepManager, aliceFingerprint);
+            OpenPgpPubSubUtil.deletePubkeysListNode(alicePepManager);
+            OpenPgpPubSubUtil.deletePublicKeyNode(bobPepManager, bobFingerprint);
+            OpenPgpPubSubUtil.deletePubkeysListNode(bobPepManager);
+        }
     }
 
 }

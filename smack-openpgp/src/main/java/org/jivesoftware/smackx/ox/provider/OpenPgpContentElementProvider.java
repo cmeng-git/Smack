@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017-2019 Florian Schmaus, 2018 Paul Schaub.
+ * Copyright 2017-2025 Florian Schmaus, 2018 Paul Schaub.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package org.jivesoftware.smackx.ox.provider;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -41,6 +42,7 @@ import org.jivesoftware.smackx.ox.element.OpenPgpContentElement;
 import org.jivesoftware.smackx.ox.element.SignElement;
 import org.jivesoftware.smackx.ox.element.SigncryptElement;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 
@@ -78,14 +80,15 @@ public abstract class OpenPgpContentElementProvider<O extends OpenPgpContentElem
     }
 
     @Override
-    public abstract O parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException;
+    public abstract O parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
+                    throws XmlPullParserException, IOException, SmackParsingException, ParseException;
 
     protected static OpenPgpContentElementData parseOpenPgpContentElementData(XmlPullParser parser, int initialDepth)
-            throws XmlPullParserException, IOException, SmackParsingException {
+            throws XmlPullParserException, IOException, SmackParsingException, ParseException {
         Set<Jid> to = new HashSet<>();
         Date timestamp = null;
         String rpad = null;
-        List<ExtensionElement> payload = new LinkedList<>();
+        List<ExtensionElement> payload = new ArrayList<>();
 
         outerloop: while (true) {
             XmlPullParser.Event tag = parser.next();
@@ -155,10 +158,10 @@ public abstract class OpenPgpContentElementProvider<O extends OpenPgpContentElem
     }
 
     protected static final class OpenPgpContentElementData {
-        protected final Set<Jid> to;
-        protected final Date timestamp;
-        protected final String rpad;
-        protected final List<ExtensionElement> payload;
+        final Set<Jid> to;
+        final Date timestamp;
+        final String rpad;
+        final List<ExtensionElement> payload;
 
         private OpenPgpContentElementData(Set<Jid> to, Date timestamp, String rpad, List<ExtensionElement> payload) {
             this.to = to;

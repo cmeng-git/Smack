@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2003-2007 Jive Software, 2016-2021 Florian Schmaus.
+ * Copyright 2003-2007 Jive Software, 2016-2025 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -35,24 +36,6 @@ public class StringUtils {
 
     public static final String MD5 = "MD5";
     public static final String SHA1 = "SHA-1";
-
-    /**
-     * Deprecated, do not use.
-     *
-     * @deprecated use StandardCharsets.UTF_8 instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    public static final String UTF8 = "UTF-8";
-
-    /**
-     * Deprecated, do not use.
-     *
-     * @deprecated use StandardCharsets.US_ASCII instead.
-     */
-    // TODO: Remove in Smack 4.5.
-    @Deprecated
-    public static final String USASCII = "US-ASCII";
 
     public static final String QUOTE_ENCODE = "&quot;";
     public static final String APOS_ENCODE = "&apos;";
@@ -343,11 +326,14 @@ public class StringUtils {
         try {
             randomString(charBuffer, random, alphabet, numRandomChars);
         } catch (IOException e) {
-            // This should never happen if we calcuate the buffer size correctly.
+            // This should never happen if we calculate the buffer size correctly.
             throw new AssertionError(e);
         }
 
-        return charBuffer.flip().toString();
+        // Workaround for Android API not matching Java >=9 API.
+        // See https://issuetracker.google.com/issues/369219141
+        ((java.nio.Buffer) charBuffer).flip();
+        return charBuffer.toString();
     }
 
     private static void randomString(Appendable appendable, Random random, char[] alphabet, int numRandomChars)
@@ -479,7 +465,7 @@ public class StringUtils {
         appendTo(collection, ", ", sb);
     }
 
-    public static <O extends Object> void appendTo(Collection<O> collection, StringBuilder sb,
+    public static <O> void appendTo(Collection<O> collection, StringBuilder sb,
                     Consumer<O> appendFunction) {
         appendTo(collection, ", ", sb, appendFunction);
     }
@@ -488,7 +474,7 @@ public class StringUtils {
         appendTo(collection, delimiter, sb, o -> sb.append(o));
     }
 
-    public static <O extends Object> void appendTo(Collection<O> collection, String delimiter, StringBuilder sb,
+    public static <O> void appendTo(Collection<O> collection, String delimiter, StringBuilder sb,
                     Consumer<O> appendFunction) {
         for (Iterator<O> it = collection.iterator(); it.hasNext();) {
             O cs = it.next();

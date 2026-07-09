@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -28,6 +28,7 @@ import static org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.Jing
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.XmlEnvironment;
+import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
@@ -38,13 +39,15 @@ import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTr
 import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTransportInfo;
 import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTransportInfo.JingleS5BCandidateTransportInfo;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Provider for JingleSocks5BytestreamTransport elements.
  */
 public class JingleS5BTransportProvider extends JingleContentTransportProvider<JingleS5BTransport> {
 
     @Override
-    public JingleS5BTransport parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+    public JingleS5BTransport parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
         JingleS5BTransport.Builder builder = JingleS5BTransport.getBuilder();
 
         String streamId = parser.getAttributeValue(null, JingleS5BTransport.ATTR_SID);
@@ -69,7 +72,7 @@ public class JingleS5BTransportProvider extends JingleContentTransportProvider<J
                         case JingleContentTransportCandidate.ELEMENT:
                             cb = JingleS5BTransportCandidate.getBuilder();
                             cb.setCandidateId(parser.getAttributeValue(null, ATTR_CID));
-                            cb.setHost(parser.getAttributeValue(null, ATTR_HOST));
+                            cb.setHost(ParserUtils.getInternetAddressIngoringZoneIdAttribute(parser, ATTR_HOST));
                             cb.setJid(parser.getAttributeValue(null, ATTR_JID));
                             cb.setPriority(Integer.parseInt(parser.getAttributeValue(null, ATTR_PRIORITY)));
 

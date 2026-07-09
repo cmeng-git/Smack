@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015 Florian Schmaus
+ * Copyright 2015-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ public enum PubSubFeature implements CharSequence {
     create_nodes(Support.recommended),
     delete_items(Support.recommended),
     delete_nodes(Support.recommended),
+    filtered_notifications(Support.recommended),
     get_pending(Support.optional),
+    instant_nodes(Support.recommended),
     item_ids(Support.recommended),
     last_published(Support.recommended),
     leased_subscription(Support.optional),
@@ -51,15 +53,17 @@ public enum PubSubFeature implements CharSequence {
     meta_data(Support.recommended),
     modify_affiliations(Support.optional),
     multi_collection(Support.optional),
+    multi_items(Support.optional),
     multi_subscribe(Support.optional),
     outcast_affiliation(Support.recommended),
     persistent_items(Support.recommended),
     presence_notifications(Support.optional),
     presence_subscribe(Support.recommended),
-    publish(Support.required),
+    publish(Support.recommended),
     publish_options(Support.optional),
     publish_only_affiliation(Support.optional),
     publisher_affiliation(Support.recommended),
+    publish_node_full(Support.optional),
     purge_nodes(Support.optional),
     retract_items(Support.optional),
     retrieve_affiliations(Support.recommended),
@@ -67,11 +71,9 @@ public enum PubSubFeature implements CharSequence {
     retrieve_default_sub(Support.optional),
     retrieve_items(Support.recommended),
     retrieve_subscriptions(Support.recommended),
-    subscribe(Support.required),
+    subscribe(Support.recommended),
     subscription_options(Support.optional),
-    subscriptions_notifications(Support.optional),
-    instant_nodes(Support.recommended),
-    filtered_notifications(Support.recommended),
+    subscription_notifications(Support.optional),
     ;
 
     private final String feature;

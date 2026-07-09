@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -33,12 +34,12 @@ import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.EmptyResultIQ;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.IQ.Type;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.packet.StanzaError.Condition;
+import org.jivesoftware.smack.packet.XmlElement;
+import org.jivesoftware.smack.util.CollectionUtil;
 import org.jivesoftware.smack.util.StringUtils;
 
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
@@ -158,33 +159,6 @@ public final class PubSubManager extends Manager {
     }
 
     /**
-     * Deprecated.
-     *
-     * @param connection the connection.
-     * @return the PubSub manager for the given connection.
-     * @deprecated use {@link #getInstanceFor(XMPPConnection)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public static PubSubManager getInstance(XMPPConnection connection) {
-        return getInstanceFor(connection);
-    }
-
-    /**
-     * Deprecated.
-     *
-     * @param connection the connection.
-     * @param pubSubService the XMPP address of the PubSub service.
-     * @return the PubSub manager for the given connection.
-     * @deprecated use {@link #getInstanceFor(XMPPConnection, BareJid)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public static PubSubManager getInstance(XMPPConnection connection, BareJid pubSubService) {
-        return getInstanceFor(connection, pubSubService);
-    }
-
-    /**
      * Create a pubsub manager associated to the specified connection where
      * the pubsub requests require a specific to address for packets.
      *
@@ -217,7 +191,7 @@ public final class PubSubManager extends Manager {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public LeafNode createNode() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub reply = sendPubsubPacket(Type.set, new NodeExtension(PubSubElementType.CREATE), null);
+        PubSub reply = sendPubsubPacket(IQ.Type.set, new NodeExtension(PubSubElementType.CREATE), null);
         QName qname = new QName(PubSubNamespace.basic.getXmlns(), "create");
         NodeExtension elem = (NodeExtension) reply.getExtension(qname);
 
@@ -257,14 +231,14 @@ public final class PubSubManager extends Manager {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public Node createNode(String nodeId, FillableConfigureForm config) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub request = PubSub.createPubsubPacket(pubSubService, Type.set, new NodeExtension(PubSubElementType.CREATE, nodeId));
+        PubSub request = PubSub.createPubsubPacket(pubSubService, IQ.Type.set, new NodeExtension(PubSubElementType.CREATE, nodeId));
         boolean isLeafNode = true;
 
         if (config != null) {
             DataForm submitForm = config.getDataFormToSubmit();
             request.addExtension(new FormNode(FormNodeType.CONFIGURE, submitForm));
             NodeType nodeType = config.getNodeType();
-            // Note that some implementations do to have the pubsub#node_type field in their defauilt configuration,
+            // Note that some implementations do to have the pubsub#node_type field in their default configuration,
             // which I believe to be a bug. However, since PubSub specifies the default node type to be 'leaf' we assume
             // leaf if the field does not exist.
             isLeafNode = nodeType == null || nodeType == NodeType.leaf;
@@ -303,7 +277,7 @@ public final class PubSubManager extends Manager {
                     .setNode(id)
                     .build();
 
-            DiscoverInfo infoReply = connection.createStanzaCollectorAndSend(info).nextResultOrThrow();
+            DiscoverInfo infoReply = connection.sendIqRequestAndWaitForResponse(info);
 
             if (infoReply.hasIdentity(PubSub.ELEMENT, "leaf")) {
                 node = new LeafNode(this, id);
@@ -493,7 +467,7 @@ public final class PubSubManager extends Manager {
         if (nodeId != null)
             items.setNode(nodeId);
         items.setTo(pubSubService);
-        DiscoverItems nodeItems = connection().createStanzaCollectorAndSend(items).nextResultOrThrow();
+        DiscoverItems nodeItems = connection().sendIqRequestAndWaitForResponse(items);
         return nodeItems;
     }
 
@@ -507,7 +481,7 @@ public final class PubSubManager extends Manager {
      * @throws InterruptedException if the calling thread was interrupted.
      */
     public List<Subscription> getSubscriptions() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        Stanza reply = sendPubsubPacket(Type.get, new NodeExtension(PubSubElementType.SUBSCRIPTIONS), null);
+        Stanza reply = sendPubsubPacket(IQ.Type.get, new NodeExtension(PubSubElementType.SUBSCRIPTIONS), null);
         SubscriptionsExtension subElem = (SubscriptionsExtension) reply.getExtensionElement(PubSubElementType.SUBSCRIPTIONS.getElementName(), PubSubElementType.SUBSCRIPTIONS.getNamespace().getXmlns());
         return subElem.getSubscriptions();
     }
@@ -523,7 +497,7 @@ public final class PubSubManager extends Manager {
      *
      */
     public List<Affiliation> getAffiliations() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        PubSub reply = sendPubsubPacket(Type.get, new NodeExtension(PubSubElementType.AFFILIATIONS), null);
+        PubSub reply = sendPubsubPacket(IQ.Type.get, new NodeExtension(PubSubElementType.AFFILIATIONS), null);
         AffiliationsExtension listElem = reply.getExtension(PubSubElementType.AFFILIATIONS);
         return listElem.getAffiliations();
     }
@@ -541,7 +515,7 @@ public final class PubSubManager extends Manager {
     public boolean deleteNode(String nodeId) throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         boolean res = true;
         try {
-            sendPubsubPacket(Type.set, new NodeExtension(PubSubElementType.DELETE, nodeId), PubSubElementType.DELETE.getNamespace());
+            sendPubsubPacket(IQ.Type.set, new NodeExtension(PubSubElementType.DELETE, nodeId), PubSubElementType.DELETE.getNamespace());
         } catch (XMPPErrorException e) {
             if (e.getStanzaError().getCondition() == StanzaError.Condition.item_not_found) {
                 res = false;
@@ -565,7 +539,7 @@ public final class PubSubManager extends Manager {
     public ConfigureForm getDefaultConfiguration() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         // Errors will cause exceptions in getReply, so it only returns
         // on success.
-        PubSub reply = sendPubsubPacket(Type.get, new NodeExtension(PubSubElementType.DEFAULT), PubSubElementType.DEFAULT.getNamespace());
+        PubSub reply = sendPubsubPacket(IQ.Type.get, new NodeExtension(PubSubElementType.DEFAULT), PubSubElementType.DEFAULT.getNamespace());
         return NodeUtils.getFormFromPacket(reply, PubSubElementType.DEFAULT);
     }
 
@@ -644,7 +618,7 @@ public final class PubSubManager extends Manager {
         return true;
     }
 
-    private PubSub sendPubsubPacket(Type type, ExtensionElement ext, PubSubNamespace ns)
+    private PubSub sendPubsubPacket(IQ.Type type, XmlElement ext, PubSubNamespace ns)
                     throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
         return sendPubsubPacket(pubSubService, type, Collections.singletonList(ext), ns);
     }
@@ -653,12 +627,12 @@ public final class PubSubManager extends Manager {
         return connection();
     }
 
-    PubSub sendPubsubPacket(Jid to, Type type, List<ExtensionElement> extList, PubSubNamespace ns)
+    PubSub sendPubsubPacket(Jid to, IQ.Type type, List<XmlElement> extList, PubSubNamespace ns)
                     throws NoResponseException, XMPPErrorException, NotConnectedException,
                     InterruptedException {
 // CHECKSTYLE:OFF
         PubSub pubSub = new PubSub(to, type, ns);
-        for (ExtensionElement pe : extList) {
+        for (XmlElement pe : extList) {
             pubSub.addExtension(pe);
         }
 // CHECKSTYLE:ON
@@ -667,12 +641,17 @@ public final class PubSubManager extends Manager {
 
     PubSub sendPubsubPacket(PubSub packet) throws NoResponseException, XMPPErrorException,
                     NotConnectedException, InterruptedException {
-        IQ resultIQ = connection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+        IQ resultIQ = connection().sendIqRequestAndWaitForResponse(packet);
         if (resultIQ instanceof EmptyResultIQ) {
             return null;
         }
         return (PubSub) resultIQ;
     }
+
+    private static final Set<String> PUBLIC_AND_SUBSCRIBE_FEATURES = CollectionUtil.setOf(
+                    PubSubFeature.subscribe.toString(),
+                    PubSubFeature.publish.toString()
+    );
 
     /**
      * Get the "default" PubSub service for a given XMPP connection. The default PubSub service is
@@ -691,7 +670,7 @@ public final class PubSubManager extends Manager {
     public static DomainBareJid getPubSubService(XMPPConnection connection)
                     throws NoResponseException, XMPPErrorException, NotConnectedException,
                     InterruptedException {
-        return ServiceDiscoveryManager.getInstanceFor(connection).findService(PubSub.NAMESPACE,
+        return ServiceDiscoveryManager.getInstanceFor(connection).findService(PUBLIC_AND_SUBSCRIBE_FEATURES,
                         true, "pubsub", "service");
     }
 }

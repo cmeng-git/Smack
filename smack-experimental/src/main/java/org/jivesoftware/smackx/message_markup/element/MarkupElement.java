@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2018 Paul Schaub
  *
@@ -270,6 +270,8 @@ public class MarkupElement implements ExtensionElement {
      * Interface for child elements.
      */
     public abstract static class MarkupChildElement implements ExtensionElement {
+
+        public static final String NAMESPACE = MarkupElement.NAMESPACE;
 
         public static final String ATTR_START = "start";
         public static final String ATTR_END = "end";

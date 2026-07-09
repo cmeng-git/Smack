@@ -1,7 +1,12 @@
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+	id 'org.igniterealtime.smack.android-conventions'
+}
+
 description = """\
 DNS over XMPP (DoX) support using MiniDNS."""
 
 dependencies {
-	compile project(path: ':smack-resolver-minidns')
-	compile project(path: ':smack-experimental')
+	api project(path: ':smack-resolver-minidns')
+	api project(path: ':smack-experimental')
 }

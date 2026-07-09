@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016-2020 Florian Schmaus
  *
@@ -26,6 +26,7 @@ import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.igniterealtime.smack.inttest.util.IntegrationTestRosterUtil;
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+
 import org.jxmpp.jid.FullJid;
 
 public class LowLevelRosterIntegrationTest extends AbstractSmackLowLevelIntegrationTest {
@@ -49,7 +50,7 @@ public class LowLevelRosterIntegrationTest extends AbstractSmackLowLevelIntegrat
 
         final SimpleResultSyncPoint offlineTriggered = new SimpleResultSyncPoint();
 
-        rosterOne.addPresenceEventListener(new AbstractPresenceEventListener() {
+        final AbstractPresenceEventListener presenceEventListener = new AbstractPresenceEventListener() {
             @Override
             public void presenceUnavailable(FullJid jid, Presence presence) {
                 if (!jid.equals(conTwo.getUser())) {
@@ -57,15 +58,24 @@ public class LowLevelRosterIntegrationTest extends AbstractSmackLowLevelIntegrat
                 }
                 offlineTriggered.signal();
             }
-        });
+        };
+        rosterOne.addPresenceEventListener(presenceEventListener);
 
-        // Disconnect conTwo, this should cause an 'unavailable' presence to be send from conTwo to
-        // conOne.
-        conTwo.disconnect();
+        try {
+            // Disconnect conTwo, this should cause an 'unavailable' presence to be sent from conTwo to
+            // conOne.
+            conTwo.disconnect();
 
-        Boolean result = offlineTriggered.waitForResult(timeout);
-        if (!result) {
-            throw new Exception("presenceUnavailable() was not called");
+            Boolean result = offlineTriggered.waitForResult(timeout);
+            if (!result) {
+                throw new Exception("presenceUnavailable() was not called");
+            }
+        } finally {
+            // Clean up test fixture.
+            rosterOne.removePresenceEventListener(presenceEventListener);
+            conTwo.connect();
+            conTwo.login();
+            IntegrationTestRosterUtil.ensureBothAccountsAreNotInEachOthersRoster(conOne, conTwo);
         }
     }
 

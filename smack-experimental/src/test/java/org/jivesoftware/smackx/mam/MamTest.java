@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016-2017 Fernando Ramirez
  *
@@ -23,6 +23,7 @@ import org.jivesoftware.smack.DummyConnection;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.test.util.SmackTestSuite;
 
+import org.jivesoftware.smackx.mam.element.MamVersion;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -47,9 +48,9 @@ public class MamTest extends SmackTestSuite {
 
     protected DataForm getNewMamForm() throws NoSuchMethodException, SecurityException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException {
-        Method methodGetNewMamForm = MamManager.class.getDeclaredMethod("getNewMamForm");
+        Method methodGetNewMamForm = MamManager.class.getDeclaredMethod("getNewMamForm", MamVersion.class);
         methodGetNewMamForm.setAccessible(true);
-        DataForm.Builder dataFormBuilder = (DataForm.Builder) methodGetNewMamForm.invoke(mamManager);
+        DataForm.Builder dataFormBuilder = (DataForm.Builder) methodGetNewMamForm.invoke(mamManager, MamVersion.MAM2);
         return dataFormBuilder.build();
     }
 

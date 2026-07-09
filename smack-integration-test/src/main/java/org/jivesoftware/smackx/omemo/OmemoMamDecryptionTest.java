@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub
  *
@@ -35,11 +35,13 @@ import org.jivesoftware.smackx.omemo.util.MessageOrOmemoMessage;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
 
 /**
  * This test sends a message from Alice to Bob, while Bob has automatic decryption disabled.
  * Then Bob fetches his Mam archive and decrypts the result.
  */
+@SpecificationReference(document = "XEP-0384", version = "0.3.0")
 public class OmemoMamDecryptionTest extends AbstractTwoUsersOmemoIntegrationTest {
     public OmemoMamDecryptionTest(SmackIntegrationTestEnvironment environment)
             throws XMPPException.XMPPErrorException, SmackException.NotConnectedException, InterruptedException,
@@ -71,11 +73,12 @@ public class OmemoMamDecryptionTest extends AbstractTwoUsersOmemoIntegrationTest
         alicesConnection.sendStanza(encrypted.buildMessage(messageBuilder, bob.getOwnJid()));
 
         MamManager.MamQuery query = bobsMamManager.queryArchive(MamManager.MamQueryArgs.builder().limitResultsToJid(alice.getOwnJid()).build());
-        assertEquals(1, query.getMessageCount());
+        assertEquals(1, query.getMessageCount(), "Unexpected message count in MAM query result of " + bob.getConnection().getUser());
 
         List<MessageOrOmemoMessage> decryptedMamQuery = bob.decryptMamQueryResult(query);
 
-        assertEquals(1, decryptedMamQuery.size());
-        assertEquals(body, decryptedMamQuery.get(decryptedMamQuery.size() - 1).getOmemoMessage().getBody());
+        assertEquals(1, decryptedMamQuery.size(), "Unexpected decrypted message count in MAM query result of " + bob.getConnection().getUser());
+        assertEquals(body, decryptedMamQuery.get(decryptedMamQuery.size() - 1).getOmemoMessage().getBody(),
+            "Expected decrypted body of message retrieved via a MAM query to be equal to the original body that was sent (but it was not).");
     }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -52,6 +52,10 @@ public final class FileUtils {
             LOGGER.log(Level.FINE, "Suppressed IOException in getInputStreamForClasspathFile", e);
             return null;
         }
+    }
+
+    public static InputStream getStreamForClasspathFile(String path) throws IOException {
+        return getStreamForClasspathFile(path, null);
     }
 
     public static InputStream getStreamForClasspathFile(String path, ClassLoader loader) throws IOException {

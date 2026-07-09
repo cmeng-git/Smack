@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2016 Fernando Ramirez
  *
@@ -24,8 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.IQ.Type;
-import org.jivesoftware.smack.util.PacketParserUtils;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 
 import org.jivesoftware.smackx.mam.element.MamQueryIQ;
 import org.jivesoftware.smackx.xdata.FormField;
@@ -54,10 +53,10 @@ public class MamQueryIQProviderTest {
     @Test
     public void checkMamQueryIQProvider() throws Exception {
         // example 1
-        IQ iq1 = PacketParserUtils.parseStanza(exampleMamQueryIQ1);
+        IQ iq1 = ElementParserUtils.parseStanza(exampleMamQueryIQ1);
         MamQueryIQ mamQueryIQ1 = (MamQueryIQ) iq1;
 
-        assertEquals(mamQueryIQ1.getType(), Type.set);
+        assertEquals(mamQueryIQ1.getType(), IQ.Type.set);
         assertEquals(mamQueryIQ1.getQueryId(), "test");
 
         DataForm dataForm1 = (DataForm) mamQueryIQ1.getExtension(DataForm.NAMESPACE);
@@ -70,10 +69,10 @@ public class MamQueryIQProviderTest {
         assertEquals(fields1.get(2).getValues().get(0).toString(), "{http://jabber.org/protocol/mood}mood/lonely");
 
         // example2
-        IQ iq2 = PacketParserUtils.parseStanza(exampleMamQueryIQ2);
+        IQ iq2 = ElementParserUtils.parseStanza(exampleMamQueryIQ2);
         MamQueryIQ mamQueryIQ2 = (MamQueryIQ) iq2;
 
-        assertEquals(mamQueryIQ2.getType(), Type.result);
+        assertEquals(mamQueryIQ2.getType(), IQ.Type.result);
         assertNull(mamQueryIQ2.getQueryId());
 
         DataForm dataForm2 = (DataForm) mamQueryIQ2.getExtension(DataForm.NAMESPACE);

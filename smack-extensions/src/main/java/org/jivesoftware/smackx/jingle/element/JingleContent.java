@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2019 Florian Schmaus
  *
@@ -16,6 +16,9 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
+import org.jivesoftware.smack.packet.XmlElement;
+import org.jivesoftware.smack.packet.XmlEnvironment;
+import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
@@ -28,7 +31,8 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public final class JingleContent extends AbstractXmlElement {
+public final class JingleContent implements XmlElement {
+
     public static final String ELEMENT = "content";
     public static final String NAMESPACE = Jingle.NAMESPACE;
 
@@ -89,9 +93,7 @@ public final class JingleContent extends AbstractXmlElement {
     }
 
     /**
-     * Creates a new <code>JingleContent</code> element; required by DefaultXmlElementProvider().
-     *
-     * @param builder Builder instance
+     * Creates a content description.
      */
     public JingleContent(Builder builder) {
         super(builder);

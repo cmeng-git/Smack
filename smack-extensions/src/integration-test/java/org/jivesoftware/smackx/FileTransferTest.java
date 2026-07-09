@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2006 Jive Software.
  *
@@ -109,7 +109,7 @@ public class FileTransferTest extends SmackTestCase {
             fail();
         }
         byte [] array = queue.take();
-        assertEquals("Recieved file not equal to sent file.", testTransfer, array);
+        assertEquals("Received file not equal to sent file.", testTransfer, array);
     }
 
 

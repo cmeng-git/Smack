@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software, 2018 Paul Schaub.
  *
@@ -40,12 +40,11 @@ import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.MessageWithBodiesFilter;
 import org.jivesoftware.smack.filter.StanzaExtensionFilter;
 import org.jivesoftware.smack.filter.StanzaFilter;
-import org.jivesoftware.smack.filter.ToTypeFilter;
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.MessageBuilder;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaBuilder;
+import org.jivesoftware.smack.packet.XmlElement;
 
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
@@ -161,7 +160,7 @@ public final class ChatStateManager extends Manager {
                 EntityBareJid bareFrom = fullFrom.asEntityBareJid();
 
                 final Chat chat = ChatManager.getInstanceFor(connection()).chatWith(bareFrom);
-                ExtensionElement extension = message.getExtension(NAMESPACE);
+                XmlElement extension = message.getExtension(NAMESPACE);
                 String chatStateElementName = extension.getElementName();
 
                 ChatState state;

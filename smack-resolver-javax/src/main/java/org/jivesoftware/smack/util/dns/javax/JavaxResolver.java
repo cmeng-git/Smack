@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2013-2020 Florian Schmaus
+ * Copyright 2013-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,12 @@ import org.minidns.record.SRV;
 
 /**
  * A DNS resolver (mostly for SRV records), which makes use of the API provided in the javax.* namespace.
- * Note that using JavaxResovler requires applications using newer Java versions (at least 11) to declare a dependency on the "sun.jdk" module.
+ * Note that using JavaxResolver requires applications using newer Java versions (at least 11) to declare a dependency on the "sun.jdk" module.
  *
  * @author Florian Schmaus
  *
  */
+@SuppressWarnings("JdkObsolete")
 public class JavaxResolver extends DNSResolver implements SmackInitializer {
 
     private static JavaxResolver instance;
@@ -83,6 +84,7 @@ public class JavaxResolver extends DNSResolver implements SmackInitializer {
     }
 
     @Override
+    @SuppressWarnings("BanJNDI")
     protected List<SRV> lookupSrvRecords0(DnsName name, List<RemoteConnectionEndpointLookupFailure> lookupFailures,
                     DnssecMode dnssecMode) {
         Attribute srvAttribute;

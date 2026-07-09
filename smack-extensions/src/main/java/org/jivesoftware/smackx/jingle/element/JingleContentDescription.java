@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017 Florian Schmaus.
+ * Copyright 2017-2021 Florian Schmaus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package org.jivesoftware.smackx.jingle.element;
 import java.util.Collections;
 import java.util.List;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
+import org.jivesoftware.smack.packet.NamedElement;
+import org.jivesoftware.smack.packet.XmlElement;
+import org.jivesoftware.smack.util.XmlStringBuilder;
 
 /**
  * Jingle content description.
@@ -28,7 +29,8 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public class JingleContentDescription extends AbstractXmlElement {
+public abstract class JingleContentDescription implements XmlElement {
+
     public static final String ELEMENT = "description";
     private final List<ExtensionElement> payloads;
 

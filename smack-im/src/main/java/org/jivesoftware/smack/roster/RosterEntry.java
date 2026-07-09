@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -29,7 +29,6 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.packet.Presence.Type;
 import org.jivesoftware.smack.roster.packet.RosterPacket;
 import org.jivesoftware.smack.util.EqualsUtil;
 
@@ -109,9 +108,9 @@ public final class RosterEntry extends Manager {
         packet.setType(IQ.Type.set);
 
         // Create a new roster item with the current RosterEntry and the *new* name. Note that we can't set the name of
-        // RosterEntry right away, as otherwise the updated event wont get fired, because equalsDeep would return true.
+        // RosterEntry right away, as otherwise the updated event won't get fired, because equalsDeep would return true.
         packet.addRosterItem(toRosterItem(this, name));
-        connection().createStanzaCollectorAndSend(packet).nextResultOrThrow();
+        connection().sendIqRequestAndWaitForResponse(packet);
 
         // We have received a result response to the IQ set, the name was successfully changed
         item.setName(name);
@@ -137,7 +136,7 @@ public final class RosterEntry extends Manager {
     }
 
     /**
-     * Returns an copied list of the roster groups that this entry belongs to.
+     * Returns a copied list of the roster groups that this entry belongs to.
      *
      * @return an iterator for the groups this entry belongs to.
      */
@@ -221,7 +220,7 @@ public final class RosterEntry extends Manager {
         XMPPConnection connection = connection();
         Presence unsubscribed = connection.getStanzaFactory().buildPresenceStanza()
                 .to(item.getJid())
-                .ofType(Type.unsubscribed)
+                .ofType(Presence.Type.unsubscribed)
                 .build();
         connection.sendStanza(unsubscribed);
     }
@@ -307,7 +306,7 @@ public final class RosterEntry extends Manager {
      *
      * @param entry the roster entry.
      * @param name the name of the roster item.
-     * @param includeAskAttribute whether or not to include the 'ask' attribute.
+     * @param includeAskAttribute whether to include the 'ask' attribute.
      * @return the roster item.
      */
     private static RosterPacket.Item toRosterItem(RosterEntry entry, String name, boolean includeAskAttribute) {

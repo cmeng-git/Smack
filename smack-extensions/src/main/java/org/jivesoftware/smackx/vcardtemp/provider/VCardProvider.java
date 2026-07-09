@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -18,13 +18,16 @@ package org.jivesoftware.smackx.vcardtemp.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * vCard provider.
@@ -33,7 +36,7 @@ import org.jivesoftware.smackx.vcardtemp.packet.VCard;
  * @author Derek DeMoro
  * @author Chris Deering
  */
-public class VCardProvider extends IQProvider<VCard> {
+public class VCardProvider extends IqProvider<VCard> {
 
     // @formatter:off
     private static final String[] ADR = new String[] {
@@ -68,7 +71,7 @@ public class VCardProvider extends IQProvider<VCard> {
     // @formatter:on
 
     @Override
-    public VCard parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+    public VCard parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
         VCard vCard = new VCard();
         String name = null;
 

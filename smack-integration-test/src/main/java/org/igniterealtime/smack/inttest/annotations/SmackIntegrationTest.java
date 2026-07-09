@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2015-2019 Florian Schmaus
  *
@@ -31,4 +31,18 @@ public @interface SmackIntegrationTest {
 
     int connectionCount() default -1;
 
+    /**
+     * Unique identifier for a section (or paragraph) of the document referenced by {@link SpecificationReference},
+     * such as '6.2.1'.
+     *
+     * @return a document section identifier
+     */
+    String section() default "";
+
+    /**
+     * A quotation of relevant text from the section referenced by {@link #section()}.
+     *
+     * @return human-readable text from the references document and section.
+     */
+    String quote() default "";
 }

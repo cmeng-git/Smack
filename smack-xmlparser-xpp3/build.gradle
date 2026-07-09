@@ -1,7 +1,7 @@
-// Note that this is also declared in the main build.gradle for
-// subprojects, but since evaluationDependsOnChildren is enabled we
-// need to declare it here too to have bundle{bnd{...}} available
-apply plugin: 'biz.aQute.bnd.builder'
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+	id 'org.igniterealtime.smack.android-conventions'
+}
 
 description = """\
 Smack XML parser using XPP3."""
@@ -12,7 +12,7 @@ ext {
 
 dependencies {
 	api "xpp3:xpp3_min:$xpp3Version"
-	implementation "xpp3:xpp3:$xpp3Version"
+	implementation "org.codelibs:xpp3:${xpp3Version}.0"
 	api project(':smack-xmlparser')
 	//testCompile project(path: ":smack-xmlparser", configuration: "testRuntime")
 }

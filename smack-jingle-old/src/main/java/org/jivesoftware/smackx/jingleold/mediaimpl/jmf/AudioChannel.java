@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -322,7 +322,7 @@ public class AudioChannel {
         String encoding = codecFormat.getEncoding();
         if (encoding.equalsIgnoreCase(AudioFormat.GSM) ||
                 encoding.equalsIgnoreCase(AudioFormat.GSM_RTP)) {
-            return milliseconds * 4; // 1 byte per millisec
+            return milliseconds * 4; // 1 byte per millisecond
         }
         else if (encoding.equalsIgnoreCase(AudioFormat.ULAW) ||
                 encoding.equalsIgnoreCase(AudioFormat.ULAW_RTP)) {
@@ -448,6 +448,7 @@ public class AudioChannel {
         failed = true;
     }
 
+    @SuppressWarnings("LockOnBoxedPrimitive")
     private synchronized boolean waitForState(Processor p, int state) {
         p.addControllerListener(new StateListener());
         failed = false;
@@ -485,6 +486,7 @@ public class AudioChannel {
 
     class StateListener implements ControllerListener {
 
+        @SuppressWarnings("LockOnBoxedPrimitive")
         @Override
         public void controllerUpdate(ControllerEvent ce) {
 

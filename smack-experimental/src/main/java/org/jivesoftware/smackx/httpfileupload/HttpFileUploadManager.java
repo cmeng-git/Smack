@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2017 Grigory Fedorov
  *
@@ -51,8 +51,11 @@ import org.jivesoftware.smack.XMPPConnectionRegistry;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.proxy.ProxyInfo;
+
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
+import org.jivesoftware.smackx.httpfileupload.AbstractHttpUploadException.HttpUploadErrorException;
+import org.jivesoftware.smackx.httpfileupload.AbstractHttpUploadException.HttpUploadIOException;
 import org.jivesoftware.smackx.httpfileupload.UploadService.Version;
 import org.jivesoftware.smackx.httpfileupload.element.Slot;
 import org.jivesoftware.smackx.httpfileupload.element.SlotRequest;
@@ -508,7 +511,7 @@ public final class HttpFileUploadManager extends Manager {
                 throw new AssertionError();
         }
 
-        return connection.createStanzaCollectorAndSend(slotRequest).nextResultOrThrow();
+        return connection.sendIqRequestAndWaitForResponse(slotRequest);
     }
 
     public void setTlsContext(SSLContext tlsContext) {
@@ -522,6 +525,23 @@ public final class HttpFileUploadManager extends Manager {
         final URL putUrl = slot.getPutUrl();
         final XMPPConnection connection = connection();
         final HttpURLConnection urlConnection = createURLConnection(connection, putUrl);
+        if (urlConnection instanceof HttpsURLConnection) {
+            var httpsUrlConnection = (HttpsURLConnection) urlConnection;
+            if (connection instanceof AbstractXMPPConnection) {
+                var abstractConnection = (AbstractXMPPConnection) connection;
+                var connectionConfiguration = abstractConnection.getConfiguration();
+
+                var sslSocketFactory = connectionConfiguration.getSSLSocketFactory();
+                if (sslSocketFactory != null) {
+                    httpsUrlConnection.setSSLSocketFactory(sslSocketFactory);
+                }
+
+                var hostnameVerifier = connectionConfiguration.getHostnameVerifier();
+                if (hostnameVerifier != null) {
+                    httpsUrlConnection.setHostnameVerifier(hostnameVerifier);
+                }
+            }
+        }
 
         urlConnection.setRequestMethod("PUT");
         urlConnection.setUseCaches(false);
@@ -578,16 +598,18 @@ public final class HttpFileUploadManager extends Manager {
 
             int status = urlConnection.getResponseCode();
             switch (status) {
-                case HttpURLConnection.HTTP_OK:
-                case HttpURLConnection.HTTP_CREATED:
-                case HttpURLConnection.HTTP_NO_CONTENT:
-                    break;
-                default:
-                    throw new IOException("Error response " + status + " from server during file upload: "
-                            + urlConnection.getResponseMessage() + ", file size: " + fileSize + ", put URL: "
-                            + putUrl);
+            case HttpURLConnection.HTTP_OK:
+            case HttpURLConnection.HTTP_CREATED:
+            case HttpURLConnection.HTTP_NO_CONTENT:
+                break;
+            default:
+                throw new HttpUploadErrorException(status, urlConnection.getResponseMessage(), fileSize, slot);
             }
-        } finally {
+        }
+        catch (IOException e) {
+            throw new HttpUploadIOException(fileSize, slot, e);
+        }
+        finally {
             urlConnection.disconnect();
         }
     }

@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2015-2020 Florian Schmaus
+ * Copyright © 2015-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * A lightweight implementation of a MultiMap, that is a Map that is able to hold multiple values for every key.
@@ -185,13 +185,14 @@ public class MultiMap<K, V> {
     }
 
     /**
-     * Remove the given number of values for a given key. May return less values then requested.
+     * Remove the given number of values for a given key. May return less values than requested.
      *
      * @param key the key to remove from.
      * @param num the number of values to remove.
      * @return a list of the removed values.
      * @since 4.4.0
      */
+    @SuppressWarnings("MixedMutabilityReturnType")
     public List<V> remove(K key, int num) {
         List<V> values = map.get(key);
         if (values == null) {
@@ -251,7 +252,7 @@ public class MultiMap<K, V> {
 
     public MultiMap<K, V> asUnmodifiableMultiMap() {
         LinkedHashMap<K, List<V>> mapCopy = new LinkedHashMap<>(map.size());
-        for (Entry<K, List<V>> entry : map.entrySet()) {
+        for (Map.Entry<K, List<V>> entry : map.entrySet()) {
             K key = entry.getKey();
             List<V> values = entry.getValue();
 
@@ -265,11 +266,10 @@ public class MultiMap<K, V> {
     public MultiMap<K, V> clone() {
         Map<K, List<V>> clonedMap = new LinkedHashMap<>(map.size());
 
-        // TODO: Use Map.forEach() once Smack's minimum Android API is 24 or higher.
-        for (Entry<K, List<V>> entry : map.entrySet()) {
-            List<V> clonedList = CollectionUtil.newListWith(entry.getValue());
-            clonedMap.put(entry.getKey(), clonedList);
-        }
+        map.forEach((k, v) -> {
+            List<V> clonedList = CollectionUtil.newListWith(v);
+            clonedMap.put(k, clonedList);
+        });
 
         return new MultiMap<>(clonedMap);
     }

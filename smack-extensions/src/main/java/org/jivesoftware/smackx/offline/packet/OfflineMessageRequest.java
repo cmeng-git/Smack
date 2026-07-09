@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -23,11 +23,15 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.offline.OfflineMessageManager;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Represents a request to get some or all the offline messages of a user. This class can also
@@ -196,11 +200,11 @@ public class OfflineMessageRequest extends IQ {
         }
     }
 
-    public static class Provider extends IQProvider<OfflineMessageRequest> {
+    public static class Provider extends IqProvider<OfflineMessageRequest> {
 
         @Override
         public OfflineMessageRequest parse(XmlPullParser parser,
-                        int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException,
+                        int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException,
                         IOException {
             OfflineMessageRequest request = new OfflineMessageRequest();
             boolean done = false;

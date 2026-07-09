@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2019 Florian Schmaus
  *
@@ -16,7 +16,7 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * An element found usually in Jingle 'transport' elements.
@@ -24,7 +24,7 @@ import org.jivesoftware.smack.packet.ExtensionElement;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public abstract class JingleContentTransportCandidate implements ExtensionElement {
+public abstract class JingleContentTransportCandidate implements XmlElement {
 
     public static final String ELEMENT = "candidate";
 

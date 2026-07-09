@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2005 Jive Software.
  *
@@ -28,6 +28,8 @@ import org.jivesoftware.smackx.jingleold.nat.TransportCandidate;
 import org.jivesoftware.smackx.jingleold.packet.JingleTransport;
 import org.jivesoftware.smackx.jingleold.packet.JingleTransport.JingleTransportCandidate;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Provider for a Jingle transport element.
  *
@@ -53,7 +55,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
      * @throws XmlPullParserException if an error in the XML parser occurred.
      */
     @Override
-    public JingleTransport parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException  {
+    public JingleTransport parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException  {
         JingleTransport trans = getInstance();
 
         outerloop: while (true) {
@@ -88,7 +90,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
     public static class Ice extends JingleTransportProvider {
 
         /**
-         * Defauls constructor.
+         * Default constructor.
          */
         public Ice() {
             super();
@@ -131,11 +133,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
             }
 
             if (generation != null) {
-                try {
-                    mt.setGeneration(Integer.parseInt(generation));
-                }
-                catch (Exception e) {
-                }
+                mt.setGeneration(Integer.parseInt(generation));
             }
 
             if (ip != null) {
@@ -150,11 +148,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
             }
 
             if (network != null) {
-                try {
-                    mt.setNetwork(Integer.parseInt(network));
-                }
-                catch (Exception e) {
-                }
+                mt.setNetwork(Integer.parseInt(network));
             }
 
             if (username != null) {
@@ -166,19 +160,11 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
             }
 
             if (port != null) {
-                try {
-                    mt.setPort(Integer.parseInt(port));
-                }
-                catch (Exception e) {
-                }
+                mt.setPort(Integer.parseInt(port));
             }
 
             if (preference != null) {
-                try {
-                    mt.setPreference(Integer.parseInt(preference));
-                }
-                catch (Exception e) {
-                }
+                mt.setPreference(Integer.parseInt(preference));
             }
 
             if (proto != null) {
@@ -199,7 +185,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
     public static class RawUdp extends JingleTransportProvider {
 
         /**
-         * Defauls constructor.
+         * Default constructor.
          */
         public RawUdp() {
             super();
@@ -233,11 +219,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
             // LOGGER.debug();
 
             if (generation != null) {
-                try {
-                    mt.setGeneration(Integer.parseInt(generation));
-                }
-                catch (Exception e) {
-                }
+                mt.setGeneration(Integer.parseInt(generation));
             }
 
             if (ip != null) {
@@ -249,11 +231,7 @@ public abstract class JingleTransportProvider extends ExtensionElementProvider<J
             }
 
             if (port != null) {
-                try {
-                    mt.setPort(Integer.parseInt(port));
-                }
-                catch (Exception e) {
-                }
+                mt.setPort(Integer.parseInt(port));
             }
             return new JingleTransport.RawUdp.Candidate(mt);
         }

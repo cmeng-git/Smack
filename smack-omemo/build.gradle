@@ -1,11 +1,19 @@
+plugins {
+	id 'org.igniterealtime.smack.java-common-conventions'
+	id 'org.igniterealtime.smack.android-conventions'
+}
+
 description="""
 Smack API for XEP-0384: OMEMO Encryption
 """
 
 dependencies {
-	compile project(":smack-im")
-	compile project(":smack-extensions")
-	compile project(":smack-experimental")
+	api project(":smack-im")
+	api project(":smack-extensions")
+	api project(":smack-experimental")
+
+	// TODO: Migrate Junit4 tests to Junit5.
+	testImplementation "org.junit.vintage:junit-vintage-engine:$junitVersion"
 
 	testFixturesApi(testFixtures(project(":smack-core")))
 }

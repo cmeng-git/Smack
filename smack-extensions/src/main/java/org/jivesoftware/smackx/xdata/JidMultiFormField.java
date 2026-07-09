@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2020-2021 Florian Schmaus.
  *
@@ -32,7 +32,7 @@ public final class JidMultiFormField extends FormField {
 
     private final List<Value> rawValues;
 
-    protected JidMultiFormField(Builder builder) {
+    JidMultiFormField(Builder builder) {
         super(builder);
         values = CollectionUtil.cloneAndSeal(builder.values);
         rawValues = CollectionUtil.cloneAndSeal(builder.rawValues);

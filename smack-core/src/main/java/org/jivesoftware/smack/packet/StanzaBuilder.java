@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2019-2020 Florian Schmaus
+ * Copyright 2019-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package org.jivesoftware.smack.packet;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.packet.id.StanzaIdSource;
-import org.jivesoftware.smack.util.Function;
 import org.jivesoftware.smack.util.MultiMap;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.ToStringUtil;
@@ -44,7 +44,7 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
 
     String language;
 
-    MultiMap<QName, ExtensionElement> extensionElements = new MultiMap<>();
+    MultiMap<QName, XmlElement> extensionElements = new MultiMap<>();
 
     protected StanzaBuilder(StanzaBuilder<?> other) {
         stanzaIdSource = other.stanzaIdSource;
@@ -87,9 +87,9 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
     }
 
     /**
-     * Set the recipent address of the stanza.
+     * Set the recipient address of the stanza.
      *
-     * @param to whoe the stanza is being sent to.
+     * @param to whom the stanza is being sent.
      * @return a reference to this builder.
      * @throws XmppStringprepException if the provided character sequence is not a valid XMPP address.
      * @see #to(Jid)
@@ -111,7 +111,7 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
     }
 
     /**
-     * Sets who the the stanza is being sent "from".
+     * Sets who the stanza is being sent "from".
      *
      * @param from who the stanza is being sent from.
      * @return a reference to this builder.
@@ -156,13 +156,13 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
         return getThis();
     }
 
-    public final B addExtension(ExtensionElement extensionElement) {
+    public final B addExtension(XmlElement extensionElement) {
         QName key = extensionElement.getQName();
         extensionElements.put(key, extensionElement);
         return getThis();
     }
 
-    public final B addOptExtensions(Collection<? extends ExtensionElement> extensionElements) {
+    public final B addOptExtensions(Collection<? extends XmlElement> extensionElements) {
         if (extensionElements == null) {
             return getThis();
         }
@@ -170,14 +170,14 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
         return addExtensions(extensionElements);
     }
 
-    public final B addExtensions(Collection<? extends ExtensionElement> extensionElements) {
-        for (ExtensionElement extensionElement : extensionElements) {
+    public final B addExtensions(Collection<? extends XmlElement> extensionElements) {
+        for (XmlElement extensionElement : extensionElements) {
             addExtension(extensionElement);
         }
         return getThis();
     }
 
-    public final B overrideExtension(ExtensionElement extensionElement) {
+    public final B overrideExtension(XmlElement extensionElement) {
         QName key = extensionElement.getQName();
         extensionElements.remove(key);
         extensionElements.put(key, extensionElement);
@@ -192,7 +192,7 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
 
     public final B removeExtension(ExtensionElement extension) {
         QName key = extension.getQName();
-        List<ExtensionElement> list = extensionElements.getAll(key);
+        List<XmlElement> list = extensionElements.getAll(key);
         list.remove(extension);
         return getThis();
     }
@@ -227,17 +227,17 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
     }
 
     @Override
-    public final ExtensionElement getExtension(QName qname) {
+    public final XmlElement getExtension(QName qname) {
         return extensionElements.getFirst(qname);
     }
 
     @Override
-    public final List<ExtensionElement> getExtensions() {
+    public final List<XmlElement> getExtensions() {
         return extensionElements.values();
     }
 
     @Override
-    public final List<ExtensionElement> getExtensions(QName qname) {
+    public final List<XmlElement> getExtensions(QName qname) {
         return extensionElements.getAll(qname);
     }
 
@@ -315,7 +315,7 @@ public abstract class StanzaBuilder<B extends StanzaBuilder<B>> implements Stanz
         return new IqData(stanzaId);
     }
 
-    public static <SB extends StanzaBuilder<?>> SB buildResponse(StanzaView request, Function<SB, String> builderFromStanzaId) {
+    public static <SB extends StanzaBuilder<?>> SB buildResponse(StanzaView request, Function<String, SB> builderFromStanzaId) {
         SB responseBuilder = builderFromStanzaId.apply(request.getStanzaId());
 
         responseBuilder.to(request.getFrom())

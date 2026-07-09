@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2019 Paul Schaub
  *
@@ -18,7 +18,7 @@ package org.jivesoftware.smackx.message_fastening.provider;
 
 import java.io.IOException;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
@@ -26,16 +26,19 @@ import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.message_fastening.MessageFasteningManager;
 import org.jivesoftware.smackx.message_fastening.element.ExternalElement;
 import org.jivesoftware.smackx.message_fastening.element.FasteningElement;
+
+import org.jxmpp.JxmppContext;
 
 public class FasteningElementProvider extends ExtensionElementProvider<FasteningElement> {
 
     public static final FasteningElementProvider TEST_INSTANCE = new FasteningElementProvider();
 
     @Override
-    public FasteningElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public FasteningElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         FasteningElement.Builder builder = FasteningElement.builder();
         builder.setOriginId(parser.getAttributeValue("", FasteningElement.ATTR_ID));
         if (ParserUtils.getBooleanAttribute(parser, FasteningElement.ATTR_CLEAR, false)) {
@@ -62,7 +65,7 @@ public class FasteningElementProvider extends ExtensionElementProvider<Fastening
                     }
 
                     // Parse wrapped payload
-                    ExtensionElement wrappedPayload = PacketParserUtils.parseExtensionElement(name, namespace, parser, xmlEnvironment);
+                    XmlElement wrappedPayload = PacketParserUtils.parseExtensionElement(name, namespace, parser, xmlEnvironment, jxmppContext);
                     builder.addWrappedPayload(wrappedPayload);
                     break;
 

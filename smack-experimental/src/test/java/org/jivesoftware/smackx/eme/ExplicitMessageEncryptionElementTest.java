@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub
  *
@@ -23,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.MessageBuilder;
 import org.jivesoftware.smack.packet.StanzaBuilder;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.test.util.SmackTestSuite;
 
 import org.jivesoftware.smackx.eme.element.ExplicitMessageEncryptionElement;
@@ -39,12 +39,12 @@ public class ExplicitMessageEncryptionElementTest extends SmackTestSuite {
     public void addToMessageTest() {
         Message message = StanzaBuilder.buildMessage().build();
 
-        // Check inital state (no elements)
+        // Check initial state (no elements)
         assertNull(ExplicitMessageEncryptionElement.from(message));
         assertFalse(ExplicitMessageEncryptionElement.hasProtocol(message,
                 ExplicitMessageEncryptionElement.ExplicitMessageEncryptionProtocol.omemoVAxolotl));
 
-        List<ExtensionElement> extensions = message.getExtensions();
+        List<XmlElement> extensions = message.getExtensions();
         assertEquals(0, extensions.size());
 
         MessageBuilder messageBuilder = StanzaBuilder.buildMessage();
@@ -75,7 +75,7 @@ public class ExplicitMessageEncryptionElementTest extends SmackTestSuite {
         assertTrue(ExplicitMessageEncryptionElement.hasProtocol(message,
                 ExplicitMessageEncryptionElement.ExplicitMessageEncryptionProtocol.omemoVAxolotl));
 
-        // Check, if adding additional OMEMO wont add another element
+        // Check, if adding additional OMEMO won't add another element
         ExplicitMessageEncryptionElement.set(messageBuilder,
                 ExplicitMessageEncryptionElement.ExplicitMessageEncryptionProtocol.omemoVAxolotl);
 

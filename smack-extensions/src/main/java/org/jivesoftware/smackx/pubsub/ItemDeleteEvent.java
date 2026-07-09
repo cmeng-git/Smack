@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -28,10 +28,10 @@ public class ItemDeleteEvent extends SubscriptionEvent {
     private List<String> itemIds = Collections.emptyList();
 
     /**
-     * Constructs an <code>ItemDeleteEvent</code> that indicates the the supplied
+     * Constructs an <code>ItemDeleteEvent</code> that indicates the supplied
      * items (by id) have been deleted, and that the event matches the listed
      * subscriptions.  The subscriptions would have been created by calling
-     * {@link LeafNode#subscribe(String)}.
+     * {@link LeafNode#subscribe(org.jxmpp.Jid)}.
      *
      * @param nodeId The id of the node the event came from
      * @param deletedItemIds The item ids of the items that were deleted.

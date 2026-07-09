@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2018 Paul Schaub
  *
@@ -37,6 +37,7 @@ public class IdleElement implements ExtensionElement {
     /**
      * Create a new IdleElement with the current date as date of last user interaction.
      */
+    @SuppressWarnings("JavaUtilDate")
     public IdleElement() {
         this(new Date());
     }

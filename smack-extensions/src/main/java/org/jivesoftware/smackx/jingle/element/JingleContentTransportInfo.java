@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub, 2019 Florian Schmaus
  *
@@ -16,7 +16,7 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * Abstract JingleContentTransportInfo element.
@@ -24,6 +24,6 @@ import org.jivesoftware.smack.packet.ExtensionElement;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public interface JingleContentTransportInfo extends ExtensionElement {
+public interface JingleContentTransportInfo extends XmlElement {
 
 }

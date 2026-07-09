@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2014-2021 Florian Schmaus
+ * Copyright © 2014-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPConnectionRegistry;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.filter.AndFilter;
+import org.jivesoftware.smack.filter.ExtensionElementFilter;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.filter.NotFilter;
 import org.jivesoftware.smack.filter.StanzaExtensionFilter;
@@ -57,6 +58,7 @@ import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.muc.MultiUserChatException.MucNotJoinedException;
 import org.jivesoftware.smackx.muc.MultiUserChatException.NotAMucServiceException;
+import org.jivesoftware.smackx.muc.packet.GroupChatInvitation;
 import org.jivesoftware.smackx.muc.packet.MUCInitialPresence;
 import org.jivesoftware.smackx.muc.packet.MUCUser;
 
@@ -81,6 +83,10 @@ import org.jxmpp.util.cache.ExpirationCache;
  * further attempts will be made for the other rooms.
  * </p>
  *
+ * Note:
+ * For inviting other users to a group chat or listening for such invitations, take a look at the
+ * {@link DirectMucInvitationManager} which provides an implementation of XEP-0249: Direct MUC Invitations.
+ *
  * @see <a href="http://xmpp.org/extensions/xep-0045.html">XEP-0045: Multi-User Chat</a>
  */
 public final class MultiUserChatManager extends Manager {
@@ -102,6 +108,7 @@ public final class MultiUserChatManager extends Manager {
                 final WeakReference<XMPPConnection> weakRefConnection = new WeakReference<XMPPConnection>(connection);
                 ServiceDiscoveryManager.getInstanceFor(connection).setNodeInformationProvider(DISCO_NODE,
                                 new AbstractNodeInformationProvider() {
+                                    @SuppressWarnings({"JavaUtilDate", "MixedMutabilityReturnType"})
                                     @Override
                                     public List<DiscoverItems.Item> getNodeItems() {
                                         XMPPConnection connection = weakRefConnection.get();
@@ -138,6 +145,12 @@ public final class MultiUserChatManager extends Manager {
 
     private static final StanzaFilter INVITATION_FILTER = new AndFilter(StanzaTypeFilter.MESSAGE, new StanzaExtensionFilter(new MUCUser()),
                     new NotFilter(MessageTypeFilter.ERROR));
+
+    private static final StanzaFilter DIRECT_INVITATION_FILTER =
+        new AndFilter(StanzaTypeFilter.MESSAGE,
+                      new ExtensionElementFilter<GroupChatInvitation>(GroupChatInvitation.class),
+                      NotFilter.of(MUCUser.class),
+                      new NotFilter(MessageTypeFilter.ERROR));
 
     private static final ExpirationCache<DomainBareJid, DiscoverInfo> KNOWN_MUC_SERVICES = new ExpirationCache<>(
         100, 1000 * 60 * 60 * 24);
@@ -199,6 +212,33 @@ public final class MultiUserChatManager extends Manager {
         };
         connection.addAsyncStanzaListener(invitationPacketListener, INVITATION_FILTER);
 
+        // Listens for all messages that include an XEP-0249 GroupChatInvitation extension and fire the invitation
+        // listeners
+        StanzaListener directInvitationStanzaListener = new StanzaListener() {
+            @Override
+            public void processStanza(Stanza stanza) {
+                final Message message = (Message) stanza;
+                GroupChatInvitation invite =
+                    stanza.getExtension(GroupChatInvitation.class);
+
+                // Fire event for invitation listeners
+                final MultiUserChat muc = getMultiUserChat(invite.getRoomAddress());
+                final XMPPConnection connection = connection();
+                final EntityJid from = message.getFrom().asEntityJidIfPossible();
+                if (from == null) {
+                    LOGGER.warning("Group Chat Invitation from non entity JID in '" + message + "'");
+                    return;
+                }
+                final String reason = invite.getReason();
+                final String password = invite.getPassword();
+                final MUCUser.Invite mucInvite = new MUCUser.Invite(reason, from, connection.getUser().asEntityBareJid());
+                for (final InvitationListener listener : invitationsListeners) {
+                    listener.invitationReceived(connection, muc, from, reason, password, message, mucInvite);
+                }
+            }
+        };
+        connection.addAsyncStanzaListener(directInvitationStanzaListener, DIRECT_INVITATION_FILTER);
+
         connection.addConnectionListener(new ConnectionListener() {
             @Override
             public void authenticated(XMPPConnection connection, boolean resumed) {
@@ -259,7 +299,7 @@ public final class MultiUserChatManager extends Manager {
      * {@link MultiUserChat#join(org.jxmpp.jid.parts.Resourcepart) join} the chat room. On some server implementations, the room will not be
      * created until the first person joins it.
      * <p>
-     * Most XMPP servers use a sub-domain for the chat service (eg chat.example.com for the XMPP server example.com).
+     * Most XMPP servers use a sub-domain for the chat service (e.g.chat.example.com for the XMPP server example.com).
      * You must ensure that the room address you're trying to connect to includes the proper chat sub-domain.
      * </p>
      *
@@ -383,22 +423,6 @@ public final class MultiUserChatManager extends Manager {
     }
 
     /**
-     * Returns a collection with the XMPP addresses of the Multi-User Chat services.
-     *
-     * @return a collection with the XMPP addresses of the Multi-User Chat services.
-     * @throws XMPPErrorException if there was an XMPP error returned.
-     * @throws NoResponseException if there was no response from the remote entity.
-     * @throws NotConnectedException if the XMPP connection is not connected.
-     * @throws InterruptedException if the calling thread was interrupted.
-     * @deprecated use {@link #getMucServiceDomains()} instead.
-     */
-    // TODO: Remove in Smack 4.5
-    @Deprecated
-    public List<DomainBareJid> getXMPPServiceDomains() throws NoResponseException, XMPPErrorException, NotConnectedException, InterruptedException {
-        return getMucServiceDomains();
-    }
-
-    /**
      * Check if the provided domain bare JID provides a MUC service.
      *
      * @param domainBareJid the domain bare JID to check.
@@ -442,7 +466,7 @@ public final class MultiUserChatManager extends Manager {
      * @throws NoResponseException if there was no response from the remote entity.
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
-     * @throws NotAMucServiceException if the entity is not a MUC serivce.
+     * @throws NotAMucServiceException if the entity is not a MUC service.
      * @since 4.3.1
      */
     public Map<EntityBareJid, HostedRoom> getRoomsHostedBy(DomainBareJid serviceName) throws NoResponseException, XMPPErrorException,

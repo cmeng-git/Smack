@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2014-2020 Florian Schmaus
+ * Copyright 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,6 +204,12 @@ public abstract class SmackException extends Exception {
             super("The connection " + connection + " is no longer connected while waiting for response with "
                             + stanzaFilter + " because of " + connectionException, connectionException);
         }
+    }
+
+    public static class OutgoingQueueFullException extends SmackException {
+
+        private static final long serialVersionUID = 1L;
+
     }
 
     public static class IllegalStateChangeException extends SmackException {

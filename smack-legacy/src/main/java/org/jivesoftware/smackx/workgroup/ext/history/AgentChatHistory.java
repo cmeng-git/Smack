@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -24,11 +24,13 @@ import java.util.Date;
 import java.util.List;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.EntityBareJid;
 
 /**
@@ -53,6 +55,7 @@ public class AgentChatHistory extends IQ {
 
     private final List<AgentChatSession> agentChatSessions = new ArrayList<>();
 
+    @SuppressWarnings("JavaUtilDate")
     public AgentChatHistory(EntityBareJid agentJID, int maxSessions, Date startDate) {
         this();
         this.agentJID = agentJID;
@@ -91,10 +94,10 @@ public class AgentChatHistory extends IQ {
     /**
      * Stanza extension provider for AgentHistory packets.
      */
-    public static class InternalProvider extends IQProvider<AgentChatHistory> {
+    public static class InternalProvider extends IqProvider<AgentChatHistory> {
 
         @Override
-        public AgentChatHistory parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public AgentChatHistory parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             if (parser.getEventType() != XmlPullParser.Event.START_ELEMENT) {
                 throw new IllegalStateException("Parser not in proper position, or bad XML.");
             }
@@ -115,6 +118,7 @@ public class AgentChatHistory extends IQ {
             return agentChatHistory;
         }
 
+        @SuppressWarnings("JavaUtilDate")
         private static AgentChatSession parseChatSetting(XmlPullParser parser)
                         throws XmlPullParserException, IOException {
             boolean done = false;

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -30,6 +30,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.MessageBuilder;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.packet.StanzaBuilder;
+import org.jivesoftware.smack.test.util.ElementParserUtils;
 import org.jivesoftware.smack.test.util.SmackTestSuite;
 import org.jivesoftware.smack.test.util.WaitForPacketListener;
 import org.jivesoftware.smack.util.PacketParserUtils;
@@ -60,7 +61,7 @@ public class DeliveryReceiptTest extends SmackTestSuite {
             .asString(outputProperties);
 
         parser = PacketParserUtils.getParserFor(control);
-        Message p = PacketParserUtils.parseMessage(parser);
+        Message p = ElementParserUtils.parseMessage(parser);
 
         DeliveryReceiptRequest drr = p.getExtension(DeliveryReceiptRequest.class);
         assertNotNull(drr);
@@ -96,7 +97,7 @@ public class DeliveryReceiptTest extends SmackTestSuite {
         rrl.waitUntilInvocationOrTimeout();
     }
 
-    private static class TestReceiptReceivedListener extends WaitForPacketListener implements ReceiptReceivedListener {
+    private static final class TestReceiptReceivedListener extends WaitForPacketListener implements ReceiptReceivedListener {
         @Override
         public void onReceiptReceived(Jid fromJid, Jid toJid, String receiptId, Stanza receipt) {
             assertThat("julia@capulet.com", equalsCharSequence(fromJid));

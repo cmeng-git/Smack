@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -45,6 +45,7 @@ public class TcpUdpBridgeClient {
     private DatagramSocket localUdpSocket;
     private Socket localTcpSocket;
 
+    @SuppressWarnings("this-escape")
     public TcpUdpBridgeClient(String remoteTcpHost, String remoteUdpHost, int remoteTcpPort, int remoteUdpPort) {
         this.remoteTcpHost = remoteTcpHost;
         this.remoteUdpHost = remoteUdpHost;

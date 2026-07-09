@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -39,6 +39,7 @@ public class Session extends SimpleIQ {
     public static final String ELEMENT = "session";
     public static final String NAMESPACE = "urn:ietf:params:xml:ns:xmpp-session";
 
+    @SuppressWarnings("this-escape")
     public Session() {
         super(ELEMENT, NAMESPACE);
         setType(IQ.Type.set);

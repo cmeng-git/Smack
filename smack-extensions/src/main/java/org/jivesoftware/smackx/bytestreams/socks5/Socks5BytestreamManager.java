@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -22,7 +22,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,7 +127,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      * list of listeners that respond to all bytestream requests if there are not user specific
      * listeners for that request
      */
-    private final List<BytestreamListener> allRequestListeners = Collections.synchronizedList(new LinkedList<BytestreamListener>());
+    private final List<BytestreamListener> allRequestListeners = Collections.synchronizedList(new ArrayList<BytestreamListener>());
 
     /* listener that handles all incoming bytestream requests */
     private final InitiationListener initiationListener;
@@ -139,7 +138,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
     /* timeout for connecting to the SOCKS5 proxy selected by the target */
     private int proxyConnectionTimeout = 10000;
 
-    /* blacklist of errornous SOCKS5 proxies */
+    /* blacklist of erroneous SOCKS5 proxies */
     private final Set<Jid> proxyBlacklist = Collections.synchronizedSet(new HashSet<Jid>());
 
     /* remember the last proxy that worked to prioritize it */
@@ -154,7 +153,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      * list containing session IDs of SOCKS5 Bytestream initialization packets that should be
      * ignored by the InitiationListener
      */
-    private final List<String> ignoredBytestreamRequests = Collections.synchronizedList(new LinkedList<String>());
+    private final List<String> ignoredBytestreamRequests = Collections.synchronizedList(new ArrayList<String>());
 
     /**
      * Returns the Socks5BytestreamManager to handle SOCKS5 Bytestreams for a given
@@ -390,7 +389,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
     }
 
     /**
-     * Set whether or not the bytestream manager will annouce the local stream host(s), i.e. the local SOCKS5 proxy.
+     * Set whether the bytestream manager will announce the local stream host(s), i.e. the local SOCKS5 proxy.
      *
      * @param announceLocalStreamHost TODO javadoc me please
      * @see #isAnnouncingLocalStreamHostEnabled()
@@ -580,7 +579,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
                 proxyInfo = serviceDiscoveryManager.discoverInfo(item.getEntityID());
             }
             catch (NoResponseException | XMPPErrorException e) {
-                // blacklist errornous server
+                // blacklist erroneous server
                 proxyBlacklist.add(item.getEntityID());
                 continue;
             }
@@ -622,12 +621,12 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
         for (Jid proxy : proxies) {
             Bytestream streamHostRequest = createStreamHostRequest(proxy);
             try {
-                Bytestream response = connection.createStanzaCollectorAndSend(
-                                streamHostRequest).nextResultOrThrow();
+                Bytestream response = connection.sendIqRequestAndWaitForResponse(
+                                streamHostRequest);
                 streamHosts.addAll(response.getStreamHosts());
             }
             catch (Exception e) {
-                // blacklist errornous proxies
+                // blacklist erroneous proxies
                 this.proxyBlacklist.add(proxy);
             }
         }
@@ -656,12 +655,22 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      */
     public List<StreamHost> getLocalStreamHost() {
         // Ensure that the local SOCKS5 proxy is running (if enabled).
-        Socks5Proxy.getSocks5Proxy();
+        Socks5Proxy socks5Proxy = Socks5Proxy.getSocks5Proxy();
 
         List<StreamHost> streamHosts = new ArrayList<>();
 
         XMPPConnection connection = connection();
         EntityFullJid myJid = connection.getUser();
+
+        // The default local address is often just 'the first address found in the
+        // list of addresses read from the OS' and this might mean an internal
+        // IP address that cannot reach external servers. So wherever possible
+        // use the same IP address being used to connect to the XMPP server
+        // because this local address has a better chance of being suitable.
+        InetAddress xmppLocalAddress = connection.getLocalAddress();
+        if (xmppLocalAddress != null) {
+            socks5Proxy.replaceLocalAddresses(Collections.singletonList(xmppLocalAddress));
+        }
 
         for (Socks5Proxy socks5Server : Socks5Proxy.getRunningProxies()) {
             List<InetAddress> addresses = socks5Server.getLocalAddresses();
@@ -717,7 +726,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      * @throws NotConnectedException if the XMPP connection is not connected.
      * @throws InterruptedException if the calling thread was interrupted.
      */
-    protected void replyRejectPacket(IQ packet) throws NotConnectedException, InterruptedException {
+    void replyRejectPacket(IQ packet) throws NotConnectedException, InterruptedException {
         StanzaError xmppError = StanzaError.getBuilder(StanzaError.Condition.not_acceptable).build();
         IQ errorIQ = IQ.createErrorResponse(packet, xmppError);
         connection().sendStanza(errorIQ);
@@ -760,7 +769,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      *
      * @return the XMPP connection
      */
-    protected XMPPConnection getConnection() {
+    XMPPConnection getConnection() {
         return connection();
     }
 
@@ -771,7 +780,7 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      * @param initiator the initiator's JID
      * @return the listener
      */
-    protected BytestreamListener getUserListener(Jid initiator) {
+    BytestreamListener getUserListener(Jid initiator) {
         return this.userListeners.get(initiator);
     }
 
@@ -781,16 +790,16 @@ public final class Socks5BytestreamManager extends Manager implements Bytestream
      *
      * @return list of listeners
      */
-    protected List<BytestreamListener> getAllRequestListeners() {
+    List<BytestreamListener> getAllRequestListeners() {
         return this.allRequestListeners;
     }
 
     /**
-     * Returns the list of session IDs that should be ignored by the InitialtionListener
+     * Returns the list of session IDs that should be ignored by the InitiationListener
      *
      * @return list of session IDs
      */
-    protected List<String> getIgnoredBytestreamRequests() {
+    List<String> getIgnoredBytestreamRequests() {
         return ignoredBytestreamRequests;
     }
 

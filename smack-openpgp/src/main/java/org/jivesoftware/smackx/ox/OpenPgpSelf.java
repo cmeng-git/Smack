@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -28,7 +28,6 @@ import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
 import org.jxmpp.jid.BareJid;
 import org.pgpainless.key.OpenPgpV4Fingerprint;
-import org.pgpainless.util.BCUtil;
 
 /**
  * This class acts as our own OpenPGP identity. It can be seen as a special view on the {@link OpenPgpStore}, giving
@@ -72,6 +71,7 @@ public class OpenPgpSelf extends OpenPgpContact {
      * @throws IOException IO is dangerous
      * @throws PGPException PGP is brittle
      */
+    @SuppressWarnings("JavaUtilDate")
     public PGPSecretKeyRing getSigningKeyRing() throws IOException, PGPException {
         PGPSecretKeyRingCollection secretKeyRings = getSecretKeys();
         if (secretKeyRings == null) {
@@ -117,7 +117,6 @@ public class OpenPgpSelf extends OpenPgpContact {
     public PGPPublicKeyRingCollection getAnnouncedPublicKeys() throws IOException, PGPException {
         PGPSecretKeyRing secretKeys = getSigningKeyRing();
         PGPPublicKeyRing publicKeys = getAnyPublicKeys().getPublicKeyRing(secretKeys.getPublicKey().getKeyID());
-        publicKeys = BCUtil.removeUnassociatedKeysFromKeyRing(publicKeys, secretKeys.getPublicKey());
         return new PGPPublicKeyRingCollection(Collections.singleton(publicKeys));
     }
 }

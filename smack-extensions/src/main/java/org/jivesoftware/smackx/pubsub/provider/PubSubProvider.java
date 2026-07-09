@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -19,9 +19,10 @@ package org.jivesoftware.smackx.pubsub.provider;
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
@@ -29,15 +30,18 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smackx.pubsub.packet.PubSub;
 import org.jivesoftware.smackx.pubsub.packet.PubSubNamespace;
 
+import org.jxmpp.JxmppContext;
+
 /**
  * Parses the root PubSub stanza extensions of the {@link IQ} stanza and returns
  * a {@link PubSub} instance.
  *
  * @author Robin Collier
  */
-public class PubSubProvider extends IQProvider<PubSub> {
+public class PubSubProvider extends IqProvider<PubSub> {
     @Override
-    public PubSub parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public PubSub parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment,
+                    JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         String namespace = parser.getNamespace();
         PubSubNamespace pubSubNamespace = PubSubNamespace.valueOfFromXmlns(namespace);
         PubSub pubsub = new PubSub(pubSubNamespace);
@@ -46,7 +50,7 @@ public class PubSubProvider extends IQProvider<PubSub> {
             XmlPullParser.Event eventType = parser.next();
             switch (eventType) {
             case START_ELEMENT:
-                PacketParserUtils.addExtensionElement(pubsub, parser, xmlEnvironment);
+                PacketParserUtils.addExtensionElement(pubsub, parser, xmlEnvironment, jxmppContext);
                 break;
             case END_ELEMENT:
                 if (parser.getDepth() == initialDepth) {

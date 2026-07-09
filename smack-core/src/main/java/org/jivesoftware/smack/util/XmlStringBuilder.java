@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2014-2021 Florian Schmaus
+ * Copyright 2014-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,28 @@
 package org.jivesoftware.smack.util;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jivesoftware.smack.packet.Element;
-import org.jivesoftware.smack.packet.ExtensionElement;
-import org.jivesoftware.smack.packet.FullyQualifiedElement;
 import org.jivesoftware.smack.packet.NamedElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 
+import org.jxmpp.jid.Jid;
 import org.jxmpp.util.XmppDateTime;
 
 public class XmlStringBuilder implements Appendable, CharSequence, Element {
     public static final String RIGHT_ANGLE_BRACKET = Character.toString('>');
+
+    private static final Logger LOGGER = Logger.getLogger(XmlStringBuilder.class.getName());
 
     private final LazyStringBuilder sb;
 
@@ -43,19 +49,21 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
         effectiveXmlEnvironment = null;
     }
 
-    public XmlStringBuilder(ExtensionElement pe) {
+    public XmlStringBuilder(XmlElement pe) {
         this(pe, null);
     }
 
+    @SuppressWarnings("this-escape")
     public XmlStringBuilder(NamedElement e) {
         this();
         halfOpenElement(e.getElementName());
     }
 
-    public XmlStringBuilder(FullyQualifiedElement element, XmlEnvironment enclosingXmlEnvironment) {
+    public XmlStringBuilder(XmlElement element, XmlEnvironment enclosingXmlEnvironment) {
         this(element.getElementName(), element.getNamespace(), element.getLanguage(), enclosingXmlEnvironment);
     }
 
+    @SuppressWarnings("this-escape")
     public XmlStringBuilder(String elementName, String xmlNs, String xmlLang, XmlEnvironment enclosingXmlEnvironment) {
         sb = new LazyStringBuilder();
         halfOpenElement(elementName);
@@ -136,20 +144,6 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
         assert content != null;
         element(name, content.toString());
         return this;
-    }
-
-    /**
-     * Deprecated.
-     *
-     * @param element deprecated.
-     * @return deprecated.
-     * @deprecated use {@link #append(Element)} instead.
-     */
-    @Deprecated
-    // TODO: Remove in Smack 4.5.
-    public XmlStringBuilder element(Element element) {
-        assert element != null;
-        return append(element.toXML());
     }
 
     public XmlStringBuilder optElement(String name, String content) {
@@ -310,6 +304,18 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
     public XmlStringBuilder attribute(String name, long value) {
         assert name != null;
         return attribute(name, String.valueOf(value));
+    }
+
+    public XmlStringBuilder jidAttribute(Jid jid) {
+        assert jid != null;
+        return attribute("jid", jid);
+    }
+
+    public XmlStringBuilder optJidAttribute(Jid jid) {
+        if (jid != null) {
+            attribute("jid", jid);
+        }
+        return this;
     }
 
     public XmlStringBuilder optAttribute(String name, String value) {
@@ -518,7 +524,7 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
         return escape(text.toString());
     }
 
-    protected XmlStringBuilder prelude(FullyQualifiedElement pe) {
+    protected XmlStringBuilder prelude(XmlElement pe) {
         return prelude(pe.getElementName(), pe.getNamespace());
     }
 
@@ -594,10 +600,49 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
         return this;
     }
 
+    public enum AppendApproach {
+        /**
+         * Simply add the given CharSequence to this builder.
+         */
+        SINGLE,
+
+        /**
+         * If the given CharSequence is a {@link XmlStringBuilder} or {@link LazyStringBuilder}, then copy the
+         * references of the lazy strings parts into this builder. This approach flattens the string builders into one,
+         * yielding a different performance characteristic.
+         */
+        FLAT,
+    }
+
+    private static AppendApproach APPEND_APPROACH = AppendApproach.SINGLE;
+
+    /**
+     * Set the builders approach on how to append new char sequences.
+     *
+     * @param appendApproach the append approach.
+     */
+    public static void setAppendMethod(AppendApproach appendApproach) {
+        Objects.requireNonNull(appendApproach);
+        APPEND_APPROACH = appendApproach;
+    }
+
     @Override
     public XmlStringBuilder append(CharSequence csq) {
         assert csq != null;
-        sb.append(csq);
+        switch (APPEND_APPROACH) {
+        case SINGLE:
+            sb.append(csq);
+            break;
+        case FLAT:
+            if (csq instanceof XmlStringBuilder) {
+                sb.append(((XmlStringBuilder) csq).sb);
+            } else if (csq instanceof LazyStringBuilder) {
+                sb.append((LazyStringBuilder) csq);
+            } else {
+                sb.append(csq);
+            }
+            break;
+        }
         return this;
     }
 
@@ -631,7 +676,18 @@ public class XmlStringBuilder implements Appendable, CharSequence, Element {
 
     @Override
     public String toString() {
-        return sb.toString();
+        // toString() and write() should match, otherwise we're not
+        // logging exactly what we send on the wire. Hence, we use
+        // write here, with the additional benefit that it's faster
+        // then just sb.toString().
+        var sw = new StringWriter();
+        try {
+            write(sw, XmlEnvironment.EMPTY);
+            return sw.toString();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception in XmlStringBuilder.toString(), using fallback", e);
+            return sb.toString();
+        }
     }
 
     @Override

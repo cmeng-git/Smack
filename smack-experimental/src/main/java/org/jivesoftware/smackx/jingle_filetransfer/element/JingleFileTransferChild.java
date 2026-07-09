@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2017 Paul Schaub, 2019 Florian Schmaus
+ * Copyright 2017 Paul Schaub, 2019-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,6 +183,7 @@ public class JingleFileTransferChild implements JingleContentDescriptionChildEle
             return new JingleFileTransferChild(date, desc, hash, mediaType, name, size, range, thumbnail);
         }
 
+        @SuppressWarnings("JavaUtilDate")
         public Builder setFile(File file) {
             return setDate(new Date(file.lastModified()))
                     .setName(file.getAbsolutePath().substring(file.getAbsolutePath().lastIndexOf("/") + 1))

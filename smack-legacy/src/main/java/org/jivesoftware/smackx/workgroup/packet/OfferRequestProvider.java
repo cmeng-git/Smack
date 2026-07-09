@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -23,9 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
@@ -38,6 +39,7 @@ import org.jivesoftware.smackx.workgroup.agent.TransferRequest;
 import org.jivesoftware.smackx.workgroup.agent.UserRequest;
 import org.jivesoftware.smackx.workgroup.util.MetaDataUtils;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 
 /**
@@ -45,14 +47,14 @@ import org.jxmpp.jid.Jid;
  *
  * @author loki der quaeler
  */
-public class OfferRequestProvider extends IQProvider<IQ> {
+public class OfferRequestProvider extends IqProvider<IQ> {
     // FIXME It seems because OfferRequestPacket is also defined here, we can
     // not add it as generic to the provider, the provider and the packet should
     // be split, but since this is legacy code, I don't think that this will
     // happen anytime soon.
 
     @Override
-    public OfferRequestPacket parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
+    public OfferRequestPacket parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         XmlPullParser.Event eventType = parser.getEventType();
         String sessionID = null;
         int timeout = -1;
@@ -64,7 +66,7 @@ public class OfferRequestProvider extends IQProvider<IQ> {
             // throw exception
         }
 
-        Jid userJID = ParserUtils.getJidAttribute(parser);
+        Jid userJID = ParserUtils.getJidAttribute(parser, jxmppContext);
         // Default userID to the JID.
         Jid userID = userJID;
 
@@ -84,20 +86,20 @@ public class OfferRequestProvider extends IQProvider<IQ> {
                    sessionID = parser.getAttributeValue("", "id");
                 }
                 else if (UserID.ELEMENT_NAME.equals(elemName)) {
-                    userID = ParserUtils.getJidAttribute(parser, "id");
+                    userID = ParserUtils.getJidAttribute(parser, "id", jxmppContext);
                 }
                 else if ("user-request".equals(elemName)) {
                     content = UserRequest.getInstance();
                 }
                 else if (RoomInvitation.ELEMENT_NAME.equals(elemName)) {
                     RoomInvitation invitation = (RoomInvitation) PacketParserUtils
-                            .parseExtensionElement(RoomInvitation.ELEMENT_NAME, RoomInvitation.NAMESPACE, parser, xmlEnvironment);
+                            .parseExtensionElement(RoomInvitation.ELEMENT_NAME, RoomInvitation.NAMESPACE, parser, xmlEnvironment, jxmppContext);
                     content = new InvitationRequest(invitation.getInviter(), invitation.getRoom(),
                             invitation.getReason());
                 }
                 else if (RoomTransfer.ELEMENT_NAME.equals(elemName)) {
                     RoomTransfer transfer = (RoomTransfer) PacketParserUtils
-                            .parseExtensionElement(RoomTransfer.ELEMENT_NAME, RoomTransfer.NAMESPACE, parser, xmlEnvironment);
+                            .parseExtensionElement(RoomTransfer.ELEMENT_NAME, RoomTransfer.NAMESPACE, parser, xmlEnvironment, jxmppContext);
                     content = new TransferRequest(transfer.getInviter(), transfer.getRoom(), transfer.getReason());
                 }
             }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.xml.namespace.QName;
 
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.roster.Roster;
@@ -51,6 +53,8 @@ import org.jivesoftware.smackx.xroster.RosterExchangeManager;
  */
 public class RosterExchange implements ExtensionElement {
 
+    public static final QName QNAME = new QName(RosterExchangeManager.NAMESPACE, RosterExchangeManager.ELEMENT);
+
     private final List<RemoteRosterEntry> remoteRosterEntries = new ArrayList<>();
 
     /**
@@ -66,6 +70,7 @@ public class RosterExchange implements ExtensionElement {
      *
      * @param roster the roster to send to other XMPP entity.
      */
+    @SuppressWarnings("this-escape")
     public RosterExchange(Roster roster) {
         // Add all the roster entries to the new RosterExchange
         for (RosterEntry rosterEntry : roster.getEntries()) {
@@ -113,7 +118,7 @@ public class RosterExchange implements ExtensionElement {
     */
     @Override
     public String getElementName() {
-        return RosterExchangeManager.ELEMENT;
+        return QNAME.getLocalPart();
     }
 
     /**
@@ -125,7 +130,7 @@ public class RosterExchange implements ExtensionElement {
      */
     @Override
     public String getNamespace() {
-        return RosterExchangeManager.NAMESPACE;
+        return QNAME.getNamespaceURI();
     }
 
     /**

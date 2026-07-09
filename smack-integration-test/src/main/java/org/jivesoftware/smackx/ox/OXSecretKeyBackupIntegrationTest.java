@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018 Paul Schaub.
  *
@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.logging.Level;
 
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.util.StringUtils;
+
 import org.jivesoftware.smackx.ox.crypto.PainlessOpenPgpProvider;
 import org.jivesoftware.smackx.ox.exception.InvalidBackupCodeException;
 import org.jivesoftware.smackx.ox.exception.MissingOpenPgpKeyException;
@@ -39,19 +39,23 @@ import org.jivesoftware.smackx.ox.exception.MissingUserIdOnKeyException;
 import org.jivesoftware.smackx.ox.exception.NoBackupFoundException;
 import org.jivesoftware.smackx.ox.store.definition.OpenPgpStore;
 import org.jivesoftware.smackx.ox.store.filebased.FileBasedOpenPgpStore;
+import org.jivesoftware.smackx.ox.util.OpenPgpPubSubUtil;
 import org.jivesoftware.smackx.pubsub.PubSubException;
 
-import org.bouncycastle.openpgp.PGPException;
-import org.bouncycastle.openpgp.PGPPublicKeyRing;
-import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.igniterealtime.smack.inttest.SmackIntegrationTestEnvironment;
 import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.AfterClass;
 import org.igniterealtime.smack.inttest.annotations.BeforeClass;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
+import org.igniterealtime.smack.inttest.annotations.SpecificationReference;
+
+import org.bouncycastle.openpgp.PGPException;
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.pgpainless.key.OpenPgpV4Fingerprint;
 import org.pgpainless.key.protection.UnprotectedKeysProtector;
 
+@SpecificationReference(document = "XEP-0374", version = "0.2.0")
 public class OXSecretKeyBackupIntegrationTest extends AbstractOpenPgpIntegrationTest {
 
     private static final String sessionId = StringUtils.randomString(10);
@@ -98,12 +102,11 @@ public class OXSecretKeyBackupIntegrationTest extends AbstractOpenPgpIntegration
     @AfterClass
     @BeforeClass
     public static void cleanStore() throws IOException {
-        LOGGER.log(Level.INFO, "Delete store directories...");
         org.apache.commons.io.FileUtils.deleteDirectory(afterPath);
         org.apache.commons.io.FileUtils.deleteDirectory(beforePath);
     }
 
-    @SmackIntegrationTest
+    @SmackIntegrationTest(section = "5")
     public void test() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException,
             NoSuchProviderException, IOException, InterruptedException, PubSubException.NotALeafNodeException,
             SmackException.NoResponseException, SmackException.NotConnectedException, XMPPException.XMPPErrorException,
@@ -122,38 +125,43 @@ public class OXSecretKeyBackupIntegrationTest extends AbstractOpenPgpIntegration
         assertNull(self.getSigningKeyFingerprint());
 
         OpenPgpV4Fingerprint keyFingerprint = openPgpManager.generateAndImportKeyPair(alice);
-        assertEquals(keyFingerprint, self.getSigningKeyFingerprint());
 
-        assertTrue(self.getSecretKeys().contains(keyFingerprint.getKeyId()));
+        try {
+            assertEquals(keyFingerprint, self.getSigningKeyFingerprint());
+            assertTrue(self.getSecretKeys().contains(keyFingerprint.getKeyId()));
 
-        PGPSecretKeyRing beforeSec = beforeStore.getSecretKeyRing(alice, keyFingerprint);
-        assertNotNull(beforeSec);
+            PGPSecretKeyRing beforeSec = beforeStore.getSecretKeyRing(alice, keyFingerprint);
+            assertNotNull(beforeSec);
 
-        PGPPublicKeyRing beforePub = beforeStore.getPublicKeyRing(alice, keyFingerprint);
-        assertNotNull(beforePub);
+            PGPPublicKeyRing beforePub = beforeStore.getPublicKeyRing(alice, keyFingerprint);
+            assertNotNull(beforePub);
 
-        OpenPgpSecretKeyBackupPassphrase backupPassphrase =
+            OpenPgpSecretKeyBackupPassphrase backupPassphrase =
                 openPgpManager.backupSecretKeyToServer(availableSecretKeys -> availableSecretKeys);
 
-        FileBasedOpenPgpStore afterStore = new FileBasedOpenPgpStore(afterPath);
-        afterStore.setKeyRingProtector(new UnprotectedKeysProtector());
-        PainlessOpenPgpProvider afterProvider = new PainlessOpenPgpProvider(afterStore);
-        openPgpManager.setOpenPgpProvider(afterProvider);
+            FileBasedOpenPgpStore afterStore = new FileBasedOpenPgpStore(afterPath);
+            afterStore.setKeyRingProtector(new UnprotectedKeysProtector());
+            PainlessOpenPgpProvider afterProvider = new PainlessOpenPgpProvider(afterStore);
+            openPgpManager.setOpenPgpProvider(afterProvider);
 
-        OpenPgpV4Fingerprint fingerprint = openPgpManager.restoreSecretKeyServerBackup(() -> backupPassphrase);
+            OpenPgpV4Fingerprint fingerprint = openPgpManager.restoreSecretKeyServerBackup(() -> backupPassphrase);
 
-        assertEquals(keyFingerprint, fingerprint);
+            assertEquals(keyFingerprint, fingerprint);
 
-        assertTrue(self.getSecretKeys().contains(keyFingerprint.getKeyId()));
+            assertTrue(self.getSecretKeys().contains(keyFingerprint.getKeyId()));
 
-        assertEquals(keyFingerprint, self.getSigningKeyFingerprint());
+            assertEquals(keyFingerprint, self.getSigningKeyFingerprint());
 
-        PGPSecretKeyRing afterSec = afterStore.getSecretKeyRing(alice, keyFingerprint);
-        assertNotNull(afterSec);
-        assertArrayEquals(beforeSec.getEncoded(), afterSec.getEncoded());
+            PGPSecretKeyRing afterSec = afterStore.getSecretKeyRing(alice, keyFingerprint);
+            assertNotNull(afterSec);
+            assertArrayEquals(beforeSec.getEncoded(), afterSec.getEncoded());
 
-        PGPPublicKeyRing afterPub = afterStore.getPublicKeyRing(alice, keyFingerprint);
-        assertNotNull(afterPub);
-        assertArrayEquals(beforePub.getEncoded(), afterPub.getEncoded());
+            PGPPublicKeyRing afterPub = afterStore.getPublicKeyRing(alice, keyFingerprint);
+            assertNotNull(afterPub);
+            assertArrayEquals(beforePub.getEncoded(), afterPub.getEncoded());
+        } finally {
+            OpenPgpPubSubUtil.deletePublicKeyNode(alicePepManager, keyFingerprint);
+            OpenPgpPubSubUtil.deletePubkeysListNode(alicePepManager);
+        }
     }
 }

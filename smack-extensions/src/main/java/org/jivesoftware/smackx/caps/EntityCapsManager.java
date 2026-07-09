@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright © 2009 Jonas Ådahl, 2011-2021 Florian Schmaus
+ * Copyright © 2009 Jonas Ådahl, 2011-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ package org.jivesoftware.smackx.caps;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -77,7 +78,41 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.util.cache.LruCache;
 
 /**
- * Keeps track of entity capabilities.
+ * Manages own and others Entity Capabilities (XEP-0115).
+ * <p>
+ * Entity Capabilities is an XMPP extension which, in order to minimize network impact, caches the capabilities of
+ * remote XMPP entities. Those capabilities are determine with the help of the Service Discovery Protocol
+ * (<a href="https://xmpp.org/extensions/xep-0030.html">XEP-0030</a>, {@link ServiceDiscoveryManager}).
+ * </p>
+ *
+ * <h2>Usage</h2>
+ * <p>
+ * Entity Capabilities work silently in the background when enabled. If the remote XMPP entity does not support XEP-0115
+ * but XEP-0030 then XEP-0030 mechanisms are transparently used.
+ * </p>
+ * <p>
+ * The caches used by Smack for Entity Capabilities is non-persistent per default. However, it is is also possible to set
+ * a persistent Entity Capabilities cache, which is recommended.
+ * </p>
+ * <h2>Examples</h2>
+ *
+ * <h3>Enable Entity Capabilities</h3>
+ * <pre>{@code
+ * // Get an instance of entity caps manager for the specified connection
+ * EntityCapsManager mgr = EntityCapsManager.getInstanceFor(connection);
+ * // Enable entity capabilities
+ * mgr.enableEntityCaps();
+ * }</pre>
+ *
+ * <h3>Configure a persistent cache for Entity Capabilities</h3>
+ * <pre>{@code
+ * // Get an instance of entity caps manager for the specified connection
+ * EntityCapsManager mgr = EntityCapsManager.getInstanceFor(connection);
+ * // Create an cache, see smackx.entitycaps.cache for pre-defined cache implementations
+ * EntityCapsPersistentCache cache = new SimpleDirectoryPersistentCache(new File("/foo/cachedir"));
+ * // Set the cache
+ * mgr.setPersistentCache(cache);
+ * }</pre>
  *
  * @author Florian Schmaus
  * @see <a href="http://www.xmpp.org/extensions/xep-0115.html">XEP-0115: Entity Capabilities</a>
@@ -96,7 +131,7 @@ public final class EntityCapsManager extends Manager {
 
     private static String DEFAULT_ENTITY_NODE = SmackConfiguration.SMACK_URL_STRING;
 
-    protected static EntityCapsPersistentCache persistentCache;
+    static EntityCapsPersistentCache persistentCache;
 
     private static boolean autoEnableEntityCaps = true;
 
@@ -191,7 +226,7 @@ public final class EntityCapsManager extends Manager {
 
     /**
      * Get the Node version (node#ver) of a JID. Returns a String or null if
-     * EntiyCapsManager does not have any information.
+     * EntityCapsManager does not have any information.
      *
      * @param jid TODO javadoc me please
      *            the user (Full JID)
@@ -354,7 +389,10 @@ public final class EntityCapsManager extends Manager {
         if (autoEnableEntityCaps)
             enableEntityCaps();
 
-        connection.addAsyncStanzaListener(new StanzaListener() {
+        // Note that this is a *synchronous* stanza listener to avoid unnecessary feature lookups. If this were to be an
+        // asynchronous listener, then it would be possible that the entity caps information was not processed when the
+        // features of entity are looked up. See SMACK-937.
+        connection.addStanzaListener(new StanzaListener() {
             // Listen for remote presence stanzas with the caps extension
             // If we receive such a stanza, record the JID and nodeVer
             @Override
@@ -517,7 +555,7 @@ public final class EntityCapsManager extends Manager {
         if (connection != null)
             JID_TO_NODEVER_CACHE.put(connection.getUser(), new NodeVerHash(entityNode, currentCapsVersion));
 
-        final List<Identity> identities = new LinkedList<>(ServiceDiscoveryManager.getInstanceFor(connection).getIdentities());
+        final List<Identity> identities = new ArrayList<>(ServiceDiscoveryManager.getInstanceFor(connection).getIdentities());
         sdm.setNodeInformationProvider(localNodeVer, new AbstractNodeInformationProvider() {
             List<String> features = sdm.getFeatures();
             List<DataForm> packetExtensions = sdm.getExtendedInfo();
@@ -595,7 +633,7 @@ public final class EntityCapsManager extends Manager {
         return true;
     }
 
-    protected static CapsVersionAndHash generateVerificationString(DiscoverInfoView discoverInfo) {
+    static CapsVersionAndHash generateVerificationString(DiscoverInfoView discoverInfo) {
         return generateVerificationString(discoverInfo, null);
     }
 
@@ -611,7 +649,7 @@ public final class EntityCapsManager extends Manager {
      * @return The generated verification String or null if the hash is not
      *         supported
      */
-    protected static CapsVersionAndHash generateVerificationString(DiscoverInfoView discoverInfo, String hash) {
+    static CapsVersionAndHash generateVerificationString(DiscoverInfoView discoverInfo, String hash) {
         if (hash == null) {
             hash = DEFAULT_HASH;
         }
@@ -664,16 +702,30 @@ public final class EntityCapsManager extends Manager {
         }
 
         List<DataForm> extendedInfos = discoverInfo.getExtensions(DataForm.class);
-        for (DataForm extendedInfo : extendedInfos) {
-            if (!extendedInfo.hasHiddenFormTypeField()) {
+        final Iterator<DataForm> iter = extendedInfos.iterator();
+        while (iter.hasNext()) {
+            if (!iter.next().hasHiddenFormTypeField()) {
                 // Only use the data form for calculation is it has a hidden FORM_TYPE field.
                 // See XEP-0115 5.4 step 3.f
-                continue;
+                iter.remove();
             }
+        }
 
-            // 6. If the service discovery information response includes
-            // XEP-0128 data forms, sort the forms by the FORM_TYPE (i.e.,
-            // by the XML character data of the <value/> element).
+        // 6. If the service discovery information response includes
+        // XEP-0128 data forms, sort the forms by the FORM_TYPE (i.e.,
+        // by the XML character data of the <value/> element).
+        Collections.sort(extendedInfos, new Comparator<DataForm>() {
+            @Override
+            public int compare(DataForm dataFormLeft, DataForm dataFormRight) {
+                final String formTypeLeft = dataFormLeft.getFormType();
+                assert formTypeLeft != null; // ensured by the previous step.
+                final String formTypeRight = dataFormRight.getFormType();
+                assert formTypeRight != null; // ensured by the previous step.
+                return formTypeLeft.compareTo(formTypeRight);
+            }
+        });
+
+        for (DataForm extendedInfo : extendedInfos) {
             SortedSet<FormField> fs = new TreeSet<>(new Comparator<FormField>() {
                 @Override
                 public int compare(FormField f1, FormField f2) {

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2014-2019 Florian Schmaus
  *
@@ -16,7 +16,7 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * An element found usually in 'description' elements.
@@ -24,6 +24,6 @@ import org.jivesoftware.smack.packet.ExtensionElement;
  * @author Paul Schaub
  * @author Eng Chong Meng
  */
-public interface JingleContentDescriptionChildElement extends ExtensionElement {
+public interface JingleContentDescriptionChildElement extends XmlElement {
 
 }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -19,12 +19,15 @@ package org.jivesoftware.smackx.workgroup.settings;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.SimpleIQ;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.stringencoder.Base64;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 public class SoundSettings extends SimpleIQ {
     private String outgoingSound;
@@ -65,10 +68,10 @@ public class SoundSettings extends SimpleIQ {
     /**
      * Stanza extension provider for SoundSetting Packets.
      */
-    public static class InternalProvider extends IQProvider<SoundSettings> {
+    public static class InternalProvider extends IqProvider<SoundSettings> {
 
         @Override
-        public SoundSettings parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public SoundSettings parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             SoundSettings soundSettings = new SoundSettings();
 
             boolean done = false;

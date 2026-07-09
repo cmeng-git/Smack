@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -26,6 +26,8 @@ import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * An IQ stanza that encapsulates both types of workgroup queue
@@ -101,7 +103,7 @@ public class QueueUpdate implements ExtensionElement {
     public static class Provider extends ExtensionElementProvider<QueueUpdate> {
 
         @Override
-        public QueueUpdate parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+        public QueueUpdate parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                         throws XmlPullParserException, IOException {
             boolean done = false;
             int position = -1;

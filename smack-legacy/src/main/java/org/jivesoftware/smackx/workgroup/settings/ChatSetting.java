@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -22,6 +22,7 @@ public class ChatSetting {
     private String value;
     private int type;
 
+    @SuppressWarnings("this-escape")
     public ChatSetting(String key, String value, int type) {
         setKey(key);
         setValue(value);

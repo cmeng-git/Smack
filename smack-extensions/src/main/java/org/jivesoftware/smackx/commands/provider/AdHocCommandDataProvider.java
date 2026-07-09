@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2005-2007 Jive Software.
  *
@@ -19,88 +19,99 @@ package org.jivesoftware.smackx.commands.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
-import org.jivesoftware.smackx.commands.AdHocCommand;
-import org.jivesoftware.smackx.commands.AdHocCommand.Action;
 import org.jivesoftware.smackx.commands.AdHocCommandNote;
+import org.jivesoftware.smackx.commands.SpecificErrorCondition;
 import org.jivesoftware.smackx.commands.packet.AdHocCommandData;
+import org.jivesoftware.smackx.commands.packet.AdHocCommandData.Action;
+import org.jivesoftware.smackx.commands.packet.AdHocCommandData.AllowedAction;
+import org.jivesoftware.smackx.commands.packet.AdHocCommandDataBuilder;
+import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jivesoftware.smackx.xdata.provider.DataFormProvider;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * The AdHocCommandDataProvider parses AdHocCommandData packets.
  *
  * @author Gabriel Guardincerri
  */
-public class AdHocCommandDataProvider extends IQProvider<AdHocCommandData> {
+public class AdHocCommandDataProvider extends IqProvider<AdHocCommandData> {
 
     @Override
-    public AdHocCommandData parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException, SmackParsingException {
-        boolean done = false;
-        AdHocCommandData adHocCommandData = new AdHocCommandData();
+    public AdHocCommandData parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
+        String commandNode = parser.getAttributeValue("node");
+        AdHocCommandDataBuilder builder = AdHocCommandData.builder(commandNode, iqData);
         DataFormProvider dataFormProvider = new DataFormProvider();
 
-        XmlPullParser.Event eventType;
-        String elementName;
-        String namespace;
-        adHocCommandData.setSessionID(parser.getAttributeValue("", "sessionid"));
-        adHocCommandData.setNode(parser.getAttributeValue("", "node"));
+        String sessionId = parser.getAttributeValue("sessionid");
+        builder.setSessionId(sessionId);
 
         // Status
         String status = parser.getAttributeValue("", "status");
-        if (AdHocCommand.Status.executing.toString().equalsIgnoreCase(status)) {
-            adHocCommandData.setStatus(AdHocCommand.Status.executing);
+        if (AdHocCommandData.Status.executing.toString().equalsIgnoreCase(status)) {
+            builder.setStatus(AdHocCommandData.Status.executing);
         }
-        else if (AdHocCommand.Status.completed.toString().equalsIgnoreCase(status)) {
-            adHocCommandData.setStatus(AdHocCommand.Status.completed);
+        else if (AdHocCommandData.Status.completed.toString().equalsIgnoreCase(status)) {
+            builder.setStatus(AdHocCommandData.Status.completed);
         }
-        else if (AdHocCommand.Status.canceled.toString().equalsIgnoreCase(status)) {
-            adHocCommandData.setStatus(AdHocCommand.Status.canceled);
+        else if (AdHocCommandData.Status.canceled.toString().equalsIgnoreCase(status)) {
+            builder.setStatus(AdHocCommandData.Status.canceled);
         }
 
         // Action
         String action = parser.getAttributeValue("", "action");
         if (action != null) {
-            Action realAction = AdHocCommand.Action.valueOf(action);
-            if (realAction == null || realAction.equals(Action.unknown)) {
-                adHocCommandData.setAction(Action.unknown);
+            Action realAction = Action.valueOf(action);
+            if (realAction == null) {
+                throw new SmackParsingException("Invalid value for action attribute: " + action);
             }
-            else {
-                adHocCommandData.setAction(realAction);
-            }
+
+            builder.setAction(realAction);
         }
-        while (!done) {
-            eventType = parser.next();
-            namespace = parser.getNamespace();
-            if (eventType == XmlPullParser.Event.START_ELEMENT) {
+
+        // TODO: Improve parsing below. Currently, the next actions like <prev/> are not checked for the correct position.
+        outerloop:
+        while (true) {
+            String elementName;
+            XmlPullParser.Event event = parser.next();
+            String namespace = parser.getNamespace();
+            switch (event) {
+            case START_ELEMENT:
                 elementName = parser.getName();
-                if (parser.getName().equals("actions")) {
-                    String execute = parser.getAttributeValue("", "execute");
+                switch (elementName) {
+                case "actions":
+                    String execute = parser.getAttributeValue("execute");
                     if (execute != null) {
-                        adHocCommandData.setExecuteAction(AdHocCommand.Action.valueOf(execute));
+                        builder.setExecuteAction(AllowedAction.valueOf(execute));
                     }
-                }
-                else if (parser.getName().equals("next")) {
-                    adHocCommandData.addAction(AdHocCommand.Action.next);
-                }
-                else if (parser.getName().equals("complete")) {
-                    adHocCommandData.addAction(AdHocCommand.Action.complete);
-                }
-                else if (parser.getName().equals("prev")) {
-                    adHocCommandData.addAction(AdHocCommand.Action.prev);
-                }
-                else if (elementName.equals("x") && namespace.equals("jabber:x:data")) {
-                    adHocCommandData.setForm(dataFormProvider.parse(parser));
-                }
-                else if (parser.getName().equals("note")) {
-                    String typeString = parser.getAttributeValue("", "type");
+                    break;
+                case "next":
+                    builder.addAction(AllowedAction.next);
+                    break;
+                case "complete":
+                    builder.addAction(AllowedAction.complete);
+                    break;
+                case "prev":
+                    builder.addAction(AllowedAction.prev);
+                    break;
+                case "x":
+                    if (namespace.equals("jabber:x:data")) {
+                        DataForm form = dataFormProvider.parse(parser);
+                        builder.setForm(form);
+                    }
+                    break;
+                case "note":
+                    String typeString = parser.getAttributeValue("type");
                     AdHocCommandNote.Type type;
                     if (typeString != null) {
                         type = AdHocCommandNote.Type.valueOf(typeString);
@@ -109,61 +120,67 @@ public class AdHocCommandDataProvider extends IQProvider<AdHocCommandData> {
                         type = AdHocCommandNote.Type.info;
                     }
                     String value = parser.nextText();
-                    adHocCommandData.addNote(new AdHocCommandNote(type, value));
+                    builder.addNote(new AdHocCommandNote(type, value));
+                    break;
+                case "error":
+                    StanzaError error = PacketParserUtils.parseError(parser, xmlEnvironment, jxmppContext);
+                    builder.setError(error);
+                    break;
                 }
-                else if (parser.getName().equals("error")) {
-                    StanzaError error = PacketParserUtils.parseError(parser);
-                    adHocCommandData.setError(error);
-                }
-            }
-            else if (eventType == XmlPullParser.Event.END_ELEMENT) {
+                break;
+            case END_ELEMENT:
                 if (parser.getName().equals("command")) {
-                    done = true;
+                    break outerloop;
                 }
+                break;
+            default:
+                // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
+                break;
             }
         }
-        return adHocCommandData;
+
+        return builder.build();
     }
 
     public static class BadActionError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.badAction);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.badAction);
         }
     }
 
     public static class MalformedActionError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.malformedAction);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.malformedAction);
         }
     }
 
     public static class BadLocaleError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.badLocale);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.badLocale);
         }
     }
 
     public static class BadPayloadError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.badPayload);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.badPayload);
         }
     }
 
     public static class BadSessionIDError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.badSessionid);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.badSessionid);
         }
     }
 
     public static class SessionExpiredError extends ExtensionElementProvider<AdHocCommandData.SpecificError> {
         @Override
-        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)  {
-            return new AdHocCommandData.SpecificError(AdHocCommand.SpecificErrorCondition.sessionExpired);
+        public AdHocCommandData.SpecificError parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)  {
+            return new AdHocCommandData.SpecificError(SpecificErrorCondition.sessionExpired);
         }
     }
 }

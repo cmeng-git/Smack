@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2015 Florian Schmaus
+ * Copyright 2015-2024 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ public class ResultSyncPoint<R, E extends Exception> {
     private R result;
     private E exception;
 
-    public R waitForResult(long timeout) throws E, InterruptedException, TimeoutException {
+    public R waitForResult(long timeout) throws E, InterruptedException, ResultSyncPointTimeoutException {
+        return waitForResult(timeout, null);
+    }
+
+    public R waitForResult(long timeout, String timeoutMessage) throws E, InterruptedException, ResultSyncPointTimeoutException {
         synchronized (this) {
             if (result != null) {
                 return result;
@@ -46,7 +50,12 @@ public class ResultSyncPoint<R, E extends Exception> {
         if (exception != null) {
             throw exception;
         }
-        throw new TimeoutException("Timeout expired");
+
+        String message = "Timeout after " + timeout + "ms";
+        if (timeoutMessage != null) {
+            message += ": " + timeoutMessage;
+        }
+        throw new ResultSyncPointTimeoutException(message);
     }
 
 
@@ -61,6 +70,21 @@ public class ResultSyncPoint<R, E extends Exception> {
         synchronized (this) {
             this.exception = Objects.requireNonNull(exception);
             notifyAll();
+        }
+    }
+
+    public static class ResultSyncPointTimeoutException extends TimeoutException {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String threadDump = ThreadDumpUtil.threadDump();
+
+        public ResultSyncPointTimeoutException(String message) {
+            super(message);
+        }
+
+        public String getThreadDump() {
+            return threadDump;
         }
     }
 }

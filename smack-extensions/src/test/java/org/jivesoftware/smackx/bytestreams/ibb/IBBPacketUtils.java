@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -40,11 +40,10 @@ public class IBBPacketUtils {
      */
     public static IQ createErrorIQ(Jid from, Jid to, StanzaError.Condition condition) {
         StanzaError xmppError = StanzaError.getBuilder(condition).build();
-        IQ errorIQ = new ErrorIQ(xmppError);
-        errorIQ.setType(IQ.Type.error);
-        errorIQ.setFrom(from);
-        errorIQ.setTo(to);
-        return errorIQ;
+        return ErrorIQ.builder(xmppError)
+                        .from(from)
+                        .to(to)
+                        .build();
     }
 
     /**

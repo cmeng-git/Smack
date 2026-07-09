@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright the original author or authors
  *
@@ -18,8 +18,9 @@ package org.jivesoftware.smackx.bytestreams.socks5.provider;
 
 import java.io.IOException;
 
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
@@ -27,6 +28,7 @@ import org.jivesoftware.smack.xml.XmlPullParserException;
 import org.jivesoftware.smackx.bytestreams.socks5.packet.Bytestream;
 import org.jivesoftware.smackx.bytestreams.socks5.packet.Bytestream.Mode;
 
+import org.jxmpp.JxmppContext;
 import org.jxmpp.jid.Jid;
 
 /**
@@ -34,10 +36,10 @@ import org.jxmpp.jid.Jid;
  *
  * @author Alexander Wenckus
  */
-public class BytestreamsProvider extends IQProvider<Bytestream> {
+public class BytestreamsProvider extends IqProvider<Bytestream> {
 
     @Override
-    public Bytestream parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
+    public Bytestream parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
                     throws XmlPullParserException, IOException {
         boolean done = false;
 
@@ -55,21 +57,24 @@ public class BytestreamsProvider extends IQProvider<Bytestream> {
         String elementName;
         while (!done) {
             eventType = parser.next();
-            elementName = parser.getName();
             if (eventType == XmlPullParser.Event.START_ELEMENT) {
-                if (elementName.equals(Bytestream.StreamHost.ELEMENTNAME)) {
-                    JID = ParserUtils.getJidAttribute(parser);
+                elementName = parser.getName();
+                if (elementName.equals(Bytestream.StreamHost.ELEMENT)) {
+                    JID = ParserUtils.getJidAttribute(parser, jxmppContext);
                     host = parser.getAttributeValue("", "host");
                     port = parser.getAttributeValue("", "port");
                 }
-                else if (elementName.equals(Bytestream.StreamHostUsed.ELEMENTNAME)) {
-                    toReturn.setUsedHost(ParserUtils.getJidAttribute(parser));
+                else if (elementName.equals(Bytestream.StreamHostUsed.ELEMENT)) {
+                    var usedHost = ParserUtils.getJidAttribute(parser, jxmppContext);
+                    toReturn.setUsedHost(usedHost);
                 }
-                else if (elementName.equals(Bytestream.Activate.ELEMENTNAME)) {
-                    toReturn.setToActivate(ParserUtils.getJidAttribute(parser));
+                else if (elementName.equals(Bytestream.Activate.ELEMENT)) {
+                    var toActivate = ParserUtils.getJidAttribute(parser, jxmppContext);
+                    toReturn.setToActivate(toActivate);
                 }
             }
             else if (eventType == XmlPullParser.Event.END_ELEMENT) {
+                elementName = parser.getName();
                 if (elementName.equals("streamhost")) {
                     if (port == null) {
                         toReturn.addStreamHost(JID, host);

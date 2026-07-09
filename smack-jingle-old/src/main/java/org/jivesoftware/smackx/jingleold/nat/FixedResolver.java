@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2006 Jive Software.
  *
@@ -38,6 +38,7 @@ public class FixedResolver extends TransportResolver {
      * @param ip the IP address.
      * @param port the port number.
      */
+    @SuppressWarnings("this-escape")
     public FixedResolver(String ip, int port) {
         super();
         setFixedCandidate(ip, port);

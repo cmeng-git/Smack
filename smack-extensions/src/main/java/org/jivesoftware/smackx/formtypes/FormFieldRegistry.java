@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2020-2021 Florian Schmaus
+ * Copyright 2020-2025 Florian Schmaus
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,26 @@
  */
 package org.jivesoftware.smackx.formtypes;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.namespace.QName;
+
+import org.jivesoftware.smack.util.FileUtils;
 import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.XmlUtil;
+import org.jivesoftware.smack.xml.SmackXmlParser;
+import org.jivesoftware.smack.xml.XmlPullParser;
+import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jivesoftware.smackx.xdata.TextSingleFormField;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
@@ -37,6 +49,120 @@ public class FormFieldRegistry {
     private static final Map<String, FormField.Type> CLARK_NOTATION_FIELD_REGISTRY = new ConcurrentHashMap<>();
 
     private static final Map<String, FormField.Type> LOOKASIDE_FIELD_REGISTRY = new ConcurrentHashMap<>();
+
+    static {
+        try {
+            loadFormFieldRegistryEntries();
+        } catch (IOException | IllegalStateException | XmlPullParserException | URISyntaxException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load form field registry entries", e);
+        }
+    }
+
+    private static int loadedFieldEntries;
+
+    static int getLoadedFieldEntires() {
+        return loadedFieldEntries;
+    }
+
+    private static void loadFormFieldRegistryEntry(InputStream inputStream, String source) throws XmlPullParserException, IOException {
+        var parser = SmackXmlParser.newXmlParser(inputStream);
+        if (parser.nextTag() != XmlPullParser.TagEvent.START_ELEMENT) throw new IllegalStateException();
+        var elementName = parser.getName();
+        if (!elementName.equals("form_type"))
+            throw new IllegalStateException(
+                            source + " does not start with 'form_type' element but with " + elementName);
+
+        String formType = null;
+        outerloop: while (true) {
+            XmlPullParser.Event eventType = parser.next();
+            switch (eventType) {
+            case START_ELEMENT:
+                var name = parser.getName();
+                switch (name) {
+                case "name":
+                    formType = parser.nextText();
+                    if (formType.isEmpty()) throw new IllegalStateException();
+                    break;
+                case "field":
+                    var fieldName = parser.getAttributeValue("var");
+                    var typeString = parser.getAttributeValue("type");
+                    var type = FormField.Type.fromString(typeString);
+                    if (formType == null) throw new IllegalStateException();
+
+                    FormFieldRegistry.register(formType, fieldName, type);
+                    loadedFieldEntries++;
+                    LOGGER.finer("Registered " + fieldName + " for form " + formType + " with type " + type + " [" + source + "]");
+                    break;
+                }
+                break;
+            case END_DOCUMENT:
+                break outerloop;
+            default:
+                // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
+                break;
+            }
+        }
+    }
+
+    @SuppressWarnings("incomplete-switch")
+    private static void parseRegistryPath(XmlPullParser parser) throws IOException, XmlPullParserException {
+        var path = parser.getAttributeValue("path");
+        if (path == null) throw new IllegalStateException();
+        int depth = parser.getDepth();
+        outerloop: while (true) {
+            var eventType = parser.next();
+            switch (eventType) {
+            case START_ELEMENT:
+                var name = parser.getName();
+                switch (name) {
+                case "registry-file":
+                    var filename = parser.getAttributeValue("name");
+                    if (filename == null) throw new IllegalStateException();
+                    var filepath = path + "/" + filename;
+                    try (var inputStream = FileUtils.getStreamForClasspathFile(filepath)) {
+                        loadFormFieldRegistryEntry(inputStream, filepath);
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, "Could not load " + filepath, e);
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected element: " + name);
+                }
+                break;
+            case END_ELEMENT:
+                if (parser.getDepth() == depth) {
+                    break outerloop;
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("incomplete-switch")
+    private static void loadFormFieldRegistryEntries() throws IOException, IllegalStateException, XmlPullParserException, URISyntaxException {
+        var formRegistryUrl = URI.create("classpath:org.igniterealtime.smack/xdata/form-registry/form-registry.xml");
+        try (var inputStream = FileUtils.getStreamForUri(formRegistryUrl, FormFieldRegistry.class.getClassLoader())) {
+            var parser = SmackXmlParser.newXmlParser(inputStream);
+            if (parser.nextTag() != XmlPullParser.TagEvent.START_ELEMENT) throw new IllegalStateException();
+            if (!parser.getQName().equals(new QName("https://igniterealtime.org/projects/smack", "form-registry"))) throw new IllegalStateException();
+            outerloop: while (true) {
+                var eventType = parser.next();
+                switch (eventType) {
+                case START_ELEMENT:
+                    var name = parser.getName();
+                    switch (name) {
+                    case "registry-path":
+                        parseRegistryPath(parser);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected element: " + name);
+                    }
+                    break;
+                case END_DOCUMENT:
+                    break outerloop;
+                }
+            }
+        }
+    }
 
     @SuppressWarnings("ReferenceEquality")
     public static void register(DataForm dataForm) {
@@ -93,7 +219,13 @@ public class FormFieldRegistry {
             } else {
                 previousType = fieldNameToType.get(fieldName);
                 if (previousType != null && previousType != fieldType) {
-                    throw new IllegalArgumentException();
+                    String message = "The field '" + fieldName + "' from form type '" + formType
+                                    + "' was already registered with field type '" + previousType
+                                    + "' while it is now seen with type '" + fieldType
+                                    + "'. Form field types have to be unambigiously."
+                                    + " XMPP uses a registry for form field tpes, scoped by the form type."
+                                    + " You may find the correct value at https://xmpp.org/registrar/formtypes.html";
+                    throw new IllegalArgumentException(message);
                 }
             }
             previousType = fieldNameToType.put(fieldName, fieldType);

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2003-2007 Jive Software.
  *
@@ -20,11 +20,14 @@ package org.jivesoftware.smackx.workgroup.settings;
 import java.io.IOException;
 
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.provider.IQProvider;
+import org.jivesoftware.smack.provider.IqProvider;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
+import org.jxmpp.JxmppContext;
 
 public class WorkgroupProperties extends IQ {
 
@@ -92,10 +95,10 @@ public class WorkgroupProperties extends IQ {
     /**
      * Stanza extension provider for SoundSetting Packets.
      */
-    public static class InternalProvider extends IQProvider<WorkgroupProperties> {
+    public static class InternalProvider extends IqProvider<WorkgroupProperties> {
 
         @Override
-        public WorkgroupProperties parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment) throws XmlPullParserException, IOException {
+        public WorkgroupProperties parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException {
             WorkgroupProperties props = new WorkgroupProperties();
 
             boolean done = false;

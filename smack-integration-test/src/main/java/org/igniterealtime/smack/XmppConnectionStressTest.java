@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2018-2019 Florian Schmaus
  *
@@ -44,6 +44,7 @@ import org.jivesoftware.smackx.jiveproperties.packet.JivePropertiesExtension;
 
 import org.igniterealtime.smack.XmppConnectionStressTest.StressTestFailedException.ErrorsWhileSendingOrReceivingException;
 import org.igniterealtime.smack.XmppConnectionStressTest.StressTestFailedException.NotAllMessagesReceivedException;
+
 import org.jxmpp.jid.EntityFullJid;
 
 public class XmppConnectionStressTest {
@@ -100,8 +101,8 @@ public class XmppConnectionStressTest {
 
                     for (int c = 0; c < payloadChunkCount; c++) {
                         int payloadChunkSize = random.nextInt(configuration.maxPayloadChunkSize) + 1;
-                        String payloadCunk = StringUtils.randomString(payloadChunkSize, random);
-                        JivePropertiesManager.addProperty(messageBuilder, "payload-chunk-" + c, payloadCunk);
+                        String payloadChunk = StringUtils.randomString(payloadChunkSize, random);
+                        JivePropertiesManager.addProperty(messageBuilder, "payload-chunk-" + c, payloadChunk);
                     }
 
                     JivePropertiesManager.addProperty(messageBuilder, MESSAGE_NUMBER_PROPERTY, i);
@@ -184,7 +185,7 @@ public class XmppConnectionStressTest {
                         Exception exception = new Exception(exceptionMessage.toString());
                         receiveExceptions.put(connection, exception);
                         // TODO: Current Smack design does not guarantee that the listener won't be invoked again.
-                        // This is because the decission to invoke a sync listeners is done at a different place
+                        // This is because the decision to invoke a sync listeners is done at a different place
                         // then invoking the listener.
                         connection.removeSyncStanzaListener(this);
                         receivedSemaphore.release();
@@ -300,6 +301,7 @@ public class XmppConnectionStressTest {
                         Integer markerFromConnectionId = connectionIds.get(markerFromAddress);
                         sb.append(markerToConnectionId)
                         .append(" is missing ").append(numberOfFalseMarkers)
+                        .append(" ( of ").append(marker.length).append(" messages)")
                         .append(" messages from ").append(markerFromConnectionId)
                         .append(": ");
                         for (int i = 0; i < marker.length; i++) {
@@ -337,7 +339,7 @@ public class XmppConnectionStressTest {
                 sb.append("Exceptions while sending and/or receiving.");
 
                 if (!sendExceptions.isEmpty()) {
-                    sb.append(" Send exxceptions: ");
+                    sb.append(" Send exceptions: ");
                     for (Map.Entry<XMPPConnection, Exception> entry : sendExceptions.entrySet()) {
                         sb.append(entry.getKey()).append(": ").append(entry.getValue()).append(';');
                     }
