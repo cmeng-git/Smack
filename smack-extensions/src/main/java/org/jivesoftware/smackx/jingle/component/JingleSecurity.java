@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Paul Schaub
  *
@@ -17,6 +17,7 @@
 package org.jivesoftware.smackx.jingle.component;
 
 import org.jivesoftware.smack.XMPPConnection;
+
 import org.jivesoftware.smackx.bytestreams.BytestreamSession;
 import org.jivesoftware.smackx.jingle.callbacks.JingleSecurityCallback;
 import org.jivesoftware.smackx.jingle.element.Jingle;

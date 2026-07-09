@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Paul Schaub
  *
@@ -17,20 +17,24 @@
 package org.jivesoftware.smackx.jet.provider;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.jet.JetManager;
 import org.jivesoftware.smackx.jet.component.JetSecurityImpl;
 import org.jivesoftware.smackx.jet.element.JetSecurity;
 import org.jivesoftware.smackx.jingle.provider.JingleContentSecurityProvider;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * Provider for the Jingle security element for XEP-0391.
@@ -43,12 +47,12 @@ public class JetSecurityProvider extends JingleContentSecurityProvider<JetSecuri
     private static final Logger LOGGER = Logger.getLogger(JetSecurityProvider.class.getName());
 
     @Override
-    public JetSecurity parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment)
-            throws IOException, XmlPullParserException, SmackParsingException {
+    public JetSecurity parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
+            throws XmlPullParserException, IOException, SmackParsingException, ParseException {
         String name = parser.getAttributeValue("", JetSecurity.ATTR_NAME);
         String cipher = parser.getAttributeValue("", JetSecurity.ATTR_CIPHER);
         String type = parser.getAttributeValue("", JetSecurity.ATTR_TYPE);
-        ExtensionElement child;
+        XmlElement child;
 
         Objects.requireNonNull(type);
         Objects.requireNonNull(cipher);
@@ -56,7 +60,8 @@ public class JetSecurityProvider extends JingleContentSecurityProvider<JetSecuri
         ExtensionElementProvider<?> encryptionElementProvider = JetManager.getEnvelopeProvider(type);
         if (encryptionElementProvider != null) {
             child = encryptionElementProvider.parse(parser);
-        } else {
+        }
+        else {
             LOGGER.log(Level.WARNING, "Unknown child element in JetSecurity: " + type);
             return null;
         }

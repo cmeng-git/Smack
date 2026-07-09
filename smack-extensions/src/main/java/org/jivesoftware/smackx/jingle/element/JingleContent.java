@@ -16,10 +16,8 @@
  */
 package org.jivesoftware.smackx.jingle.element;
 
-import org.jivesoftware.smack.packet.XmlElement;
-import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.StringUtils;
+
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
 /**
@@ -31,8 +29,7 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public final class JingleContent implements XmlElement {
-
+public final class JingleContent extends AbstractXmlElement {
     public static final String ELEMENT = "content";
     public static final String NAMESPACE = Jingle.NAMESPACE;
 
@@ -93,7 +90,9 @@ public final class JingleContent implements XmlElement {
     }
 
     /**
-     * Creates a content description.
+     * Creates a new <code>JingleContent</code> element; required by DefaultXmlElementProvider().
+     *
+     * @param builder Builder instance
      */
     public JingleContent(Builder builder) {
         super(builder);
@@ -188,7 +187,7 @@ public final class JingleContent implements XmlElement {
 
         // Not use: Is there a need to check for existing JingleContentDescription?
         public Builder setDescription(JingleContentDescription description) {
-            if (elements != null && elements.containsKey(description.getQName())) {
+            if (elements != null && elements.containsKey(description.getElementName())) {
                 throw new IllegalStateException("Jingle content description already set");
             }
             this.description = description;

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright © 2019 Paul Schaub
  *
@@ -19,6 +19,7 @@ package org.jivesoftware.smackx.omemo_media_sharing;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -29,9 +30,11 @@ import javax.crypto.spec.SecretKeySpec;
 import org.jivesoftware.smack.util.RandomUtil;
 
 /**
- * Utility code for XEP-XXXX: OMEMO Media Sharing.
+ * Utility code for XEP-0454: OMEMO Media Sharing.
+ * @see <a href="https://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-0454: OMEMO Media Sharing</a>
  *
- * @see <a href="https://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-XXXX: OMEMO Media Sharing</a>
+ * @author Paul Schaub
+ * @author Eng Chong Meng
  */
 public class OmemoMediaSharingUtils {
 
@@ -62,6 +65,7 @@ public class OmemoMediaSharingUtils {
      * Generate a random 256 bit AES key.
      *
      * @return encoded AES key
+     *
      * @throws NoSuchAlgorithmException if the JVM doesn't provide the given key type.
      */
     public static byte[] generateRandomKey() throws NoSuchAlgorithmException {

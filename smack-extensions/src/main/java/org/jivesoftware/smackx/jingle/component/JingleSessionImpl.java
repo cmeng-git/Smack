@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Paul Schaub
  *
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +31,7 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.StanzaError;
 import org.jivesoftware.smack.util.Async;
+
 import org.jivesoftware.smackx.jingle.JingleDescriptionManager;
 import org.jivesoftware.smackx.jingle.JingleManager;
 import org.jivesoftware.smackx.jingle.JingleSession;
@@ -88,7 +90,7 @@ public class JingleSessionImpl extends JingleSession {
      * @param recipient The remote file-recipient
      */
     public JingleSessionImpl(XMPPConnection connection, FullJid recipient) {
-        this(connection, connection.getUser(), recipient, Role.initiator, JingleManager.randomId(), null);
+        this(connection, connection.getUser(), recipient, Role.initiator, JingleManager.randomUuid(), null);
     }
 
     /**
@@ -131,7 +133,7 @@ public class JingleSessionImpl extends JingleSession {
             throw new IllegalStateException("Session is not in fresh state.");
         }
 
-        connection.createStanzaCollectorAndSend(createSessionInitiate()).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(createSessionInitiate());
         updateSessionState(SessionState.pending);
     }
 
@@ -149,7 +151,7 @@ public class JingleSessionImpl extends JingleSession {
             content.start(connection);
         }
 
-        connection.createStanzaCollectorAndSend(createSessionAccept()).nextResultOrThrow();
+        connection.sendIqRequestAndWaitForResponse(createSessionAccept());
         updateSessionState(SessionState.active);
     }
 
@@ -203,14 +205,14 @@ public class JingleSessionImpl extends JingleSession {
 
         // Only content has finished i.e. SessionState.ended; skip if the remote cancel the file transfer.
         if (mSessionState == SessionState.ended && contentImpls.size() == 1) {
-            JingleReason jingleReason = new JingleReason(JingleReason.Reason.success, "success", null);
+            JingleReason jingleReason = new JingleReason(JingleReason.Reason.success, "Success", null);
             terminateSession(jingleReason);
         }
 
         // Session still has active contents to handle.
         /*
         try {
-            mConnection.createStanzaCollectorAndSend(Jingle.createSessionTerminateContentCancel(
+            mConnection.sendIqRequestAndWaitForResponse(Jingle.createSessionTerminateContentCancel(
                     getPeer(), getSessionId(), jingleContent.getCreator(), jingleContent.getName()));
         } catch (SmackException.NotConnectedException | InterruptedException e) {
             LOGGER.log(Level.SEVERE, "Could not send content-cancel: " + e, e);
@@ -232,8 +234,9 @@ public class JingleSessionImpl extends JingleSession {
         else {
             try {
                 jutil.sendSessionTerminateContentCancel(remote, sid, jingleContent.getCreator(), jingleContent.getName());
-            } catch (SmackException.NotConnectedException | InterruptedException
-                     | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+            }
+            catch (SmackException.NotConnectedException | InterruptedException
+                   | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
                 LOGGER.log(Level.SEVERE, "Could not send content-cancel: " + e, e);
             }
         }
@@ -249,8 +252,9 @@ public class JingleSessionImpl extends JingleSession {
         notifySessionTerminated(jingleReason);
         try {
             mConnection.sendIqRequestAndWaitForResponse(jutil.createSessionTerminate(remote, sid, jingleReason));
-        } catch (SmackException.NotConnectedException | InterruptedException | SmackException.NoResponseException |
-                 XMPPException.XMPPErrorException e) {
+        }
+        catch (SmackException.NotConnectedException | InterruptedException | SmackException.NoResponseException |
+               XMPPException.XMPPErrorException e) {
             LOGGER.log(Level.SEVERE, "Could not send session-terminate: " + e, e);
         }
         mManager.unregisterJingleSessionHandler(remote, sid, this);
@@ -259,32 +263,32 @@ public class JingleSessionImpl extends JingleSession {
     @Override
     public IQ handleJingleSessionRequest(Jingle request) {
         switch (request.getAction()) {
-            case content_modify:
-            case description_info:
-            case security_info:
-            case session_info:
-            case transport_accept:
-            case transport_info:
-            case transport_reject:
-            case transport_replace:
-                return getSoleAffectedContentOrThrow(request).handleJingleRequest(request, mConnection);
+        case content_modify:
+        case description_info:
+        case security_info:
+        case session_info:
+        case transport_accept:
+        case transport_info:
+        case transport_reject:
+        case transport_replace:
+            return getSoleAffectedContentOrThrow(request).handleJingleRequest(request, mConnection);
 
-            case content_accept:
-                return handleContentAccept(request);
-            case content_add:
-                return handleContentAdd(request);
-            case content_reject:
-                return handleContentReject(request);
-            case content_remove:
-                return handleContentRemove(request);
-            case session_accept:
-                return handleSessionAccept(request);
-            case session_initiate:
-                return handleSessionInitiate(request);
-            case session_terminate:
-                return handleSessionTerminate(request);
-            default:
-                throw new AssertionError("Illegal jingle action: " + request.getAction());
+        case content_accept:
+            return handleContentAccept(request);
+        case content_add:
+            return handleContentAdd(request);
+        case content_reject:
+            return handleContentReject(request);
+        case content_remove:
+            return handleContentRemove(request);
+        case session_accept:
+            return handleSessionAccept(request);
+        case session_initiate:
+            return handleSessionInitiate(request);
+        case session_terminate:
+            return handleSessionTerminate(request);
+        default:
+            throw new AssertionError("Illegal jingle action: " + request.getAction());
         }
     }
 
@@ -329,8 +333,9 @@ public class JingleSessionImpl extends JingleSession {
                 LOGGER.log(Level.WARNING, "Unsupported description type: " + description.getNamespace());
                 try {
                     jutil.sendSessionTerminateUnsupportedApplications(remote, sid);
-                } catch (SmackException.NotConnectedException | InterruptedException
-                         | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+                }
+                catch (SmackException.NotConnectedException | InterruptedException
+                       | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
                     LOGGER.log(Level.SEVERE, "Could not send session-terminate: " + e, e);
                 }
             }
@@ -350,21 +355,20 @@ public class JingleSessionImpl extends JingleSession {
 
         // the resultant state is currently not used by JingleSessionImpl
         switch (reason.asEnum()) {
-            case cancel:
-                updateSessionState(SessionState.cancelled);
-                break;
+        case cancel:
+            updateSessionState(SessionState.cancelled);
+            break;
 
-            case success:
-                updateSessionState(SessionState.ended);
-                break;
+        case success:
+            updateSessionState(SessionState.ended);
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         // Inform the client on session terminated.
         notifySessionTerminated(reason);
-
         mManager.unregisterJingleSessionHandler(remote, sid, this);
         return IQ.createResultIQ(sessionTerminate);
     }
@@ -434,8 +438,8 @@ public class JingleSessionImpl extends JingleSession {
         */
     }
 
-    protected HashMap<JingleContent, JingleContentImpl> getAffectedContents(Jingle request) {
-        HashMap<JingleContent, JingleContentImpl> map = new HashMap<>();
+    protected Map<JingleContent, JingleContentImpl> getAffectedContents(Jingle request) {
+        Map<JingleContent, JingleContentImpl> map = new HashMap<>();
         for (org.jivesoftware.smackx.jingle.element.JingleContent e : request.getContents()) {
             JingleContentImpl c = contentImpls.get(e.getName());
             if (c == null) {

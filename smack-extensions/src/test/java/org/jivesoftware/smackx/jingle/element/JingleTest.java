@@ -31,8 +31,8 @@ public class JingleTest {
         jingleBuilder.setAction(JingleAction.content_accept);
 
         JingleContent.Builder jingleContentBuilder = JingleContent.getBuilder();
-        jingleContentBuilder.setCreator(JingleContent.Creator.initiator);
         jingleContentBuilder.setName("Hello world");
+        jingleContentBuilder.setCreator(JingleContent.Creator.initiator);
 
         jingleBuilder.addJingleContent(jingleContentBuilder.build());
         Jingle iq = jingleBuilder.build();
@@ -41,7 +41,8 @@ public class JingleTest {
         String expectedXml
                         = "<iq id='test-id' type='set'>"
                         + "<jingle xmlns='urn:xmpp:jingle:1' action='content-accept' sid='MySession'>"
-                        + "<content creator='initiator' name='Hello world'/>"
+                        // + "<content creator='initiator' name='Hello world'/>"
+                        + "<content name='Hello world' creator='initiator'/>"
                         + "</jingle></iq>";
         assertEquals(expectedXml, actualXml);
     }

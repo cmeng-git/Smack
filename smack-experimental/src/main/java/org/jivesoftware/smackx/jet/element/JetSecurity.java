@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Paul Schaub
  *
@@ -16,9 +16,10 @@
  */
 package org.jivesoftware.smackx.jet.element;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.XmlStringBuilder;
+
 import org.jivesoftware.smackx.jet.component.JetSecurityImpl;
 import org.jivesoftware.smackx.jingle.element.JingleContentSecurity;
 
@@ -34,11 +35,11 @@ public class JetSecurity extends JingleContentSecurity {
     public static final String ATTR_TYPE = "type";
     public static final String ATTR_CIPHER = "cipher";
 
-    private final ExtensionElement child;
+    private final XmlElement child;
     private final String contentName;
     private final String cipherName;
 
-    public JetSecurity(String contentName, String cipherName, ExtensionElement child) {
+    public JetSecurity(String contentName, String cipherName, XmlElement child) {
         this.contentName = contentName;
         this.child = child;
         this.cipherName = cipherName;
@@ -65,7 +66,7 @@ public class JetSecurity extends JingleContentSecurity {
         return child.getNamespace();
     }
 
-    public ExtensionElement getChild() {
+    public XmlElement getChild() {
         return child;
     }
 

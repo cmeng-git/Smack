@@ -888,7 +888,7 @@ public final class MamManager extends Manager {
             this.alwaysJids = new ArrayList<>(mamPrefsIq.getAlwaysJids());
             this.neverJids = new ArrayList<>(mamPrefsIq.getNeverJids());
             this.defaultBehavior = mamPrefsIq.getDefault();
-            this.mamVersion = MamVersion.fromNamespace(mamPrefsIq.getNamespace());
+            this.mamVersion = MamVersion.fromNamespace(mamPrefsIq.getChildElementNamespace());
         }
 
         public void setDefaultBehavior(DefaultBehavior defaultBehavior) {

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -27,9 +27,6 @@ package org.jivesoftware.smackx.jingle_rtp.element;
  * @author Eng Chong Meng
  */
 public class IceUdpTransportRemoteCandidate extends IceUdpTransportCandidate {
-    /**
-     * The name of the "remote-candidate" element.
-     */
     public static final String ELEMENT = "remote-candidate";
 
     public IceUdpTransportRemoteCandidate() {
@@ -46,7 +43,7 @@ public class IceUdpTransportRemoteCandidate extends IceUdpTransportCandidate {
     }
 
     public static Builder getBuilder() {
-        return new Builder(ELEMENT, NAMESPACE);
+        return new Builder(ELEMENT);
     }
 
     /**
@@ -54,8 +51,8 @@ public class IceUdpTransportRemoteCandidate extends IceUdpTransportCandidate {
      * obtain a new instance and {@link #build} to build the IceUdpTransportRemoteCandidate.
      */
     public static final class Builder extends IceUdpTransportCandidate.Builder {
-        protected Builder(String element, String namespace) {
-            super(element, namespace);
+        Builder(String element) {
+            super(element);
         }
 
         @Override

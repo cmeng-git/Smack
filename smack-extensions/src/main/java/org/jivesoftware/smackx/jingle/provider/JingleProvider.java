@@ -32,6 +32,7 @@ import org.jivesoftware.smack.util.PacketParserUtils;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.jingle.element.Jingle;
 import org.jivesoftware.smackx.jingle.element.JingleAction;
 import org.jivesoftware.smackx.jingle.element.JingleContent;
@@ -64,14 +65,17 @@ public class JingleProvider extends IqProvider<Jingle> {
      * Parses a Jingle IQ sub-document and returns a {@link Jingle} instance.
      *
      * @param parser an XML parser.
+     *
      * @return a new {@link Jingle} instance.
+     *
      * @throws IOException if an error occurs in IO.
      * @throws XmlPullParserException if an error occurs pull parsing the XML.
      * @throws SmackParsingException if an error occurs parsing the XML.
      */
+
     @Override
-    public Jingle parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment,
-                    JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
+    public Jingle parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
+            throws XmlPullParserException, IOException, SmackParsingException {
         Jingle.Builder builder = Jingle.builder(iqData);
 
         String actionString = parser.getAttributeValue("", Jingle.ATTR_ACTION);
@@ -80,10 +84,10 @@ public class JingleProvider extends IqProvider<Jingle> {
             builder.setAction(action);
         }
 
-        FullJid initiator = ParserUtils.getFullJidAttribute(parser, Jingle.INITIATOR_ATTRIBUTE_NAME, jxmppContext);
+        FullJid initiator = ParserUtils.getFullJidAttribute(parser, Jingle.ATTR_INITIATOR, jxmppContext);
         builder.setInitiator(initiator);
 
-        FullJid responder = ParserUtils.getFullJidAttribute(parser, Jingle.RESPONDER_ATTRIBUTE_NAME, jxmppContext);
+        FullJid responder = ParserUtils.getFullJidAttribute(parser, Jingle.ATTR_RESPONDER, jxmppContext);
         builder.setResponder(responder);
 
         String sessionId = parser.getAttributeValue("", Jingle.ATTR_SESSION_ID);
@@ -93,75 +97,78 @@ public class JingleProvider extends IqProvider<Jingle> {
         while (true) {
             XmlPullParser.Event eventType = parser.next();
             switch (eventType) {
-                case START_ELEMENT:
-                    String tagName = parser.getName();
-                    String namespace = parser.getNamespace();
-                    switch (tagName) {
-                        case JingleContent.ELEMENT:
-                            JingleContent content = parseJingleContent(parser, parser.getDepth());
-                            builder.addJingleContent(content);
-                            break;
-
-                        case JingleReason.ELEMENT:
-                            JingleReason reason = parseJingleReason(parser);
-                            builder.setReason(reason);
-                            break;
-
-                        // Use DefaultXmlElementProvider instead.
-//                        case Grouping.ELEMENT:
-//                            ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
-//                            if (provider != null) {
-//                                ExtensionElement childExtension = provider.parse(parser);
-//                                builder.addExtension(childExtension);
-//                            }
-//                            break;
-
-                        default:
-                            // session-info element handlers for <mute/> <active/> and etc for rtp session
-                            if (namespace.equals(SessionInfo.NAMESPACE)) {
-                                LOGGER.info("Handle Jingle Session-Info: <" + tagName + " xml: " + namespace + ">");
-                                SessionInfoType type = SessionInfoType.valueOf(tagName);
-
-                                // <mute/> <unmute/>
-                                if (type == SessionInfoType.mute || type == SessionInfoType.unmute) {
-                                    String name = parser.getAttributeValue("", SessionInfo.ATTR_NAME);
-                                    String creator = parser.getAttributeValue("", SessionInfo.ATTR_CREATOR);
-                                    builder.setSessionInfo(SessionInfo.builder(type)
-                                            .setName(name)
-                                            .setCreator(creator)
-                                            .build()
-                                    );
-                                }
-                                // <active/>, <hold/>, <unhold/>, and <ringing/> etc.
-                                else {
-                                    builder.setSessionInfo(SessionInfo.builder(type).build());
-                                }
-                            // Handle all the aTalk AbstractExtensionElement extensions embedded in JingleIQ
-                            } else {
-                                ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
-                                if (provider != null) {
-                                    LOGGER.info("Found provider for EE<" + tagName + " " + namespace + "/>");
-                                    ExtensionElement childExtension = provider.parse(parser);
-                                    if (childExtension instanceof AbstractXmlElement) {
-                                        builder.addExtension(childExtension);
-                                    }
-                                    else
-                                        LOGGER.severe("Unknown Jingle extension element: " + tagName);
-                                }
-                                else {
-                                    // Extension element provider may not have been added properly if null
-                                    LOGGER.severe("No provider for EE<" + tagName + " " + namespace + "/>");
-                                }
-                            }
-                    }
+            case START_ELEMENT:
+                String tagName = parser.getName();
+                String namespace = parser.getNamespace();
+                switch (tagName) {
+                case JingleContent.ELEMENT:
+                    JingleContent content = parseJingleContent(parser, parser.getDepth());
+                    builder.addJingleContent(content);
                     break;
+
                 case JingleReason.ELEMENT:
                     JingleReason reason = parseJingleReason(parser, jxmppContext);
                     builder.setReason(reason);
                     break;
+
+                // Use DefaultXmlElementProvider instead.
+//                        case Grouping.ELEMENT:
+//                            ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
+//                            if (provider != null) {
+//                                XmlElement childExtension = provider.parse(parser);
+//                                builder.addExtension(childExtension);
+//                            }
+//                            break;
+
                 default:
-                    // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
-                    break;
+                    // session-info element handlers for <mute/> <active/> and etc for rtp session
+                    if (namespace.equals(SessionInfo.NAMESPACE)) {
+                        LOGGER.info("Handle Jingle Session-Info: <" + tagName + " xml: " + namespace + ">");
+                        SessionInfoType type = SessionInfoType.valueOf(tagName);
+
+                        // <mute/> <unmute/>
+                        if (type == SessionInfoType.mute || type == SessionInfoType.unmute) {
+                            String name = parser.getAttributeValue("", SessionInfo.ATTR_NAME);
+                            String creator = parser.getAttributeValue("", SessionInfo.ATTR_CREATOR);
+                            builder.setSessionInfo(SessionInfo.builder(type)
+                                    .setName(name)
+                                    .setCreator(creator)
+                                    .build()
+                            );
+                        }
+                        // <active/>, <hold/>, <unhold/>, and <ringing/> etc.
+                        else {
+                            builder.setSessionInfo(SessionInfo.builder(type).build());
+                        }
+                    }
+                    // Handle all the aTalk AbstractXmlElement extensions embedded in JingleIQ
+                    else {
+                        ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
+                        if (provider != null) {
+                            LOGGER.info("Found provider for EE<" + tagName + " " + namespace + "/>");
+                            XmlElement childExtension = provider.parse(parser);
+                            if (childExtension instanceof AbstractXmlElement) {
+                                builder.addExtension(childExtension);
+                            }
+                            else
+                                LOGGER.severe("Unknown Jingle element: " + tagName);
+                        }
+                        else {
+                            // Extension element provider may not have been added properly if null
+                            LOGGER.severe("No ExtensionElement provider for EE<" + tagName + " " + namespace + "/>");
+                        }
+                    }
+                }
+                break;
+
+            case END_ELEMENT:
+                if (parser.getDepth() == initialDepth) {
+                    break outerloop;
+                }
+                break;
+            default:
+                // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
+                break;
             }
         }
         return builder.build();
@@ -191,77 +198,79 @@ public class JingleProvider extends IqProvider<Jingle> {
         while (true) {
             XmlPullParser.Event eventType = parser.next();
             switch (eventType) {
-                case START_ELEMENT:
-                    String tagName = parser.getName();
-                    String namespace = parser.getNamespace();
-                    switch (tagName) {
-                        case JingleContentDescription.ELEMENT: {
-                            JingleContentDescription description;
-                            JingleContentDescriptionProvider<?> provider = JingleContentProviderManager.getJingleContentDescriptionProvider(namespace);
-                            if (provider == null) {
-                                StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
-                                description = new UnknownJingleContentDescription(standardExtensionElement);
-                            } else {
-                                description = provider.parse(parser);
-                            }
-                            builder.setDescription(description);
-                            break;
-                        }
-
-                        case JingleContentTransport.ELEMENT: {
-                            JingleContentTransport transport;
-                            JingleContentTransportProvider<?> provider = JingleContentProviderManager.getJingleContentTransportProvider(namespace);
-                            if (provider == null) {
-                                StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
-                                transport = new UnknownJingleContentTransport(standardExtensionElement);
-                            } else {
-                                transport = provider.parse(parser);
-                            }
-                            builder.setTransport(transport);
-                            break;
-                        }
-
-                        case JingleContentSecurity.ELEMENT: {
-                            JingleContentSecurity jetSecurity;
-                            JingleContentSecurityProvider<?> provider = JingleContentProviderManager.getJingleContentSecurityProvider(namespace);
-                            if (provider == null) {
-                                StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
-                                jetSecurity = new UnknownJingleContentSecurity(standardExtensionElement);
-                            }
-                            else {
-                                jetSecurity = provider.parse(parser);
-                            }
-                            builder.setSecurity(jetSecurity);
-                            break;
-                        }
-
-                        default:
-                            // Handle all the aTalk AbstractExtensionElement extensions embedded in JingleContent
-                            ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
-                            if (provider != null) {
-                                LOGGER.info("Found provider for EE<" + tagName + " " + namespace + "/>");
-                                ExtensionElement childExtension = provider.parse(parser);
-                                if (childExtension instanceof AbstractXmlElement) {
-                                    builder.addChildElement(childExtension);
-                                }
-                                else
-                                    LOGGER.severe("Unknown Jingle content element: " + tagName);
-                            }
-                            else {
-                                // Extension element provider may not have been added properly if null
-                                LOGGER.severe("No provider for content EE<" + tagName + " " + namespace + "/>");
-                            }
-                            break;
+            case START_ELEMENT:
+                String tagName = parser.getName();
+                String namespace = parser.getNamespace();
+                switch (tagName) {
+                case JingleContentDescription.ELEMENT: {
+                    JingleContentDescription description;
+                    JingleContentDescriptionProvider<?> provider = JingleContentProviderManager.getJingleContentDescriptionProvider(namespace);
+                    if (provider == null) {
+                        StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
+                        description = new UnknownJingleContentDescription(standardExtensionElement);
                     }
-                    break;
-                case END_ELEMENT:
-                    if (parser.getDepth() == initialDepth) {
-                        break outerloop;
+                    else {
+                        description = provider.parse(parser);
                     }
+                    builder.setDescription(description);
                     break;
+                }
+
+                case JingleContentTransport.ELEMENT: {
+                    JingleContentTransport transport;
+                    JingleContentTransportProvider<?> provider = JingleContentProviderManager.getJingleContentTransportProvider(namespace);
+                    if (provider == null) {
+                        StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
+                        transport = new UnknownJingleContentTransport(standardExtensionElement);
+                    }
+                    else {
+                        transport = provider.parse(parser);
+                    }
+                    builder.setTransport(transport);
+                    break;
+                }
+
+                case JingleContentSecurity.ELEMENT: {
+                    JingleContentSecurity jetSecurity;
+                    JingleContentSecurityProvider<?> provider = JingleContentProviderManager.getJingleContentSecurityProvider(namespace);
+                    if (provider == null) {
+                        StandardExtensionElement standardExtensionElement = StandardExtensionElementProvider.INSTANCE.parse(parser);
+                        jetSecurity = new UnknownJingleContentSecurity(standardExtensionElement);
+                    }
+                    else {
+                        jetSecurity = provider.parse(parser);
+                    }
+                    builder.setSecurity(jetSecurity);
+                    break;
+                }
+
                 default:
-                    // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
+                    // Handle all the aTalk AbstractXmlElement extensions embedded in JingleContent
+                    ExtensionElementProvider<?> provider = ProviderManager.getExtensionProvider(tagName, namespace);
+                    if (provider != null) {
+                        LOGGER.info("Found provider for EE<" + tagName + " " + namespace + "/>");
+                        XmlElement childExtension = provider.parse(parser);
+                        if (childExtension instanceof AbstractXmlElement) {
+                            builder.addChildElement(childExtension);
+                        }
+                        else
+                            LOGGER.severe("Unknown Jingle content element: " + tagName);
+                    }
+                    else {
+                        // Extension element provider may not have been added properly if null
+                        LOGGER.severe("No provider for content EE<" + tagName + " " + namespace + "/>");
+                    }
                     break;
+                }
+                break;
+            case END_ELEMENT:
+                if (parser.getDepth() == initialDepth) {
+                    break outerloop;
+                }
+                break;
+            default:
+                // Catch all for incomplete switch (MissingCasesInEnumSwitch) statement.
+                break;
             }
         }
 
@@ -269,7 +278,7 @@ public class JingleProvider extends IqProvider<Jingle> {
     }
 
     public static JingleReason parseJingleReason(XmlPullParser parser, JxmppContext jxmppContext)
-                    throws XmlPullParserException, IOException, SmackParsingException {
+            throws XmlPullParserException, IOException, SmackParsingException {
         ParserUtils.assertAtStartTag(parser);
         final int initialDepth = parser.getDepth();
         final String jingleNamespace = parser.getNamespace();
@@ -285,27 +294,24 @@ public class JingleProvider extends IqProvider<Jingle> {
         while (true) {
             XmlPullParser.TagEvent event = parser.nextTag();
             switch (event) {
-                case START_ELEMENT:
-                    String elementName = parser.getName();
-                    String namespace = parser.getNamespace();
-                    if (namespace.equals(jingleNamespace)) {
-                        switch (elementName) {
-                            case "text":
-                                text = parser.nextText();
-                                break;
-                            case "alternative-session":
-                                parser.next();
-                                sid = parser.nextText();
-                                break;
-                            default:
-                                reason = Reason.fromString(elementName);
-                                break;
-                        }
-                    } else {
-                        element = PacketParserUtils.parseExtensionElement(elementName, namespace, parser, null);
+            case START_ELEMENT:
+                String elementName = parser.getName();
+                String namespace = parser.getNamespace();
+                if (namespace.equals(jingleNamespace)) {
+                    switch (elementName) {
+                    case "text":
+                        text = parser.nextText();
+                        break;
+                    case "alternative-session":
+                        parser.next();
+                        sid = parser.nextText();
+                        break;
+                    default:
+                        reason = Reason.fromString(elementName);
+                        break;
                     }
-                } else {
-                    // TODO: Pass proper XmlEnvironment here.
+                }
+                else {
                     element = PacketParserUtils.parseExtensionElement(elementName, namespace, parser, null, jxmppContext);
                 }
                 break;
@@ -320,7 +326,8 @@ public class JingleProvider extends IqProvider<Jingle> {
         JingleReason res;
         if (sid != null) {
             res = new JingleReason.AlternativeSession(sid, text, element);
-        } else {
+        }
+        else {
             res = new JingleReason(reason, text, element);
         }
         return res;

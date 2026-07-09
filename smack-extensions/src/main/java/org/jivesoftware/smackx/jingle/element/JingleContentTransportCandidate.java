@@ -21,8 +21,6 @@ import org.jivesoftware.smack.packet.XmlElement;
 /**
  * An element found usually in Jingle 'transport' elements.
  *
- * @author Florian Schmaus
- * @author Eng Chong Meng
  */
 public abstract class JingleContentTransportCandidate implements XmlElement {
 

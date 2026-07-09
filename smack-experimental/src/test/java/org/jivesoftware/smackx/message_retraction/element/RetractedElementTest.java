@@ -28,7 +28,6 @@ import org.jivesoftware.smack.test.util.SmackTestUtil;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.message_retraction.provider.RetractedElementProvider;
-import org.jivesoftware.smackx.sid.element.OriginIdElement;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,12 +39,9 @@ public class RetractedElementTest {
     @Test
     public void serializationTest() throws ParseException {
         Date stamp = XmppDateTime.parseXEP0082Date("2019-09-20T23:08:25.000+00:00");
-        OriginIdElement originId = new OriginIdElement("origin-id-1");
-        RetractedElement retractedElement = new RetractedElement(stamp, originId);
-        String expectedXml = "" +
-                "<retracted stamp='2019-09-20T23:08:25.000+00:00' xmlns='urn:xmpp:message-retract:0'>\n" +
-                "  <origin-id xmlns='urn:xmpp:sid:0' id='origin-id-1'/>\n" +
-                "</retracted>";
+        String msgId = "retract-message-1";
+        RetractedElement retractedElement = new RetractedElement(stamp, msgId);
+        String expectedXml = "<retracted xmlns='urn:xmpp:message-retract:1' stamp='2019-09-20T23:08:25.000+00:00' id='retract-message-1'/>";
 
         assertXmlSimilar(expectedXml, retractedElement.toXML());
     }
@@ -54,12 +50,9 @@ public class RetractedElementTest {
     @EnumSource(SmackTestUtil.XmlPullParserKind.class)
     public void deserializationTest(SmackTestUtil.XmlPullParserKind parserKind)
             throws XmlPullParserException, IOException, SmackParsingException {
-        String xml = "" +
-                "<retracted stamp='2019-09-20T23:08:25.000+00:00' xmlns='urn:xmpp:message-retract:0'>\n" +
-                "  <origin-id xmlns='urn:xmpp:sid:0' id='origin-id-1'/>\n" +
-                "</retracted>";
+        String xml =  "<retracted stamp='2019-09-20T23:08:25.000+00:00' xmlns='urn:xmpp:message-retract:1' id='retract-message-1'/>\n";
 
         RetractedElement element = SmackTestUtil.parse(xml, RetractedElementProvider.class, parserKind);
-        assertNotNull(element.getOriginId());
+        assertNotNull(element.getId());
     }
 }

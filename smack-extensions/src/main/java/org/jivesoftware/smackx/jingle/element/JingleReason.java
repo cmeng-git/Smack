@@ -106,10 +106,6 @@ public class JingleReason implements XmlElement {
     }
 
     protected final Reason reason;
-
-    /**
-     * The content of the text element (if any) providing human-readable information about the reason for the action.
-     */
     private final String text;
     private final XmlElement element;
 
@@ -170,7 +166,9 @@ public class JingleReason implements XmlElement {
         return reason;
     }
 
+
     public static class AlternativeSession extends JingleReason {
+
         public static final String SID = "sid";
         private final String sessionId;
 

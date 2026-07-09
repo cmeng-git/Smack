@@ -19,9 +19,7 @@ package org.jivesoftware.smackx.jingle.element;
 import java.util.Collections;
 import java.util.List;
 
-import org.jivesoftware.smack.packet.XmlElement;
-import org.jivesoftware.smack.packet.XmlEnvironment;
-import org.jivesoftware.smack.util.XmlStringBuilder;
+import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
 /**
  * A jingle transport extension.
@@ -29,8 +27,7 @@ import org.jivesoftware.smack.util.XmlStringBuilder;
  * @author Florian Schmaus
  * @author Eng Chong Meng
  */
-public abstract class JingleContentTransport implements XmlElement {
-
+public class JingleContentTransport extends AbstractXmlElement {
     public static final String ELEMENT = "transport";
 
     protected List<JingleContentTransportCandidate> candidates;

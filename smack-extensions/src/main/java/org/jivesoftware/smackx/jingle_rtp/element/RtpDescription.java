@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -16,7 +16,10 @@
  */
 package org.jivesoftware.smackx.jingle_rtp.element;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import javax.xml.namespace.QName;
+
+import org.jivesoftware.smack.packet.XmlElement;
+
 import org.jivesoftware.smackx.jingle.element.JingleContentDescription;
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
@@ -31,15 +34,10 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @author Eng Chong Meng
  */
 public class RtpDescription extends JingleContentDescription {
-    /**
-     * The name of the "description" element.
-     */
     public static final String ELEMENT = "description";
-
-    /**
-     * The name space for RTP description elements.
-     */
     public static final String NAMESPACE = "urn:xmpp:jingle:apps:rtp:1";
+
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     /**
      * The name of the <code>media</code> description argument.
@@ -103,7 +101,7 @@ public class RtpDescription extends JingleContentDescription {
      * to obtain a new instance and {@link #build} to build the RtpDescription.
      */
     public static final class Builder extends JingleContentDescription.Builder {
-        protected Builder(String element, String namespace) {
+        Builder(String element, String namespace) {
             super(element, namespace);
         }
 
@@ -133,7 +131,7 @@ public class RtpDescription extends JingleContentDescription {
         /**
          * Set the optional encryption element that contains encryption parameters for this session.
          *
-         * @param srtpEncryption the encryption {@link ExtensionElement} we'd like to add to this packet.
+         * @param srtpEncryption the encryption {@link XmlElement} we'd like to add to this packet.
          * @return builder instance
          */
         public Builder addEncryption(SrtpEncryption srtpEncryption) {
@@ -144,7 +142,7 @@ public class RtpDescription extends JingleContentDescription {
         /**
          * Set the optional rtcpmux element that contains rtcpmux parameters for this session.
          *
-         * @param rtcpmux the rtcpmux {@link ExtensionElement} we'd like to add to this packet.
+         * @param rtcpmux the rtcpmux {@link XmlElement} we'd like to add to this packet.
          * @return builder instance
          */
         public Builder addRtcpMux(RtcpMux rtcpmux) {

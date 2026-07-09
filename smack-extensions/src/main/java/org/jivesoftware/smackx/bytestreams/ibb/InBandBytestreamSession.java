@@ -226,14 +226,15 @@ public class InBandBytestreamSession implements BytestreamSession {
         if (this.inputStream.isClosed && this.outputStream.isClosed) {
             this.isClosed = true;
 
-            // send close request
-            Close close = new Close(this.byteStreamRequest.getSessionID());
-            close.setTo(this.remoteJID);
-            try {
-                connection.sendIqRequestAndWaitForResponse(close);
-            }
-            catch (Exception e) {
-                throw new IOException(e);
+            // send close stream request if not already closed by peer
+            if (!closedByPeer) {
+                Close close = new Close(this.byteStreamRequest.getSessionID());
+                close.setTo(this.remoteJID);
+                try {
+                    connection.sendIqRequestAndWaitForResponse(close);
+                } catch (Exception e) {
+                    throw new IOException(e);
+                }
             }
 
             this.inputStream.cleanup();
@@ -243,7 +244,6 @@ public class InBandBytestreamSession implements BytestreamSession {
             // now to remove(byteStreamRequest.getSessionID).
             InBandBytestreamManager.getByteStreamManager(this.connection).getSessions().remove(byteStreamRequest.getSessionID());
         }
-
     }
 
     /**

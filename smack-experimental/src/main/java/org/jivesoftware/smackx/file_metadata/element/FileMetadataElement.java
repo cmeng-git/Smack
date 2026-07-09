@@ -300,8 +300,8 @@ public final class FileMetadataElement implements ExtensionElement {
             return this;
         }
 
-        public Builder addThumbnail(ThumbnailElement thumbnail) {
-            thumbnails.add(thumbnail);
+        public Builder addThumbnail(ThumbnailElement thumbnailElement) {
+            thumbnails.add(thumbnailElement);
             return this;
         }
 

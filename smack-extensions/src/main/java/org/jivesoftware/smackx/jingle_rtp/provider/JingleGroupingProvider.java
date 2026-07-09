@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Jive Software
  *
@@ -19,15 +19,19 @@ package org.jivesoftware.smackx.jingle_rtp.provider;
 import static org.jivesoftware.smack.xml.XmlPullParser.Event.END_ELEMENT;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.ExtensionElementProvider;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.jingle.element.JingleContent;
 import org.jivesoftware.smackx.jingle_rtp.DefaultXmlElementProvider;
 import org.jivesoftware.smackx.jingle_rtp.element.Grouping;
+
+import org.jxmpp.JxmppContext;
 
 /**
  * A Grouping provider that parses incoming stanza extensions into instances of the
@@ -42,6 +46,7 @@ public class JingleGroupingProvider extends ExtensionElementProvider<Grouping> {
      * and at the end of the method call it will be on the closing element of the stanza extension.
      *
      * @param parser an XML parser positioned at the stanza's starting element.
+     *
      * @return a new Grouping stanza extension instance.
      *
      * @throws XmlPullParserException if an error occurs pull parsing the XML.
@@ -49,8 +54,8 @@ public class JingleGroupingProvider extends ExtensionElementProvider<Grouping> {
      * @throws SmackParsingException if an error occurs parsing the XML.
      */
     @Override
-    public Grouping parse(XmlPullParser parser, int i, XmlEnvironment xmlEnvironment)
-            throws XmlPullParserException, IOException, SmackParsingException {
+    public Grouping parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
+            throws XmlPullParserException, IOException, SmackParsingException, ParseException {
         DefaultXmlElementProvider<JingleContent> contentProvider = new DefaultXmlElementProvider<>(JingleContent.class);
 
         Grouping.Builder builder = Grouping.getBuilder();
@@ -74,4 +79,5 @@ public class JingleGroupingProvider extends ExtensionElementProvider<Grouping> {
         }
         return builder.build();
     }
+
 }

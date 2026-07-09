@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -20,6 +20,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+
 import javax.crypto.NoSuchPaddingException;
 
 public class Aes256GcmNoPadding extends AesGcmNoPadding {

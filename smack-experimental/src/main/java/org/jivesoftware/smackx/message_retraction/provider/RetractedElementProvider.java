@@ -27,30 +27,18 @@ import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
+import org.jivesoftware.smackx.message_retraction.element.RetractElement;
 import org.jivesoftware.smackx.message_retraction.element.RetractedElement;
-import org.jivesoftware.smackx.sid.StableUniqueStanzaIdManager;
-import org.jivesoftware.smackx.sid.element.OriginIdElement;
-import org.jivesoftware.smackx.sid.provider.OriginIdProvider;
 
 import org.jxmpp.JxmppContext;
 
 public class RetractedElementProvider extends ExtensionElementProvider<RetractedElement> {
-
     @Override
     public RetractedElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
             throws XmlPullParserException, IOException, SmackParsingException, ParseException {
         Date date = ParserUtils.getDateFromXep82String(parser.getAttributeValue("", RetractedElement.ATTR_STAMP));
+        String id = parser.getAttributeValue("", RetractElement.ATTR_ID);
 
-        OriginIdElement originIdElement = null;
-        while (originIdElement == null) {
-            XmlPullParser.TagEvent tag = parser.nextTag();
-            if (tag == XmlPullParser.TagEvent.START_ELEMENT
-                    && OriginIdElement.ELEMENT.equals(parser.getName())
-                    && StableUniqueStanzaIdManager.NAMESPACE.equals(parser.getNamespace())) {
-                originIdElement = OriginIdProvider.INSTANCE.parse(parser);
-            }
-        }
-
-        return new RetractedElement(date, originIdElement);
+        return new RetractedElement(date, id);
     }
 }

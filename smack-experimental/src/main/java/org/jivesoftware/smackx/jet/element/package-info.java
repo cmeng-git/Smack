@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017 Paul Schaub
  *
@@ -16,7 +16,6 @@
  */
 
 /**
- * Smack's API for XEP-0391: Jingle Encrypted Transfers.
- * Elements.
+ * Element classes for XEP-0391: Jingle Encrypted Transports.
  */
 package org.jivesoftware.smackx.jet.element;

@@ -26,10 +26,14 @@ import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.IqProvider;
+import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
+
 import org.jivesoftware.smackx.si.packet.StreamInitiation;
-import org.jivesoftware.smackx.thumbnail.element.Thumbnail;
+import org.jivesoftware.smackx.si.packet.StreamInitiation.File;
+import org.jivesoftware.smackx.thumbnails.element.ThumbnailElement;
+import org.jivesoftware.smackx.thumbnails.provider.ThumbnailElementProvider;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jivesoftware.smackx.xdata.provider.DataFormProvider;
 
@@ -45,9 +49,18 @@ import org.jxmpp.util.XmppDateTime;
 public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
     private static final Logger LOGGER = Logger.getLogger(StreamInitiationProvider.class.getName());
 
+    /**
+     * Parses the given <code>parser</code> in order to create a <code>FileElement</code> from it.
+     *
+     * @param parser the parser to parse
+     */
+
     @SuppressWarnings("JavaUtilDate")
     @Override
-    public StreamInitiation parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
+    public StreamInitiation parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
+            throws XmlPullParserException, IOException, SmackParsingException, ParseException {
+        boolean done = false;
+
         // si
         String id = parser.getAttributeValue("", "id");
         String mimeType = parser.getAttributeValue("", "mime-type");
@@ -60,7 +73,7 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
         String hash = null;
         String date = null;
         String desc = null;
-        Thumbnail thumbnail = null;
+        ThumbnailElement thumbnailElement = null;
         boolean isRanged = false;
 
         // feature
@@ -90,8 +103,8 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
                 else if (elementName.equals("x") && namespace.equals("jabber:x:data")) {
                     form = dataFormProvider.parse(parser);
                 }
-                else if (elementName.equals("thumbnail")) {
-                    thumbnail = new Thumbnail(parser);
+                else if (elementName.equals("thumbnailElement")) {
+                    thumbnailElement = ThumbnailElementProvider.INSTANCE.parse(parser);  // new ThumbnailElement(parser);
                 }
             }
             else if (eventType == XmlPullParser.Event.END_ELEMENT) {
@@ -107,26 +120,29 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
                     if (size != null) {
                         try {
                             fileSize = Long.parseLong(size);
-                        } catch (NumberFormatException e) {
+                        }
+                        catch (NumberFormatException e) {
                             LOGGER.log(Level.SEVERE, "Failed to parse file size from " + fileSize);
                         }
                     }
 
-                    StreamInitiation.File file = new StreamInitiation.File(name, fileSize);
+                    Date fileDate = new Date();
                     if (date != null) {
                         try {
-                            file.setDate(XmppDateTime.parseDate(date));
-                        } catch (ParseException e) {
+                            fileDate = XmppDateTime.parseDate(date);
+                        }
+                        catch (ParseException e) {
+                            // couldn't parse date, use current date-time
                             LOGGER.log(Level.WARNING, "Unknown date format on incoming file transfer: " + date);
                         }
                     }
-                    else {
-                        file.setDate(new Date());
-                    }
+
+                    File file = new File(name, fileSize);
+                    file.setHash(hash);
+                    file.setDate(fileDate);
                     file.setDesc(desc);
                     file.setRanged(isRanged);
-                    file.setHash(hash);
-                    file.setThumbnail(thumbnail);
+                    file.setThumbnail(thumbnailElement);
                     initiation.setFile(file);
                 }
             }

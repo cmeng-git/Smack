@@ -20,9 +20,6 @@ import org.jivesoftware.smack.packet.XmlElement;
 
 /**
  * Abstract JingleContentTransportInfo element.
- *
- * @author Florian Schmaus
- * @author Eng Chong Meng
  */
 public interface JingleContentTransportInfo extends XmlElement {
 

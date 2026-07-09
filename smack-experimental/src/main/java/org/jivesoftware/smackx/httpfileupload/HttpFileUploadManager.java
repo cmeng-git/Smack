@@ -69,13 +69,14 @@ import org.jxmpp.jid.DomainBareJid;
 
 /**
  * A manager for XEP-0363: HTTP File Upload.
- * This manager is also capable of XEP-XXXX: OMEMO Media Sharing.
+ * This manager is also capable of XEP-0454: OMEMO Media Sharing.
  *
  * @author Grigory Fedorov
  * @author Florian Schmaus
  * @author Paul Schaub
+ * @author Eng Chong Meng
  * @see <a href="http://xmpp.org/extensions/xep-0363.html">XEP-0363: HTTP File Upload</a>
- * @see <a href="http://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-XXXX: OMEMO Media Sharing</a>
+ * @see <a href="http://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-0454: OMEMO Media Sharing</a>
  */
 public final class HttpFileUploadManager extends Manager {
 
@@ -328,39 +329,6 @@ public final class HttpFileUploadManager extends Manager {
      * then uploaded to the server.
      * The URL that is returned has a modified scheme (aesgcm:// instead of https://) and has the IV and key attached
      * as ref part.
-     *
-     * Note: The URL contains the used key and IV in plain text. Keep in mind to only share this URL though a secured
-     * channel (i.e. end-to-end encrypted message), as anybody who can read the URL can also decrypt the file.
-     *
-     * Note: This method uses a IV of length 16 instead of 12. Although not specified in the ProtoXEP, 16 byte IVs are
-     * currently used by most implementations. This implementation also supports 12 byte IVs when decrypting.
-     *
-     * @param file file
-     * @return AESGCM URL which contains the key and IV of the encrypted file.
-     * @throws InterruptedException  If the calling thread was interrupted.
-     * @throws IOException If an I/O error occurred.
-     * @throws XMPPException.XMPPErrorException if there was an XMPP error returned.
-     * @throws SmackException If Smack detected an exceptional situation.
-     * @throws InvalidAlgorithmParameterException if the provided arguments are invalid.
-     * @throws NoSuchAlgorithmException if no such algorithm is available.
-     * @throws InvalidKeyException if the key is invalid.
-     * @throws NoSuchPaddingException if the requested padding mechanism is not available.
-     *
-     * @see <a href="https://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-XXXX: OMEMO Media Sharing</a>
-     */
-    /**
-    public AesgcmUrl uploadFileEncrypted(File file) throws InterruptedException, IOException,
-            XMPPException.XMPPErrorException, SmackException, InvalidAlgorithmParameterException,
-            NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException {
-        return uploadFileEncrypted(file, null);
-    }
-
-    /**
-     * Upload a file encrypted using the scheme described in OMEMO Media Sharing.
-     * The file is being encrypted using a random 256 bit AES key in Galois Counter Mode using a random 16 byte IV and
-     * then uploaded to the server.
-     * The URL that is returned has a modified scheme (aesgcm:// instead of https://) and has the IV and key attached
-     * as ref part.
      * <p>
      * Note: The URL contains the used key and IV in plain text. Keep in mind to only share this URL though a secured
      * channel (i.e. end-to-end encrypted message), as anybody who can read the URL can also decrypt the file.
@@ -370,7 +338,7 @@ public final class HttpFileUploadManager extends Manager {
      *
      * @param file file
      * @param listener progress listener or null
-     * @return AESGCM URL which contains the key and IV of the encrypted file.
+     * @return AesgcmUrl which contains the key and IV of the encrypted file.
      * @throws IOException If an I/O error occurred.
      * @throws InterruptedException  If the calling thread was interrupted.
      * @throws XMPPException.XMPPErrorException if there was an XMPP error returned.
@@ -380,7 +348,7 @@ public final class HttpFileUploadManager extends Manager {
      * @throws InvalidAlgorithmParameterException if the provided arguments are invalid.
      * @throws InvalidKeyException if the key is invalid.
      *
-     * @see <a href="https://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-XXXX: OMEMO Media Sharing</a>
+     * @see <a href="https://xmpp.org/extensions/inbox/omemo-media-sharing.html">XEP-0454: OMEMO Media Sharing</a>
      */
     public AesgcmUrl uploadFileEncrypted(File file, UploadProgressListener listener) throws IOException,
             InterruptedException, XMPPException.XMPPErrorException, SmackException, NoSuchPaddingException,
@@ -428,7 +396,7 @@ public final class HttpFileUploadManager extends Manager {
 
     /**
      * Request a new upload slot with optional content type from default upload service (if discovered).
-     * <p>
+     *
      * When you get slot you should upload file to PUT URL and share GET URL.
      * Note that this is a synchronous call -- Smack must wait for the server response.
      *
@@ -451,7 +419,7 @@ public final class HttpFileUploadManager extends Manager {
 
     /**
      * Request a new upload slot with optional content type from custom upload service.
-     * <p>
+     *
      * When you get slot you should upload file to PUT URL and share GET URL.
      * Note that this is a synchronous call -- Smack must wait for the server response.
      *
@@ -501,14 +469,14 @@ public final class HttpFileUploadManager extends Manager {
 
         SlotRequest slotRequest;
         switch (uploadService.getVersion()) {
-            case v0_3:
-                slotRequest = new SlotRequest(uploadService.getAddress(), filename, fileSize, contentType);
-                break;
-            case v0_2:
-                slotRequest = new SlotRequest_V0_2(uploadService.getAddress(), filename, fileSize, contentType);
-                break;
-            default:
-                throw new AssertionError();
+        case v0_3:
+            slotRequest = new SlotRequest(uploadService.getAddress(), filename, fileSize, contentType);
+            break;
+        case v0_2:
+            slotRequest = new SlotRequest_V0_2(uploadService.getAddress(), filename, fileSize, contentType);
+            break;
+        default:
+            throw new AssertionError();
         }
 
         return connection.sendIqRequestAndWaitForResponse(slotRequest);
@@ -581,7 +549,8 @@ public final class HttpFileUploadManager extends Manager {
                         listener.onUploadProgress(bytesSend, fileSize);
                     }
                 }
-            } finally {
+            }
+            finally {
                 try {
                     inputStream.close();
                 }
@@ -591,7 +560,8 @@ public final class HttpFileUploadManager extends Manager {
                 }
                 try {
                     outputStream.close();
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     LOGGER.log(Level.WARNING, "Exception while closing output stream", e);
                 }
             }
@@ -641,15 +611,15 @@ public final class HttpFileUploadManager extends Manager {
     public static UploadService.Version namespaceToVersion(String namespace) {
         UploadService.Version version;
         switch (namespace) {
-            case NAMESPACE:
-                version = Version.v0_3;
-                break;
-            case NAMESPACE_0_2:
-                version = Version.v0_2;
-                break;
-            default:
-                version = null;
-                break;
+        case NAMESPACE:
+            version = Version.v0_3;
+            break;
+        case NAMESPACE_0_2:
+            version = Version.v0_2;
+            break;
+        default:
+            version = null;
+            break;
         }
         return version;
     }

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -25,7 +25,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 /**
- * Implements <code>ExtensionElement</code> for the "transfer" element defined below.
+ * Implements <code>XmlElement</code> for the "transfer" element defined below.
  * XEP-0251: Jingle Session Transfer 0.2 (2009-10-05)
  * @see <a href="https://xmpp.org/extensions/xep-0251.html#unattended">XEP-0251 § 2. Unattended Transfer</a>
  * @see <a href="https://xmpp.org/extensions/xep-0251.html#attended">XEP-0251 § 3. Attended Transfer</a>
@@ -36,14 +36,7 @@ import org.jxmpp.stringprep.XmppStringprepException;
  * @author Eng Chong Meng
  */
 public class SdpTransfer extends AbstractXmlElement {
-    /**
-     * The name of the "transfer" element.
-     */
     public static final String ELEMENT = "transfer";
-
-    /**
-     * The namespace of the "transfer" element.
-     */
     public static final String NAMESPACE = "urn:xmpp:jingle:transfer:0";
 
     public static final QName QNAME = new QName(NAMESPACE, ELEMENT);

@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -16,10 +16,12 @@
  */
 package org.jivesoftware.smackx.jingle_rtp.element;
 
+import javax.xml.namespace.QName;
+
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
 /**
- * Implements <code>ExtensionElement</code> for the <code>fingerprint</code> element.
+ * Implements <code>XmlElement</code> for the <code>fingerprint</code> element.
  *
  * @author Lyubomir Marinov
  * @author Eng Chong Meng
@@ -27,15 +29,10 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc4145">TCP-Based Media Transport in the Session Description Protocol (SDP)</a>
  */
 public class SrtpFingerprint extends AbstractXmlElement {
-    /**
-     * The XML name of the <code>fingerprint</code> element defined by: XEP-0320: Use of DTLS-SRTP in Jingle Sessions.
-     */
     public static final String ELEMENT = "fingerprint";
-
-    /**
-     * The XML namespace of the <code>fingerprint</code> element defined by XEP-0320: Use of DTLS-SRTP in Jingle Sessions.
-     */
     public static final String NAMESPACE = "urn:xmpp:jingle:apps:dtls:0";
+
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     /**
      * The XML name of the <code>fingerprint</code> element's attribute which specifies the hash
@@ -113,7 +110,7 @@ public class SrtpFingerprint extends AbstractXmlElement {
      * to obtain a new instance and {@link #build} to build the SrtpEncryption.
      */
     public static final class Builder extends AbstractXmlElement.Builder<Builder, SrtpFingerprint> {
-        protected Builder(String element, String namespace) {
+        Builder(String element, String namespace) {
             super(element, namespace);
         }
 

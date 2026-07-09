@@ -26,7 +26,7 @@ public class ThumbnailElementTest {
     @Test
     public void uriIsRequired() {
         assertThrows(IllegalArgumentException.class, () -> new ThumbnailElement(null));
-        assertThrows(IllegalArgumentException.class, () -> new ThumbnailElement(null, "image/png", 128, 128));
+        assertThrows(IllegalArgumentException.class, () -> new ThumbnailElement((String) null, "image/png", 128, 128));
     }
 
     @Test

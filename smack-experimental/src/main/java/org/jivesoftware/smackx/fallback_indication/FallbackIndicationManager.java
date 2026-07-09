@@ -43,8 +43,8 @@ import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.EntityBareJid;
 
 /**
- * Smacks API for XEP-0428: Fallback Indication.
- * In some scenarios it might make sense to mark the body of a message as fallback for legacy clients.
+ * API for XEP-0428: Fallback Indication 0.2.1 (2024-03-20).
+ * In some scenarios it might make sense  to mark the body of a message as fallback for legacy clients.
  * Examples are encryption mechanisms where the sender might include a hint for legacy clients stating that the
  * body (eg. "This message is encrypted") should be ignored.
  *
@@ -133,21 +133,23 @@ public final class FallbackIndicationManager extends Manager {
      * Set the body of the message to the provided fallback message and add a {@link FallbackIndicationElement}.
      *
      * @param messageBuilder message builder
+     * @param fallbackFor the element to which the fallback is for
      * @param fallbackMessageBody fallback message body
      * @return builder with set body and added fallback element
      */
-    public static MessageBuilder addFallbackIndicationWithBody(MessageBuilder messageBuilder, String fallbackMessageBody) {
-        return addFallbackIndication(messageBuilder).setBody(fallbackMessageBody);
+    public static MessageBuilder addFallbackIndicationWithBody(MessageBuilder messageBuilder, String fallbackFor, String fallbackMessageBody) {
+        return addFallbackIndication(messageBuilder, fallbackFor).setBody(fallbackMessageBody);
     }
 
     /**
      * Add a {@link FallbackIndicationElement} to the provided message builder.
      *
      * @param messageBuilder message builder
+     * @param fallbackFor the element to which the fallback is for
      * @return message builder with added fallback element
      */
-    public static MessageBuilder addFallbackIndication(MessageBuilder messageBuilder) {
-        return messageBuilder.addExtension(new FallbackIndicationElement());
+    public static MessageBuilder addFallbackIndication(MessageBuilder messageBuilder, String fallbackFor) {
+        return messageBuilder.addExtension(new FallbackIndicationElement(fallbackFor));
     }
 
     /**

@@ -23,6 +23,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.StanzaBuilder;
 
 import org.jivesoftware.smackx.fallback_indication.element.FallbackIndicationElement;
+import org.jivesoftware.smackx.message_retraction.element.RetractElement;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,12 +32,12 @@ public class FallbackIndicationTest {
     @Test
     public void testFallbackIndicationElementFromMessageTest() {
         Message messageWithoutFallback = StanzaBuilder.buildMessage()
-                        .build();
+                .build();
         assertNull(FallbackIndicationElement.fromMessage(messageWithoutFallback));
 
         Message messageWithFallback = StanzaBuilder.buildMessage()
-                        .addExtension(new FallbackIndicationElement())
-                        .build();
+                .addExtension(new FallbackIndicationElement(RetractElement.NAMESPACE))
+                .build();
         assertNotNull(FallbackIndicationElement.fromMessage(messageWithFallback));
     }
 }

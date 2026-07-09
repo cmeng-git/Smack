@@ -21,8 +21,6 @@ import org.jivesoftware.smack.packet.XmlElement;
 /**
  * An element found usually in 'description' elements.
  *
- * @author Paul Schaub
- * @author Eng Chong Meng
  */
 public interface JingleContentDescriptionChildElement extends XmlElement {
 

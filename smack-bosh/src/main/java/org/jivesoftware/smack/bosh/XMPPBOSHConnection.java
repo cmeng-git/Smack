@@ -211,7 +211,7 @@ public class XMPPBOSHConnection extends AbstractXMPPConnection {
             done = true;
             String errorMessage = "Timeout reached for the connection to "
                     + getHost() + ":" + getPort() + ".";
-            instantShutdown();
+            shutdown();
             throw new SmackException.SmackMessageException(errorMessage);
         }
 
@@ -220,7 +220,7 @@ public class XMPPBOSHConnection extends AbstractXMPPConnection {
                             "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'/>");
             onStreamOpen(parser);
         } catch (XmlPullParserException | IOException e) {
-            instantShutdown();
+            shutdown();
             throw new AssertionError("Failed to setup stream environment", e);
         }
     }
@@ -323,6 +323,13 @@ public class XMPPBOSHConnection extends AbstractXMPPConnection {
 
     @Override
     protected void shutdown() {
+        if (client != null) {
+            try {
+                client.disconnect();
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "shutdown", e);
+            }
+        }
         instantShutdown();
     }
 
@@ -337,14 +344,6 @@ public class XMPPBOSHConnection extends AbstractXMPPConnection {
             }
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted while waiting for writer thread to terminate", e);
-        }
-
-        if (client != null) {
-            try {
-                client.disconnect();
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "shutdown", e);
-            }
         }
 
         setWasAuthenticated();

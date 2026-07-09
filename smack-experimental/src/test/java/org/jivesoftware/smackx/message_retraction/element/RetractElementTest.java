@@ -35,8 +35,9 @@ public class RetractElementTest {
 
     @Test
     public void serializationTest() {
-        RetractElement retractElement = new RetractElement();
-        String expectedXml = "<retract xmlns='urn:xmpp:message-retract:0'/>";
+        String originId = "wrong-recipient-1";
+        RetractElement retractElement = new RetractElement(originId);
+        String expectedXml = "<retract xmlns='urn:xmpp:message-retract:1' id='wrong-recipient-1'/>";
 
         assertXmlSimilar(expectedXml, retractElement.toXML());
     }
@@ -45,7 +46,7 @@ public class RetractElementTest {
     @EnumSource(SmackTestUtil.XmlPullParserKind.class)
     public void deserializationTest(SmackTestUtil.XmlPullParserKind parserKind)
             throws XmlPullParserException, IOException, SmackParsingException {
-        String xml = "<retract xmlns='urn:xmpp:message-retract:0'/>";
+        String xml = "<retract xmlns='urn:xmpp:message-retract:1' id='wrong-recipient-1'/>";
         RetractElement element = SmackTestUtil.parse(xml, RetractElementProvider.class, parserKind);
 
         assertNotNull(element);

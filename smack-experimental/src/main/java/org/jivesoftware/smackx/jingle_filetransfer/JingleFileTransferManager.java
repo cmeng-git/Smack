@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2017-2024 Eng Chong Meng
+ * Copyright 2017 Paul Schaub
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
+
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.jingle.JingleDescriptionManager;
 import org.jivesoftware.smackx.jingle.JingleHandler;
@@ -105,6 +106,7 @@ public final class JingleFileTransferManager extends Manager implements JingleDe
      * Register a new JingleSessionHandler with JingleManager when a new session-initiate is received.
      *
      * @param jingle Jingle session-initiate
+     *
      * @return IQ.Result
      */
     @Override
@@ -115,7 +117,6 @@ public final class JingleFileTransferManager extends Manager implements JingleDe
         if (initiator == null) {
             initiator = jingle.getFrom().asEntityFullJidIfPossible();
         }
-
         JingleSessionImpl session = new JingleSessionImpl(mConnection, initiator, jingle);
         return session.handleJingleSessionRequest(jingle);
     }
@@ -187,6 +188,15 @@ public final class JingleFileTransferManager extends Manager implements JingleDe
         offerListeners.remove(listener);
     }
 
+    public void addIncomingFileRequestListener(IncomingFileRequestListener listener) {
+        requestListeners.add(listener);
+    }
+
+    public void removeIncomingFileRequestListener(IncomingFileRequestListener listener) {
+        requestListeners.remove(listener);
+    }
+
+
     public void notifyIncomingFileOfferListeners(JingleIncomingFileOffer offer) {
         LOGGER.log(Level.INFO, "Incoming File transfer: [" + offer.getNamespace() + ", "
                 + offer.getParent().getTransport().getNamespace() + ", "
@@ -194,14 +204,6 @@ public final class JingleFileTransferManager extends Manager implements JingleDe
         for (IncomingFileOfferListener l : offerListeners) {
             l.onIncomingFileOffer(offer);
         }
-    }
-
-    public void addIncomingFileRequestListener(IncomingFileRequestListener listener) {
-        requestListeners.add(listener);
-    }
-
-    public void removeIncomingFileRequestListener(IncomingFileRequestListener listener) {
-        requestListeners.remove(listener);
     }
 
     public void notifyIncomingFileRequestListeners(JingleIncomingFileRequest request) {
@@ -215,11 +217,22 @@ public final class JingleFileTransferManager extends Manager implements JingleDe
         return JingleFileTransferImpl.NAMESPACE;
     }
 
+    // Handling of JingleOutgoingFile event is not required.
     private void notifyTransfer(JingleFileTransferImpl transfer) {
-        if (transfer.isOffer()) {
+        if (transfer instanceof JingleIncomingFileOffer) {
             notifyIncomingFileOfferListeners((JingleIncomingFileOffer) transfer);
-        } else {
+            // LOGGER.log(Level.INFO, "JingleIncomingFileOffer received!");
+        }
+        else if (transfer instanceof JingleIncomingFileRequest) {
             notifyIncomingFileRequestListeners((JingleIncomingFileRequest) transfer);
+            // LOGGER.log(Level.INFO, "JingleIncomingFileRequest received!");
+        }
+        else if (transfer instanceof JingleOutgoingFileOffer) {
+            // send jingle file to own self; trigger this on sending.
+            LOGGER.log(Level.INFO, "JingleOutgoingFileOffer received!");
+        }
+        else if (transfer instanceof JingleOutgoingFileRequest) {
+            LOGGER.log(Level.INFO, "JingleOutgoingFileRequest received!");
         }
     }
 

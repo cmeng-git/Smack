@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -30,6 +30,7 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 public class SctpMap extends AbstractXmlElement {
     public static final String ELEMENT = "sctpmap";
     public static final String NAMESPACE = "urn:xmpp:jingle:transports:dtls-sctp:1";
+
     public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     /**
@@ -84,7 +85,7 @@ public class SctpMap extends AbstractXmlElement {
      * to obtain a new instance and {@link #build} to build the SctpMap.
      */
     public static final class Builder extends AbstractXmlElement.Builder<Builder, SctpMap> {
-        protected Builder(String element, String namespace) {
+        Builder(String element, String namespace) {
             super(element, namespace);
         }
 

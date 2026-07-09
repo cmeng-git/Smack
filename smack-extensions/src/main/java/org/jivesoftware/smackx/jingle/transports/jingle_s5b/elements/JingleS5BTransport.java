@@ -21,7 +21,7 @@ import java.util.List;
 
 import javax.xml.namespace.QName;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
+import org.jivesoftware.smack.packet.XmlElement;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 
@@ -36,7 +36,7 @@ import org.jivesoftware.smackx.jingle.element.JingleContentTransportInfo;
  * @author Paul Schaub
  * @author Eng Chong Meng
  */
-public class JingleS5BTransport extends JingleContentTransport implements ExtensionElement {
+public class JingleS5BTransport extends JingleContentTransport implements XmlElement {
     public static final String NAMESPACE_V1 = "urn:xmpp:jingle:transports:s5b:1";
     public static final String ATTR_DSTADDR = "dstaddr";
     public static final String ATTR_MODE = "mode";

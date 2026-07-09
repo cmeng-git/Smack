@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Paul Schaub
  *
@@ -29,6 +29,7 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.util.Async;
+
 import org.jivesoftware.smackx.bytestreams.socks5.Socks5BytestreamSession;
 import org.jivesoftware.smackx.bytestreams.socks5.Socks5Proxy;
 import org.jivesoftware.smackx.bytestreams.socks5.Socks5Utils;
@@ -46,6 +47,7 @@ import org.jivesoftware.smackx.jingle.exception.FailedTransportException;
 import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTransport;
 import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTransportCandidate;
 import org.jivesoftware.smackx.jingle.transports.jingle_s5b.elements.JingleS5BTransportInfo;
+
 import org.jxmpp.jid.FullJid;
 
 /**
@@ -354,9 +356,8 @@ public class JingleS5BTransportImpl extends JingleTransport<JingleS5BTransport> 
             if (isProxy) {
                 LOGGER.log(Level.INFO, "Send candidate activated.");
                 Jingle candidateActivate = mTransportManager.createCandidateActivated((JingleS5BTransportImpl) nominated.getParent(), nominated);
-
                 try {
-                    mConnection.createStanzaCollectorAndSend(candidateActivate).nextResultOrThrow();
+                    mConnection.sendIqRequestAndWaitForResponse(candidateActivate);
                 } catch (InterruptedException | XMPPException.XMPPErrorException |
                          SmackException.NotConnectedException | SmackException.NoResponseException e) {
                     LOGGER.log(Level.WARNING, "Could not send candidate activated", e);

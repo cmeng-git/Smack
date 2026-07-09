@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 package org.jivesoftware.smackx.jingle_rtp.element;
+
+import javax.xml.namespace.QName;
 
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
@@ -33,6 +35,8 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 public class RtpExtmap extends AbstractXmlElement {
     public static final String ELEMENT = "extmap-allow-mixed";
     public static final String NAMESPACE = "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0";
+
+    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     public RtpExtmap() {
         super(getBuilder());
@@ -56,7 +60,7 @@ public class RtpExtmap extends AbstractXmlElement {
      * to obtain a new instance and {@link #build} to build the RtpExtmap.
      */
     public static final class Builder extends AbstractXmlElement.Builder<Builder, RtpExtmap> {
-        protected Builder(String element, String namespace) {
+        Builder(String element, String namespace) {
             super(element, namespace);
         }
 

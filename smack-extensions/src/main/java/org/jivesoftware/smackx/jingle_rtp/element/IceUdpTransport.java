@@ -1,4 +1,4 @@
-/**
+/*
  *
  * Copyright 2017-2022 Eng Chong Meng
  *
@@ -20,7 +20,6 @@ import java.util.List;
 
 import javax.xml.namespace.QName;
 
-import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smackx.jingle.element.JingleContentTransport;
 import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
 
@@ -30,9 +29,7 @@ import org.jivesoftware.smackx.jingle_rtp.AbstractXmlElement;
  * @see <a href="https://xmpp.org/extensions/xep-0176.html">XEP-0176: Jingle ICE-UDP Transport Method 1.1.1 (2021-03-04)</a>
  */
 public class IceUdpTransport extends JingleContentTransport {
-
     public static final String NAMESPACE = "urn:xmpp:jingle:transports:ice-udp:1";
-
     public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
     /**
@@ -49,7 +46,7 @@ public class IceUdpTransport extends JingleContentTransport {
      * A list of one or more candidates representing each of the initiator's higher-priority
      * transport candidates as determined in accordance with the ICE methodology.
      */
-    private List<IceUdpTransportCandidate> candidateList;
+    protected List<IceUdpTransportCandidate> candidateList;
 
     /**
      * Once the parties have connectivity and therefore the initiator has completed ICE as
@@ -89,11 +86,8 @@ public class IceUdpTransport extends JingleContentTransport {
      * @return <code>true</code> if this <code>IceUdpTransport</code> has a child with the 'rtcp-mux' name.
      */
     public boolean isRtcpMux() {
-        for (ExtensionElement packetExtension : getChildElements()) {
-            if (RtcpMux.ELEMENT.equals(packetExtension.getElementName()))
-                return true;
-        }
-        return false;
+        List<RtcpMux> namedElements = getChildElements(RtcpMux.class);
+        return (namedElements.size() != 0);
     }
 
     public IceUdpTransportCandidate getCandidate(String candidateId) {
@@ -121,6 +115,7 @@ public class IceUdpTransport extends JingleContentTransport {
      * Removes <code>candidate</code> from the list of {@link IceUdpTransportCandidate}s registered with this transport.
      *
      * @param candidate the <code>CandidateExtensionElement</code> to remove from this transport element
+     *
      * @return <code>true</code> if the list of <code>CandidateExtensionElement</code>s registered with this
      * transport contains the specified <code>candidate</code>
      */
@@ -130,47 +125,6 @@ public class IceUdpTransport extends JingleContentTransport {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Clones a specific <code>IceUdpTransport</code> and its candidates.
-     *
-     * @param src the <code>IceUdpTransport</code> to be cloned
-     * @param copyDtls if <code>true</code> will also copy {@link SrtpFingerprint}.
-     * @return a new <code>IceUdpTransport</code> instance which has the same run-time
-     * type, attributes, namespace, text and candidates as the specified <code>src</code>
-     */
-    public static IceUdpTransport cloneTransportAndCandidates(final IceUdpTransport src, boolean copyDtls) {
-        IceUdpTransport dst = null;
-        if (src != null) {
-            dst = clone(src);
-            // Copy candidates
-            for (IceUdpTransportCandidate srcCand : src.getCandidateList()) {
-                if (!(srcCand instanceof IceUdpTransportRemoteCandidate)) {
-                    dst.addChildElement(clone(srcCand));
-                }
-            }
-            // Copy "web-socket" extensions.
-            // cmeng - NPE for src during testing; force to use final hopefully it helps
-
-            // Copy RTCP MUX
-            if (src.isRtcpMux()) {
-                dst.addChildElement(RtcpMux.builder(IceUdpTransport.NAMESPACE).build());
-            }
-
-            // Optionally copy DTLS
-            if (copyDtls) {
-                for (SrtpFingerprint srtpFingerprint : src.getChildElements(SrtpFingerprint.class)) {
-                    SrtpFingerprint.Builder fpBuilder = SrtpFingerprint.getBuilder();
-
-                    fpBuilder.setFingerprint(srtpFingerprint.getFingerprint());
-                    fpBuilder.setHash(srtpFingerprint.getHash());
-                    fpBuilder.setSetup(srtpFingerprint.getSetup());
-                    dst.addChildElement(fpBuilder.build());
-                }
-            }
-        }
-        return dst;
     }
 
     public static Builder getBuilder() {
