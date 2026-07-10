@@ -725,8 +725,8 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0384.html"/>
                 <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-omemo; Support both 'eu.siacs.conversations.axolotl' (since 0.7.9) and 'urn:xmpp:omemo:2' namespaces encrypted message decryption.</xmpp:note>
-                <xmpp:version>0.9.0</xmpp:version>
+                <xmpp:note>smack-omemo</xmpp:note>
+                <xmpp:version>0.3.0</xmpp:version>
             </xmpp:SupportedXep>
         </implements>
         <implements>
