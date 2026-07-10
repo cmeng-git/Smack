@@ -25,7 +25,7 @@ public class ThumbnailElementTest {
 
     @Test
     public void uriIsRequired() {
-        assertThrows(IllegalArgumentException.class, () -> new ThumbnailElement(null));
+        assertThrows(IllegalArgumentException.class, () -> new org.jivesoftware.smackx.thumbnails.element.ThumbnailElement(null));
         assertThrows(IllegalArgumentException.class, () -> new ThumbnailElement((String) null, "image/png", 128, 128));
     }
 

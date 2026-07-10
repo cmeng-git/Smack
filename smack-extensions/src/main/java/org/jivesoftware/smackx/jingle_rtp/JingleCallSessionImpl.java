@@ -117,6 +117,7 @@ public class JingleCallSessionImpl extends JingleSession {
      * @param contents Jingle contents list
      * @param basicTelephony a reference of the Basic Telephony implementation
      */
+    @SuppressWarnings("this-escape")
     public JingleCallSessionImpl(XMPPConnection connection, FullJid initiator, FullJid responder, Role role,
             String sessionId, List<JingleContent> contents, BasicTelephony basicTelephony) {
         super(initiator, responder, role, sessionId, contents);

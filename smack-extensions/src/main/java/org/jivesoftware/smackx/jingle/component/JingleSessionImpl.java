@@ -114,10 +114,11 @@ public class JingleSessionImpl extends JingleSession {
      * @param connection XMPPConnection
      * @param initiator JingleSI initiator
      * @param responder JingleSI responder
-     * @param role Acting role for the this session-initial
+     * @param role Acting role for this session-initial
      * @param sid Jingle session Id
      * @param contents Jingle contents
      */
+    @SuppressWarnings("this-escape")
     public JingleSessionImpl(XMPPConnection connection, FullJid initiator, FullJid responder, Role role, String sid, List<JingleContent> contents) {
         super(initiator, responder, role, sid, contents);
         updateSessionState(SessionState.fresh);

@@ -77,6 +77,7 @@ public class JingleContentImpl implements JingleTransportCallback, JingleSecurit
         this(connection, null, null, null, randomName(), null, creator, senders);
     }
 
+    @SuppressWarnings("this-escape")
     public JingleContentImpl(XMPPConnection connection, JingleDescription<?> description, JingleTransport<?> transport, JingleSecurity<?> security, String name, String disposition, JingleContent.Creator creator, JingleContent.Senders senders) {
         setDescription(description);
         setTransport(transport);

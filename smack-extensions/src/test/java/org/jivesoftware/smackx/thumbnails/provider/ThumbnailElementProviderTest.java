@@ -41,7 +41,7 @@ public class ThumbnailElementProviderTest {
                 "width='128'\n" +
                 "height='96'/>";
 
-        ThumbnailElement element = SmackTestUtil.parse(xml, ThumbnailElementProvider.class, parserKind);
+        ThumbnailElement element = SmackTestUtil.parse(xml, org.jivesoftware.smackx.thumbnails.provider.ThumbnailElementProvider.class, parserKind);
 
         assertEquals("cid:sha1+ffd7c8d28e9c5e82afea41f97108c6b4@bob.xmpp.org", element.getUri());
         assertEquals("image/png", element.getMediaType());
