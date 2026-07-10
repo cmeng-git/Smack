@@ -52,7 +52,7 @@ public class XmppConnectionTool {
         PubSubManager pepPubSubManager = pepManager.getPepPubSubManager();
 
         // TODO: Also delete "bundles" nodes.
-        return pepPubSubManager.deleteNode(OmemoConstants.PEP_NODE_DEVICES_V_AXOLOTL);
+        return pepPubSubManager.deleteNode(OmemoConstants.PEP_NODE_DEVICE_LIST);
     }
 
     public static XmppConnectionTool of(String jid, String password, boolean debug)
