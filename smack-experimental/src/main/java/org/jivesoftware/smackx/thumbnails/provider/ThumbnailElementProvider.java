@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2014~2024 Paul Schaub
+ * Copyright 2023 Paul Schaub
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,23 +30,20 @@ import org.jivesoftware.smackx.thumbnails.element.ThumbnailElement;
 
 import org.jxmpp.JxmppContext;
 
-/**
- * Implement XEP-0264: Jingle Content Thumbnails provider.
- *
- * @author Paul Schaub
- * @author Eng Chong Meng
- */
 public class ThumbnailElementProvider extends ExtensionElementProvider<ThumbnailElement> {
-
-    public static final ThumbnailElementProvider INSTANCE = new ThumbnailElementProvider();
-
     @Override
     public ThumbnailElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
             throws XmlPullParserException, IOException, SmackParsingException, ParseException {
-        String uri = parser.getAttributeValue(null, ThumbnailElement.ATTR_URI);
-        String mediaType = parser.getAttributeValue(null, ThumbnailElement.ATTR_MEDIA_TYPE);
-        Integer width = ParserUtils.getIntegerAttribute(parser, ThumbnailElement.ATTR_WIDTH);
-        Integer height = ParserUtils.getIntegerAttribute(parser, ThumbnailElement.ATTR_HEIGHT);
-        return new ThumbnailElement(uri, mediaType, width, height);
+        String uri = parser.getAttributeValue(ThumbnailElement.ELEM_URI);
+        String mediaType = parser.getAttributeValue(ThumbnailElement.ELEM_MEDIA_TYPE);
+        Integer width = ParserUtils.getIntegerAttribute(parser, ThumbnailElement.ELEM_WIDTH);
+        Integer height = ParserUtils.getIntegerAttribute(parser, ThumbnailElement.ELEM_HEIGHT);
+
+        return new ThumbnailElement(
+                uri,
+                mediaType,
+                width,
+                height
+        );
     }
 }

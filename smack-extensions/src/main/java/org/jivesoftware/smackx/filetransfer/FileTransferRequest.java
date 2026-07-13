@@ -19,7 +19,6 @@ package org.jivesoftware.smackx.filetransfer;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 
 import org.jivesoftware.smackx.si.packet.StreamInitiation;
-import org.jivesoftware.smackx.thumbnails.element.ThumbnailElement;
 
 import org.jxmpp.jid.Jid;
 
@@ -35,20 +34,18 @@ public class FileTransferRequest {
     private final FileTransferManager manager;
 
     /**
-     * A receipt request is constructed from the Stream Initiation request
+     * A receive request is constructed from the Stream Initiation request
      * received from the initiator.
      *
-     * @param manager The manager handling this file transfer
+     * @param manager TODO javadoc me please
+     *            The manager handling this file transfer
      *
-     * @param si The Stream initiation received from the initiator.
+     * @param si TODO javadoc me please
+     *            The Stream initiation received from the initiator.
      */
     public FileTransferRequest(FileTransferManager manager, StreamInitiation si) {
         this.streamInitiation = si;
         this.manager = manager;
-    }
-
-    public ThumbnailElement getThumbnail() {
-        return streamInitiation.getFile().getThumbnail();
     }
 
     /**
@@ -140,4 +137,5 @@ public class FileTransferRequest {
     public void reject() throws NotConnectedException, InterruptedException {
         manager.rejectIncomingFileTransfer(this);
     }
+
 }

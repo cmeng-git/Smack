@@ -26,14 +26,11 @@ import org.jivesoftware.smack.packet.IqData;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.parsing.SmackParsingException;
 import org.jivesoftware.smack.provider.IqProvider;
-import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.xml.XmlPullParser;
 import org.jivesoftware.smack.xml.XmlPullParserException;
 
 import org.jivesoftware.smackx.si.packet.StreamInitiation;
 import org.jivesoftware.smackx.si.packet.StreamInitiation.File;
-import org.jivesoftware.smackx.thumbnails.element.ThumbnailElement;
-import org.jivesoftware.smackx.thumbnails.provider.ThumbnailElementProvider;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jivesoftware.smackx.xdata.provider.DataFormProvider;
 
@@ -41,26 +38,17 @@ import org.jxmpp.JxmppContext;
 import org.jxmpp.util.XmppDateTime;
 
 /**
- * The StreamInitiationProvider parses StreamInitiation packets with thumbnail element support.
+ * The StreamInitiationProvider parses StreamInitiation packets.
  *
  * @author Alexander Wenckus
- * @author Eng Chong Meng
+ *
  */
 public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
     private static final Logger LOGGER = Logger.getLogger(StreamInitiationProvider.class.getName());
 
-    /**
-     * Parses the given <code>parser</code> in order to create a <code>FileElement</code> from it.
-     *
-     * @param parser the parser to parse
-     */
-
     @SuppressWarnings("JavaUtilDate")
     @Override
-    public StreamInitiation parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext)
-            throws XmlPullParserException, IOException, SmackParsingException, ParseException {
-        boolean done = false;
-
+    public StreamInitiation parse(XmlPullParser parser, int initialDepth, IqData iqData, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
         // si
         String id = parser.getAttributeValue("", "id");
         String mimeType = parser.getAttributeValue("", "mime-type");
@@ -73,56 +61,42 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
         String hash = null;
         String date = null;
         String desc = null;
-        ThumbnailElement thumbnailElement = null;
         boolean isRanged = false;
 
         // feature
         DataForm form = null;
         DataFormProvider dataFormProvider = new DataFormProvider();
 
-        XmlPullParser.Event eventType;
-        String elementName;
-        String namespace;
-        while (!done) {
-            eventType = parser.next();
-            elementName = parser.getName();
-            namespace = parser.getNamespace();
+        outerloop: while (true) {
+            XmlPullParser.Event eventType = parser.next();
             if (eventType == XmlPullParser.Event.START_ELEMENT) {
+                String elementName = parser.getName();
+                String namespace = parser.getNamespace();
                 if (elementName.equals("file")) {
-                    name = parser.getAttributeValue("", StreamInitiation.ATTR_NAME);
-                    size = parser.getAttributeValue("", StreamInitiation.ATTR_SIZE);
-                    hash = parser.getAttributeValue("", StreamInitiation.ATTR_HASH);
-                    date = parser.getAttributeValue("", StreamInitiation.ATTR_DATE);
-                }
-                else if (elementName.equals(StreamInitiation.ELEM_DESC)) {
+                    name = parser.getAttributeValue("", "name");
+                    size = parser.getAttributeValue("", "size");
+                    hash = parser.getAttributeValue("", "hash");
+                    date = parser.getAttributeValue("", "date");
+                } else if (elementName.equals("desc")) {
                     desc = parser.nextText();
-                }
-                else if (elementName.equals(StreamInitiation.ELEM_RANGE)) {
+                } else if (elementName.equals("range")) {
                     isRanged = true;
-                }
-                else if (elementName.equals("x") && namespace.equals("jabber:x:data")) {
+                } else if (elementName.equals("x")
+                        && namespace.equals("jabber:x:data")) {
                     form = dataFormProvider.parse(parser);
                 }
-                else if (elementName.equals("thumbnailElement")) {
-                    thumbnailElement = ThumbnailElementProvider.INSTANCE.parse(parser);  // new ThumbnailElement(parser);
+            } else if (eventType == XmlPullParser.Event.END_ELEMENT) {
+                if (parser.getDepth() == initialDepth) {
+                    break outerloop;
                 }
-            }
-            else if (eventType == XmlPullParser.Event.END_ELEMENT) {
-                if (elementName.equals("si")) {
-                    done = true;
-                }
-                // The name-attribute is required per XEP-0096, so ignore the IQ if the name is not
-                // set to avoid exceptions. Particularly,
-                // the SI response of Empathy contains an invalid, empty file-tag.
-                else if (elementName.equals("file") && (name != null)) {
+                if (parser.getName().equals("file")) {
                     long fileSize = 0;
-                    size = StringUtils.returnIfNotEmptyTrimmed(size);
-                    if (size != null) {
+                    if (size != null && size.trim().length() != 0) {
                         try {
                             fileSize = Long.parseLong(size);
                         }
                         catch (NumberFormatException e) {
-                            LOGGER.log(Level.SEVERE, "Failed to parse file size from " + fileSize);
+                            LOGGER.log(Level.SEVERE, "Failed to parse file size from " + fileSize, e);
                         }
                     }
 
@@ -130,10 +104,8 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
                     if (date != null) {
                         try {
                             fileDate = XmppDateTime.parseDate(date);
-                        }
-                        catch (ParseException e) {
+                        } catch (ParseException e) {
                             // couldn't parse date, use current date-time
-                            LOGGER.log(Level.WARNING, "Unknown date format on incoming file transfer: " + date);
                         }
                     }
 
@@ -142,14 +114,17 @@ public class StreamInitiationProvider extends IqProvider<StreamInitiation> {
                     file.setDate(fileDate);
                     file.setDesc(desc);
                     file.setRanged(isRanged);
-                    file.setThumbnail(thumbnailElement);
                     initiation.setFile(file);
                 }
             }
         }
+
         initiation.setSessionID(id);
         initiation.setMimeType(mimeType);
+
         initiation.setFeatureNegotiationForm(form);
+
         return initiation;
     }
+
 }

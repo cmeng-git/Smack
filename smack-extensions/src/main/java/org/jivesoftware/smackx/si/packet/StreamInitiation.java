@@ -20,13 +20,10 @@ import java.util.Date;
 
 import javax.xml.namespace.QName;
 
+import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
-import org.jivesoftware.smack.packet.XmlElement;
-import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.StringUtils;
-import org.jivesoftware.smack.util.XmlStringBuilder;
 
-import org.jivesoftware.smackx.thumbnails.element.ThumbnailElement;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import org.jxmpp.util.XmppDateTime;
@@ -37,12 +34,6 @@ import org.jxmpp.util.XmppDateTime;
  * @author Alexander Wenckus
  */
 public class StreamInitiation extends IQ {
-    public static final String ATTR_DATE = "date";
-    public static final String ATTR_HASH = "hash";
-    public static final String ATTR_NAME = "name";
-    public static final String ATTR_SIZE = "size";
-    public static final String ELEM_DESC = "desc";
-    public static final String ELEM_RANGE = "range";
 
     public static final String ELEMENT = "si";
     public static final String NAMESPACE = "http://jabber.org/protocol/si";
@@ -76,7 +67,6 @@ public class StreamInitiation extends IQ {
      * Uniquely identifies a stream initiation to the recipient.
      *
      * @return The "id" attribute.
-     *
      * @see #setSessionID(String)
      */
     public String getSessionID() {
@@ -102,7 +92,6 @@ public class StreamInitiation extends IQ {
      * Identifies the type of file that is desired to be transferred.
      *
      * @return The mime-type.
-     *
      * @see #setMimeType(String)
      */
     public String getMimeType() {
@@ -143,7 +132,7 @@ public class StreamInitiation extends IQ {
      * negotiation and transfer.
      *
      * @return Returns the data form which contains the valid methods of stream
-     * negotiation and transfer.
+     *         negotiation and transfer.
      */
     public DataForm getFeatureNegotiationForm() {
         return featureNegotiation.getData();
@@ -207,11 +196,10 @@ public class StreamInitiation extends IQ {
      *
      * @author Alexander Wenckus
      */
-    public static class File implements XmlElement {
+    public static class File implements ExtensionElement {
 
         public static final String ELEMENT = "file";
         public static final String NAMESPACE = "http://jabber.org/protocol/si/profile/file-transfer";
-
         public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
 
         private final String name;
@@ -226,8 +214,6 @@ public class StreamInitiation extends IQ {
 
         private boolean isRanged;
 
-        private ThumbnailElement thumbnailElement;
-
         /**
          * Constructor providing the name of the file and its size.
          *
@@ -238,6 +224,7 @@ public class StreamInitiation extends IQ {
             if (name == null) {
                 throw new NullPointerException("name cannot be null");
             }
+
             this.name = name;
             this.size = size;
         }
@@ -300,7 +287,7 @@ public class StreamInitiation extends IQ {
          * Sets the description of the file.
          *
          * @param desc The description of the file so that the file receiver can
-         * know what file it is.
+         *             know what file it is.
          */
         public void setDesc(final String desc) {
             this.desc = desc;
@@ -329,18 +316,10 @@ public class StreamInitiation extends IQ {
          * transfer.
          *
          * @return Returns whether or not the initiator can support a range for
-         * the file transfer.
+         *         the file transfer.
          */
         public boolean isRanged() {
             return isRanged;
-        }
-
-        public void setThumbnail(final ThumbnailElement thumbnailElement) {
-            this.thumbnailElement = thumbnailElement;
-        }
-
-        public ThumbnailElement getThumbnail() {
-            return thumbnailElement;
         }
 
         @Override
@@ -354,28 +333,42 @@ public class StreamInitiation extends IQ {
         }
 
         @Override
-        public XmlStringBuilder toXML(XmlEnvironment enclosingNamespace) {
-            XmlStringBuilder sb = new XmlStringBuilder(this, enclosingNamespace);
+        public String toXML(org.jivesoftware.smack.packet.XmlEnvironment enclosingNamespace) {
+            StringBuilder buffer = new StringBuilder();
 
-            sb.optAttribute(ATTR_NAME, StringUtils.escapeForXmlAttribute(getName()));
-            sb.optLongAttribute(ATTR_SIZE, getSize());
-            sb.optAttribute(ATTR_DATE, (date == null) ? null : XmppDateTime.formatXEP0082Date(date));
-            sb.optAttribute(ATTR_HASH, getHash());
+            buffer.append('<').append(getElementName()).append(" xmlns=\"")
+                    .append(getNamespace()).append("\" ");
 
-            if (StringUtils.isNotEmpty(desc)
-                    || isRanged() || (thumbnailElement != null)) {
-                sb.rightAngleBracket();
-                sb.optElement(ELEM_DESC, desc);
-                if (isRanged()) {
-                    sb.emptyElement(ELEM_RANGE);
+            if (getName() != null) {
+                buffer.append("name=\"").append(StringUtils.escapeForXmlAttribute(getName())).append("\" ");
+            }
+
+            if (getSize() > 0) {
+                buffer.append("size=\"").append(getSize()).append("\" ");
+            }
+
+            if (getDate() != null) {
+                buffer.append("date=\"").append(XmppDateTime.formatXEP0082Date(date)).append("\" ");
+            }
+
+            if (getHash() != null) {
+                buffer.append("hash=\"").append(getHash()).append("\" ");
+            }
+
+            if ((desc != null && desc.length() > 0) || isRanged) {
+                buffer.append('>');
+                if (getDesc() != null && desc.length() > 0) {
+                    buffer.append("<desc>").append(StringUtils.escapeForXmlText(getDesc())).append("</desc>");
                 }
-                sb.optElement(thumbnailElement);
-                sb.closeElement(this);
+                if (isRanged()) {
+                    buffer.append("<range/>");
+                }
+                buffer.append("</").append(getElementName()).append('>');
             }
             else {
-                sb.closeEmptyElement();
+                buffer.append("/>");
             }
-            return sb;
+            return buffer.toString();
         }
     }
 
@@ -383,8 +376,9 @@ public class StreamInitiation extends IQ {
      * The feature negotiation portion of the StreamInitiation packet.
      *
      * @author Alexander Wenckus
+     *
      */
-    public static class Feature implements XmlElement {
+    public static class Feature implements ExtensionElement {
 
         public static final QName QNAME = new QName("http://jabber.org/protocol/feature-neg", "feature");
 
@@ -421,7 +415,8 @@ public class StreamInitiation extends IQ {
         @Override
         public String toXML(org.jivesoftware.smack.packet.XmlEnvironment enclosingNamespace) {
             StringBuilder buf = new StringBuilder();
-            buf.append("<feature xmlns=\"http://jabber.org/protocol/feature-neg\">");
+            buf
+                    .append("<feature xmlns=\"http://jabber.org/protocol/feature-neg\">");
             buf.append(data.toXML());
             buf.append("</feature>");
             return buf.toString();
