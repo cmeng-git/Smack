@@ -38,7 +38,8 @@ import org.jxmpp.jid.Jid;
 /**
  * Push Notifications manager class.
  *
- * @see <a href="http://xmpp.org/extensions/xep-0357.html">XEP-0357: Push Notifications</a>
+ * @see <a href="http://xmpp.org/extensions/xep-0357.html">XEP-0357: Push
+ *      Notifications</a>
  * @author Fernando Ramirez
  *
  */

@@ -29,9 +29,9 @@ import org.jivesoftware.smackx.message_retraction.element.RetractElement;
 import org.jxmpp.JxmppContext;
 
 public class RetractElementProvider extends ExtensionElementProvider<RetractElement> {
+
     @Override
     public RetractElement parse(XmlPullParser parser, int initialDepth, XmlEnvironment xmlEnvironment, JxmppContext jxmppContext) throws XmlPullParserException, IOException, SmackParsingException {
-        String id = parser.getAttributeValue("", RetractElement.ATTR_ID);
-        return new RetractElement(id);
+        return new RetractElement();
     }
 }

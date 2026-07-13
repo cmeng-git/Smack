@@ -201,14 +201,6 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0070.html"/>
-                <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>1.0.2</xmpp:version>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0071.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-extensions</xmpp:note>
@@ -475,22 +467,6 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0264.html"/>
-                <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-extensions</xmpp:note>
-                <xmpp:version>0.4.2</xmpp:version>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0280.html"/>
-                <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>1.0.1</xmpp:version>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0293.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-extensions</xmpp:note>
@@ -725,16 +701,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0384.html"/>
                 <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-omemo</xmpp:note>
-                <xmpp:version>0.3.0</xmpp:version>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0391.html"/>
-                <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>0.1.2</xmpp:version>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -766,7 +733,7 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0420.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>0.5.0</xmpp:version>
+                <xmpp:version>0.3.0</xmpp:version>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -782,20 +749,12 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0424.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>0.5.0</xmpp:version>
+                <xmpp:version>0.2.0</xmpp:version>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0428.html"/>
-                <xmpp:status>complete</xmpp:status>
-                <xmpp:note>smack-experimental</xmpp:note>
-                <xmpp:version>0.2.1</xmpp:version>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0454.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:note>smack-experimental</xmpp:note>
                 <xmpp:version>0.1.0</xmpp:version>

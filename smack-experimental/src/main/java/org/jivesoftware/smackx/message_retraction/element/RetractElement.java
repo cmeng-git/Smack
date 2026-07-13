@@ -16,31 +16,16 @@
  */
 package org.jivesoftware.smackx.message_retraction.element;
 
-import javax.xml.namespace.QName;
-
 import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 
 public class RetractElement implements ExtensionElement {
+
+    private static final String NAMESPACE_WITHOUT_VERSION = "urn:xmpp:message-retract";
+    private static final String NAMESPACE_0 = NAMESPACE_WITHOUT_VERSION + ":0";
+    public static final String NAMESPACE = NAMESPACE_0;
     public static final String ELEMENT = "retract";
-    public static final String NAMESPACE = "urn:xmpp:message-retract:1";
-
-    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
-
-    public static String retractHint = "me retracted a previous message, but it's unsupported by your client.";
-
-    public static final String ATTR_ID = "id";
-
-    private final String mId;
-
-    public RetractElement(String id) {
-        mId = id;
-    }
-
-    public String getId() {
-        return mId;
-    }
 
     @Override
     public String getNamespace() {
@@ -54,8 +39,6 @@ public class RetractElement implements ExtensionElement {
 
     @Override
     public XmlStringBuilder toXML(XmlEnvironment xmlEnvironment) {
-        return new XmlStringBuilder(this)
-                .attribute(ATTR_ID, mId)
-                .closeEmptyElement();
+        return new XmlStringBuilder(this).closeEmptyElement();
     }
 }

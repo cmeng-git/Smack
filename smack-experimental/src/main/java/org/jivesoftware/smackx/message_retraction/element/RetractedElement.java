@@ -24,28 +24,28 @@ import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.XmlEnvironment;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 
+import org.jivesoftware.smackx.sid.element.OriginIdElement;
+
 public class RetractedElement implements ExtensionElement {
+
     public static final String ELEMENT = "retracted";
-    public static final String NAMESPACE = RetractElement.NAMESPACE;
-
-    public static final QName QNAME = new QName(NAMESPACE, ELEMENT);
+    public static final QName QNAME = new QName(RetractElement.NAMESPACE, ELEMENT);
     public static final String ATTR_STAMP = "stamp";
-    public static final String ATTR_ID = "id";
 
-    private final Date mStamp;
-    private final String mId;
+    private final Date stamp;
+    private final OriginIdElement originId;
 
-    public RetractedElement(Date stamp, String id) {
-        mStamp = stamp;
-        mId = id;
+    public RetractedElement(Date stamp, OriginIdElement originId) {
+        this.stamp = stamp;
+        this.originId = originId;
     }
 
-    public Date getTimeStamp() {
-        return mStamp;
+    public Date getStamp() {
+        return stamp;
     }
 
-    public String getId() {
-        return mId;
+    public OriginIdElement getOriginId() {
+        return originId;
     }
 
     @Override
@@ -61,8 +61,9 @@ public class RetractedElement implements ExtensionElement {
     @Override
     public XmlStringBuilder toXML(XmlEnvironment xmlEnvironment) {
         return new XmlStringBuilder(this)
-                .attribute(ATTR_STAMP, getTimeStamp())
-                .attribute(ATTR_ID, getId())
-                .closeEmptyElement();
+                .attribute(ATTR_STAMP, getStamp())
+                .rightAngleBracket()
+                .append(getOriginId())
+                .closeElement(this);
     }
 }

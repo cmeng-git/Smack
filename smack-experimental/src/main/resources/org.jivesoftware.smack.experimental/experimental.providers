@@ -1,6 +1,7 @@
 <?xml version="1.0"?> 
 <!-- Providers for workgroup extensions -->
 <smackProviders>
+
     <!-- XEP-0264: Jingle Content Thumbnails -->
     <extensionProvider>
         <elementName>thumbnail</elementName>
@@ -321,8 +322,8 @@
     <!-- XEP-0420: Stanza Content Encryption (SCE) -->
     <extensionProvider>
       <elementName>content</elementName>
-      <namespace>urn:xmpp:sce:1</namespace>
-      <className>org.jivesoftware.smackx.stanza_content_encryption.provider.EnvelopeElementProvider</className>
+      <namespace>urn:xmpp:sce:0</namespace>
+      <className>org.jivesoftware.smackx.stanza_content_encryption.provider.ContentElementProvider</className>
     </extensionProvider>
 
     <!-- XEP-0422: Message Fastening -->
@@ -335,12 +336,12 @@
     <!-- XEP-0424: Message Retraction -->
     <extensionProvider>
       <elementName>retract</elementName>
-      <namespace>urn:xmpp:message-retract:1</namespace>
+      <namespace>urn:xmpp:message-retract:0</namespace>
       <className>org.jivesoftware.smackx.message_retraction.provider.RetractElementProvider</className>
     </extensionProvider>
     <extensionProvider>
       <elementName>retracted</elementName>
-      <namespace>urn:xmpp:message-retract:1</namespace>
+      <namespace>urn:xmpp:message-retract:0</namespace>
       <className>org.jivesoftware.smackx.message_retraction.provider.RetractedElementProvider</className>
     </extensionProvider>
 
